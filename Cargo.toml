@@ -1,0 +1,6 @@
+[package]
+name = "disp"
+version = "0.0.1"
+authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
+
+[dependencies]

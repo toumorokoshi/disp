@@ -1,0 +1,15 @@
+defun when[statement] List[Statement]
+   return Block[
+   ]
+
+
+when
+
+
+defun foo {a: Int} Int
+  return 5
+
+defun foo {a: Int} Int
+  return 5
+
+foo {a: Int} -> Int
