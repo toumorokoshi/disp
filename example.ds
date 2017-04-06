@@ -1,6 +1,5 @@
-defun when[statement] List[Statement]
-   return Block[
-   ]
+defun when [[statement Statement] [block [List Statement]] [List Statement]
+   return [if statement block]
 
 
 when
@@ -13,3 +12,19 @@ defun foo {a: Int} Int
   return 5
 
 foo {a: Int} -> Int
+
+if [x == 1]
+  print "foo"
+
+
+defmacro if [conditional:Conditional block:Block] None
+  return [
+    x = exec conditional
+  ]
+
+
+print "foo"
+print "bar"
+
+for s in statements:
+  exec(scope, line)
