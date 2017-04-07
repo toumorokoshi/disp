@@ -3,20 +3,8 @@ use super::ast::Token;
 
 type DFunc = fn(&mut Block, &[Token]) -> Token;
 
-/*
-pub fn eval(args: Vec<Token>) -> Vec<String> {
-    let mut block = Block::new();
-    eval_block(&mut block, &args)
+pub fn eval(block: &mut Block, token: Token) -> Token {
 }
-
-fn eval_block(block: &mut Block, statements: &Vec<Vec<Token>>) -> Vec<String> {
-    let mut result = Vec::new();
-    for statement in statements {
-        result = eval_expr(block, statement)
-    }
-    return result;
-}
-*/
 
 pub fn eval_expr(block: &mut Block, statement: &[Token]) -> Token {
     let mut func: Option<DFunc> = None;
@@ -45,6 +33,7 @@ impl Block {
             locals: HashMap::new(),
         };
         block.locals.insert(String::from("+"), plus as DFunc);
+        block.locals.insert(String::from("if"), if_func as DFunc);
         return block;
     }
 }
@@ -55,14 +44,21 @@ fn plus(block: &mut Block, args: &[Token]) -> Token {
     return Token::Integer(left_op + right_op);
 }
 
-/*
-fn if_expr(block: &mut Block, args:  &[Token]) -> Vec<String> {
-    if let &Token::List(tl) = &args[0] {
-        let condition_result = eval_expr(block, tl);
+fn if_expr(block: &mut Block, args:  &[Token]) -> Token {
+    if let &Token::List(ref tl) = &args[0] {
+        let condition_result = eval_expr(block, &tl);
+        if let Token::Boolean(b) = condition_result {
+            if b {
+                if let &Token::List(ref tl) = &args[1] {
+                    return eval_expr(block, &tl);
+                }
+            }
+        } else {
+            return Token::None;
+        }
     }
     panic!("incorrect if arguments");
 }
-*/
 
 fn ensure_symbol<'a>(t: &'a Token) -> &'a str {
     if let &Token::Symbol(ref s) = t {
