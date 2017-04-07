@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use super::ast::Token;
 
+type DFunc = fn(&mut Block, &[Token]) -> Token;
+
 /*
 pub fn eval(args: Vec<Token>) -> Vec<String> {
     let mut block = Block::new();
@@ -16,21 +18,25 @@ fn eval_block(block: &mut Block, statements: &Vec<Vec<Token>>) -> Vec<String> {
 }
 */
 
-pub fn eval_expr(block: &mut Block, statement: &[Token]) -> Vec<String> {
+pub fn eval_expr(block: &mut Block, statement: &[Token]) -> Token {
+    let mut func: Option<DFunc> = None;
     if let Some((func_token, args)) = statement.split_first() {
-        let func_name = ensure_symbol(func_token);
-        match block.locals.get(func_name) {
-            Some(f) => {
-                return f(args);
-            },
-            None => {}
+        {
+            let func_name = ensure_symbol(func_token);
+            let res = block.locals.get(func_name).clone();
+            if let Some(ref f) = res {
+                func = Some(*f.clone());
+            }
+        }
+        if let Some(f) = func {
+            return f(block, args);
         }
     }
-    return Vec::new();
+    return Token::None;
 }
 
 pub struct Block {
-    locals: HashMap<String, fn(&[Token]) -> Vec<String>>
+    locals: HashMap<String, DFunc>
 }
 
 impl Block {
@@ -38,18 +44,25 @@ impl Block {
         let mut block = Block {
             locals: HashMap::new(),
         };
-        block.locals.insert(String::from("+"), plus as fn(&[Token]) -> Vec<String>);
+        block.locals.insert(String::from("+"), plus as DFunc);
         return block;
     }
 }
 
-fn plus(args: &[Token]) -> Vec<String> {
+fn plus(block: &mut Block, args: &[Token]) -> Token {
     let left_op = ensure_int(&args[0]);
     let right_op = ensure_int(&args[1]);
-    let mut return_value = Vec::new();
-    return_value.push((left_op + right_op).to_string());
-    return return_value;
+    return Token::Integer(left_op + right_op);
 }
+
+/*
+fn if_expr(block: &mut Block, args:  &[Token]) -> Vec<String> {
+    if let &Token::List(tl) = &args[0] {
+        let condition_result = eval_expr(block, tl);
+    }
+    panic!("incorrect if arguments");
+}
+*/
 
 fn ensure_symbol<'a>(t: &'a Token) -> &'a str {
     if let &Token::Symbol(ref s) = t {

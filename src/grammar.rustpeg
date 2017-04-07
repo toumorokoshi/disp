@@ -8,6 +8,9 @@ pub integer -> i64 = i:$([0-9]+) { i.parse().unwrap() }
 
 pub token_list_array_syntax -> Vec<ast::Token> = "[" tl:token_list "]" { tl }
 
+pub true_value -> bool = "true" { true };
+pub false_value -> bool = "false" { true };
+
 
 pub spaces -> usize = s:" "+ { s.len() }
 
@@ -28,3 +31,5 @@ token -> ast::Token =
       i:integer { ast::Token::Integer(i) }
     / s:symbol { ast::Token::Symbol(Box::new(s)) }
     / tl:token_list_array_syntax { ast::Token::List(tl) }
+    / b:true_value { ast::Token::Boolean(b) }
+    / b:false_value { ast::Token::Boolean(b) }

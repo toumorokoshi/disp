@@ -16,7 +16,7 @@ fn main() {
     loop {
         let inp = read();
         let result = eval_expr(&mut block, &inp);
-        print(result);
+        println!("{}", result);
     }
 }
 
@@ -26,10 +26,4 @@ fn read() -> Vec<Token> {
     let mut input = String::new();
     io::stdin().read_line(&mut input).ok().expect("Failed to read line");
     grammar::token_list(&input).unwrap()
-}
-
-fn print(values: Vec<String>) {
-    for v in values {
-        println!("{}", v);
-    }
 }
