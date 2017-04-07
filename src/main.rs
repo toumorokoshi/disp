@@ -1,3 +1,9 @@
+#![feature(plugin)]
+#![plugin(peg_syntax_ext)]
+peg_file! grammar("grammar.rustpeg");
+
+mod ast;
+
 use std::{env};
 use std::collections::HashMap;
 use std::io::{self, Write};
@@ -13,17 +19,12 @@ fn main() {
     }
 }
 
-fn read() -> Vec<String> {
+fn read() -> Vec<Token> {
     std::io::stdout().write(b">>> ").unwrap();
     std::io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin().read_line(&mut input).ok().expect("Failed to read line");
-    input.push(' ');
-    let mut result = Vec::new();
-    for token in input.split(" ") {
-        result.push(String::from(token));
-    }
-    return result;
+    grammar::token_list(&input)
 }
 
 fn print(values: Vec<String>) {
