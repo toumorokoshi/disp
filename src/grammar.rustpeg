@@ -1,10 +1,13 @@
 use super::ast;
 
-pub symbol -> String = match_str:$([a-zA-Z0-9_=+]*) { match_str.to_string() }
+pub symbol -> String = match_str:$([a-zA-Z0-9_=+]+) { match_str.to_string() }
 
 pub newline -> bool = [\n]+ { true }
 
 pub integer -> i64 = i:$([0-9]+) { i.parse().unwrap() }
+
+pub token_list_array_syntax -> Vec<ast::Token> = "[" tl:token_list "]" { tl }
+
 
 pub spaces -> usize = s:" "+ { s.len() }
 
@@ -15,7 +18,7 @@ pub token_list -> Vec<ast::Token> =
     new_tokens.extend_from_slice(&tl);
     new_tokens
   }
-  / t:token {
+  / spaces? t:token spaces? newline? {
     let mut new_tokens = Vec::new();
     new_tokens.push(t);
     new_tokens
@@ -24,4 +27,4 @@ pub token_list -> Vec<ast::Token> =
 token -> ast::Token =
       i:integer { ast::Token::Integer(i) }
     / s:symbol { ast::Token::Symbol(Box::new(s)) }
-    / "[" tl:token_list "]" { ast::Token::List(tl) }
+    / tl:token_list_array_syntax { ast::Token::List(tl) }
