@@ -44,22 +44,22 @@ impl Block {
 }
 
 fn plus(args: &[Token]) -> Vec<String> {
-    let left_op = ensure_int(args[0]);
-    let right_op = ensure_int(args[1]);
+    let left_op = ensure_int(&args[0]);
+    let right_op = ensure_int(&args[1]);
     let mut return_value = Vec::new();
     return_value.push((left_op + right_op).to_string());
     return return_value;
 }
 
-fn ensure_symbol<'a>(t: Token) -> &'a str {
-    if let Token::Symbol(s) = t {
+fn ensure_symbol<'a>(t: &'a Token) -> &'a str {
+    if let &Token::Symbol(ref s) = t {
         return s;
     }
     panic!("string token expected.");
 }
 
-fn ensure_int(t: Token) -> i64 {
-    if let Token::Integer(i) = t {
+fn ensure_int(t: &Token) -> i64 {
+    if let &Token::Integer(i) = t {
         return i;
     }
     panic!("intn token expected.");

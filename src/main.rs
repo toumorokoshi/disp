@@ -4,6 +4,7 @@ peg_file! grammar("grammar.rustpeg");
 
 mod ast;
 
+use ast::Token;
 use std::{env};
 use std::collections::HashMap;
 use std::io::{self, Write};
@@ -24,7 +25,7 @@ fn read() -> Vec<Token> {
     std::io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin().read_line(&mut input).ok().expect("Failed to read line");
-    grammar::token_list(&input)
+    grammar::token_list(&input).unwrap()
 }
 
 fn print(values: Vec<String>) {
