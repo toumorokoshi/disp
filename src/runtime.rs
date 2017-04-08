@@ -3,7 +3,14 @@ use super::ast::Token;
 
 type DFunc = fn(&mut Block, &[Token]) -> Token;
 
-pub fn eval(block: &mut Block, token: Token) -> Token {
+pub fn eval(block: &mut Block, token: &Token) -> Token {
+    match token {
+        &Token::List(ref tl) => eval_expr(block, tl),
+        &Token::Symbol(ref s) => Token::Symbol(s.clone()),
+        &Token::Integer(i) => Token::Integer(i),
+        &Token::Boolean(b) => Token::Boolean(b),
+        &Token::None => Token::None
+    }
 }
 
 pub fn eval_expr(block: &mut Block, statement: &[Token]) -> Token {
@@ -33,14 +40,14 @@ impl Block {
             locals: HashMap::new(),
         };
         block.locals.insert(String::from("+"), plus as DFunc);
-        block.locals.insert(String::from("if"), if_func as DFunc);
+        block.locals.insert(String::from("if"), if_expr as DFunc);
         return block;
     }
 }
 
 fn plus(block: &mut Block, args: &[Token]) -> Token {
-    let left_op = ensure_int(&args[0]);
-    let right_op = ensure_int(&args[1]);
+    let left_op = ensure_int(block, &args[0]);
+    let right_op = ensure_int(block, &args[1]);
     return Token::Integer(left_op + right_op);
 }
 
@@ -67,8 +74,9 @@ fn ensure_symbol<'a>(t: &'a Token) -> &'a str {
     panic!("string token expected.");
 }
 
-fn ensure_int(t: &Token) -> i64 {
-    if let &Token::Integer(i) = t {
+fn ensure_int(block: &mut Block, t: &Token) -> i64 {
+    let eval_t = eval(block, t);
+    if let Token::Integer(i) = eval_t {
         return i;
     }
     panic!("intn token expected.");
