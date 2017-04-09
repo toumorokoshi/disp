@@ -1,0 +1,59 @@
+// a file is a list of list objects
+// every newline represents a new element in a list,
+// so this structure is transparent to the
+// code author
+
+import "foo"  // equivalent to [import, "foo"]
+// function call take a list:
+call [a, b]
+x = call [a, b]
+
+if x == "foo"
+  // indented sections are evaluated as a list,
+  // and considered another element in the list
+  x = "b"
+
+// TODO: how to macros?
+Statement when [cond, block]
+  return Statement [
+    if cond block
+  ]
+
+
+
+Statement try [block]
+  return Expression [
+    result = eval block
+    match result {
+      Error(a): return a
+      Result(r): r
+    }
+  ]
+
+// there are to fundamental data structures: arrays and dicts
+
+a_list := ["a", "b", "c"]
+a_dict := {"a": "a", "b": "b", "c": "c"}
+
+// additional data structures are declared
+Struct {
+  "a": Int,
+  "b": List["a", "b"]
+}
+
+// compile time execution is forced with a bang!
+// this is a good substitute for macros: it makes it clear
+// that is new syntax, and could be special to the project.
+
+from .macros import when
+
+when! x == "b"
+
+// also allows optimizations like
+fib_n = exec! fib [5]
+// fib! 5 is replaced with the fibonacci sequence evaluation.
+
+// this gets compiled down and type checked.
+
+
+// the compiler evaluates a list of statement structures
