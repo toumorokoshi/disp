@@ -52,13 +52,11 @@ fn plus(block: &mut Block, args: &[Token]) -> Token {
 }
 
 fn if_expr(block: &mut Block, args:  &[Token]) -> Token {
-    if let &Token::List(ref tl) = &args[0] {
-        let condition_result = eval_expr(block, &tl);
-        if let Token::Boolean(b) = condition_result {
-            if b {
-                if let &Token::List(ref tl) = &args[1] {
-                    return eval_expr(block, &tl);
-                }
+    let condition_result = eval(block, &args[0]);
+    if let Token::Boolean(b) = condition_result {
+        if b {
+            if let &Token::List(ref tl) = &args[1] {
+                return eval_expr(block, &tl);
             }
         } else {
             return Token::None;

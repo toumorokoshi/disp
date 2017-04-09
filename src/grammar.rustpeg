@@ -29,7 +29,7 @@ pub token_list -> Vec<ast::Token> =
 
 token -> ast::Token =
       i:integer { ast::Token::Integer(i) }
-    / s:symbol { ast::Token::Symbol(Box::new(s)) }
     / tl:token_list_array_syntax { ast::Token::List(tl) }
     / b:true_value { ast::Token::Boolean(b) }
     / b:false_value { ast::Token::Boolean(b) }
+    / s:symbol { ast::Token::Symbol(Box::new(s)) }
