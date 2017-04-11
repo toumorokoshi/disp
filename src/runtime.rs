@@ -5,7 +5,8 @@ type DFunc = fn(&mut Block, &[Token]) -> Token;
 
 pub fn eval(block: &mut Block, token: &Token) -> Token {
     match token {
-        &Token::List(ref tl) => eval_expr(block, tl),
+        &Token::Expression(ref tl) => eval_expr(block, tl),
+        &Token::List(ref tl) => eval_list(block, tl),
         &Token::Symbol(ref s) => Token::Symbol(s.clone()),
         &Token::Integer(i) => Token::Integer(i),
         &Token::Boolean(b) => Token::Boolean(b),
@@ -28,6 +29,14 @@ pub fn eval_expr(block: &mut Block, statement: &[Token]) -> Token {
         }
     }
     return Token::None;
+}
+
+pub fn eval_list(block: &mut Block, list: &[Token]) -> Token {
+    let mut result = Vec::new();
+    for e in list {
+        result.push(eval(block, e));
+    }
+    return Token::List(result);
 }
 
 pub struct Block {
@@ -77,5 +86,5 @@ fn ensure_int(block: &mut Block, t: &Token) -> i64 {
     if let Token::Integer(i) = eval_t {
         return i;
     }
-    panic!("intn token expected.");
+    panic!("int token expected.");
 }
