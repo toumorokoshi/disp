@@ -3,19 +3,25 @@
 peg_file! grammar("grammar.rustpeg");
 
 mod ast;
+mod builtins;
+mod core;
+mod codegen;
+mod runtime;
 
 use ast::Token;
 use std::{env};
 use std::collections::HashMap;
 use std::io::{self, Write};
-mod runtime;
-use runtime::{eval, eval_expr, Block};
+use runtime::{eval};
+use core::{Block};
 
 fn main() {
     let mut block = Block::new();
     loop {
         let inp = read();
         let result = eval(&mut block, &inp);
+        // let module = compile(&mut block, inp);
+        // let result = vm.execute(module)
         println!("{}", result);
     }
 }

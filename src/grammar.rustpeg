@@ -2,6 +2,8 @@ use super::ast;
 
 pub symbol -> String = match_str:$([a-zA-Z0-9_=+]+) { match_str.to_string() }
 
+pub bang_symbol -> String = s:symbol "!" { s }
+
 pub newline -> bool = [\n]+ { true }
 
 pub integer -> i64 = i:$([0-9]+) { i.parse().unwrap() }
@@ -35,4 +37,5 @@ pub token -> ast::Token =
     / e:expression { ast::Token::Expression(e) }
     / b:true_value { ast::Token::Boolean(b) }
     / b:false_value { ast::Token::Boolean(b) }
+    / s:bang_symbol { ast::Token::BangSymbol(Box::new(s)) }
     / s:symbol { ast::Token::Symbol(Box::new(s)) }
