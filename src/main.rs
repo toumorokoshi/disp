@@ -1,6 +1,7 @@
 #![feature(plugin)]
 #![plugin(peg_syntax_ext)]
 peg_file! grammar("grammar.rustpeg");
+extern crate ghvm;
 
 mod ast;
 mod builtins;
