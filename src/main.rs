@@ -1,7 +1,7 @@
 #![feature(plugin)]
 #![plugin(peg_syntax_ext)]
 peg_file! grammar("grammar.rustpeg");
-extern crate gh_vm;
+extern crate ghvm;
 
 mod ast;
 mod builtins;
@@ -14,15 +14,18 @@ use std::{env};
 use std::collections::HashMap;
 use std::io::{self, Write};
 use runtime::{eval};
+use codegen::{compile};
 use core::{Block};
 
 fn main() {
     let mut block = Block::new();
+    let mut vm = ghvm::VM::new();
     loop {
         let inp = read();
-        let result = eval(&mut block, &inp);
-        // let module = compile(&mut block, inp);
-        // let result = vm.execute(module)
+        // let result = eval(&mut block, &inp);
+        let func = compile(&mut block, &inp);
+        let vm_result = vm.execute_function(&func, &vec![]);
+        let result = unpack(&vm_result);
         println!("{}", result);
     }
 }
@@ -34,4 +37,11 @@ fn read() -> Token {
     io::stdin().read_line(&mut input).ok().expect("Failed to read line");
     input = input.replace("\n", "");
     grammar::token(&input).unwrap()
+}
+
+fn unpack(object: &ghvm::Object) -> Token {
+    if object.typ == *ghvm::INT_TYPE {
+        return Token::Integer(object.value);
+    }
+    return Token::None;
 }
