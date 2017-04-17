@@ -2,6 +2,11 @@ use super::ast::Token;
 use super::Block;
 use ghvm;
 
+mod core;
+
+use core::CodeGenerator;
+
+
 struct Context {
     scope: ghvm::Scope,
     oplist: ghvm::OpList
