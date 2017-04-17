@@ -24,8 +24,8 @@ fn main() {
         let inp = read();
         // let result = eval(&mut block, &inp);
         let func = compile(&mut block, &inp);
-        let vm_result = vm.execute_function(&func, &vec![]);
-        let result = unpack(&vm_result);
+        let vm_result = vm.execute_function(&func);
+        let result = unpack(&func.return_type, vm_result);
         println!("{}", result);
     }
 }
@@ -39,9 +39,9 @@ fn read() -> Token {
     grammar::token(&input).unwrap()
 }
 
-fn unpack(object: &ghvm::Object) -> Token {
-    if object.typ == *ghvm::INT_TYPE {
-        return Token::Integer(object.value);
+fn unpack(typ: &ghvm::Type, value: i64) -> Token {
+    match typ {
+        &ghvm::Type::Int => Token::Integer(value),
+        _ => Token::None
     }
-    return Token::None;
 }
