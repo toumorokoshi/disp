@@ -1,5 +1,4 @@
 use std::fmt;
-use super::core::Block;
 
 #[derive(Clone)]
 pub enum Token {
@@ -47,7 +46,7 @@ pub fn ensure_symbol<'a>(t: &'a Token) -> &'a str {
     panic!("string token expected.");
 }
 
-pub fn ensure_int(block: &mut Block, t: Token) -> i64 {
+pub fn ensure_int(t: Token) -> i64 {
     if let Token::Integer(i) = t {
         return i;
     }

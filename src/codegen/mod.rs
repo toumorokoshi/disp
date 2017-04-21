@@ -2,17 +2,15 @@ mod core;
 mod error;
 
 use ghvm;
-use self::core::{Context, Object};
+use self::core::{Context, Object, CodegenResult};
 use self::error::CodegenError;
-use super::{Block, Token};
-
-pub type CodegenResult = Result<Object, CodegenError>;
+use super::{Token};
 
 // compile a token into a set of VM opcodes.
 // NOTE: this can also execute code due to the compile-time
 // execution support.
-pub fn compile(block: &mut Block, token: &Token) -> Result<ghvm::Function, CodegenError> {
-    let mut context = Context::new();
+pub fn compile(vm: &mut ghvm::VM, token: &Token) -> Result<ghvm::Function, CodegenError> {
+    let mut context = Context::new(vm);
     let result_obj = try!(gen_token(&mut context, token));
     context.builder.add_return(&result_obj.to_build_object());
     return Ok(context.builder.build());

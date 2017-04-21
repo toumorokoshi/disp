@@ -4,20 +4,45 @@
 ///   needs to provide more rules about type construction.
 
 use ghvm;
-use super::super::Block;
+use std::collections::HashMap;
+use super::super::{Token};
+use super::{CodegenError};
 
-pub struct Context {
-    pub block: Block,
-    pub builder: ghvm::FunctionBuilder,
-    pub vm: ghvm::VM
+pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult;
+pub type CodegenResult = Result<Object, CodegenError>;
+
+pub struct Block {
+    pub locals: HashMap<String, Production>
 }
 
-impl Context {
-    pub fn new() -> Context {
+impl Block {
+    pub fn new() -> Block {
+        let mut block = Block {
+            locals: HashMap::new(),
+        };
+        return block;
+    }
+}
+
+pub fn unpack(typ: &ghvm::Type, value: i64) -> Token {
+    match typ {
+        &ghvm::Type::Int => Token::Integer(value),
+        _ => Token::None
+    }
+}
+
+pub struct Context<'a> {
+    pub block: Block,
+    pub builder: ghvm::FunctionBuilder,
+    pub vm: &'a ghvm::VM
+}
+
+impl<'a> Context<'a> {
+    pub fn new(vm: &'a ghvm::VM) -> Context {
         return Context {
             block: Block::new(),
             builder: ghvm::FunctionBuilder::new(),
-            vm: ghvm::VM::new()
+            vm: vm
         }
     }
 }

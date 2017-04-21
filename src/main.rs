@@ -4,26 +4,22 @@ peg_file! grammar("grammar.rustpeg");
 extern crate ghvm;
 
 mod ast;
-mod builtins;
-mod core;
+// mod builtins;
 mod codegen;
-mod runtime;
+// mod runtime;
 
 use ast::Token;
 use std::{env};
 use std::collections::HashMap;
 use std::io::{self, Write};
-use runtime::{eval};
 use codegen::{compile};
-use core::{Block};
 
 fn main() {
-    let mut block = Block::new();
     let mut vm = ghvm::VM::new();
     loop {
         let inp = read();
         // let result = eval(&mut block, &inp);
-        let func = compile(&mut block, &inp).unwrap();
+        let func = compile(&mut vm, &inp).unwrap();
         let vm_result = vm.execute_function(&func);
         let result = unpack(&func.return_type, vm_result);
         println!("{}", result);
