@@ -5,25 +5,24 @@
 
 use ghvm;
 use super::super::Block;
-use super::types::Type;
 
 pub struct Context {
-    block: Block,
-    builder: ghvm::FunctionBuilder,
-    vm: ghvm::VM
+    pub block: Block,
+    pub builder: ghvm::FunctionBuilder,
+    pub vm: ghvm::VM
 }
 
 impl Context {
     pub fn new() -> Context {
         return Context {
             block: Block::new(),
-            function: ghvm::Function::new(),
-            vm:: ghvm::VM::new()
+            builder: ghvm::FunctionBuilder::new(),
+            vm: ghvm::VM::new()
         }
     }
 }
 
-struct Object {
+pub struct Object {
     typ: ghvm::Type, // the type of the register
     register: usize // the register containing the value
 }
@@ -33,6 +32,13 @@ impl Object {
         return Object {
             typ: build_object.typ,
             register: build_object.register
+        };
+    }
+
+    pub fn to_build_object(&self) -> ghvm::BuildObject {
+        return ghvm::BuildObject {
+            typ: self.typ.clone(),
+            register: self.register
         };
     }
 }

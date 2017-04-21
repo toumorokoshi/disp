@@ -29,8 +29,3 @@ pub fn if_expr(block: &mut Block, args:  &[Token]) -> Token {
     }
     panic!("incorrect if arguments");
 }
-
-
-pub fn plus_production(builder: &mut ghvm::FunctionBuilder, args: &[Token]) -> Result<ghvm::BuildObject, Err> {
-
-}

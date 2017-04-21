@@ -23,7 +23,7 @@ fn main() {
     loop {
         let inp = read();
         // let result = eval(&mut block, &inp);
-        let func = compile(&mut block, &inp);
+        let func = compile(&mut block, &inp).unwrap();
         let vm_result = vm.execute_function(&func);
         let result = unpack(&func.return_type, vm_result);
         println!("{}", result);

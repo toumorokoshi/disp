@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use ghvm;
 use super::ast::Token;
 use super::builtins::{add_builtins};
 
