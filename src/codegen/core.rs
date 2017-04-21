@@ -1,29 +1,24 @@
+/// thoughts here:
+/// - Object probably needs be disp-specific to allow
+///   disp-specific functionality, or the ghvm builder
+///   needs to provide more rules about type construction.
+
 use ghvm;
 use super::super::Block;
-
-pub struct CodeGenerator {
-    /// a vm is necessary to execute expressions.
-    vm: ghvm::VM
-}
-
-impl CodeGenerator {
-    pub fn new() -> CodeGenerator {
-        return CodeGenerator {
-            vm: ghvm::VM::new()
-        }
-    }
-}
+use super::types::Type;
 
 pub struct Context {
     block: Block,
-    function: ghvm::Function
+    builder: ghvm::FunctionBuilder,
+    vm: ghvm::VM
 }
 
 impl Context {
     pub fn new() -> Context {
         return Context {
             block: Block::new(),
-            function: ghvm::Function::new()
+            function: ghvm::Function::new(),
+            vm:: ghvm::VM::new()
         }
     }
 }
@@ -31,4 +26,13 @@ impl Context {
 struct Object {
     typ: ghvm::Type, // the type of the register
     register: usize // the register containing the value
+}
+
+impl Object {
+    pub fn from_build_object(build_object: ghvm::BuildObject) -> Object {
+        return Object {
+            typ: build_object.typ,
+            register: build_object.register
+        };
+    }
 }

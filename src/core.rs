@@ -17,3 +17,11 @@ impl Block {
         return block;
     }
 }
+
+
+pub fn unpack(typ: &ghvm::Type, value: i64) -> Token {
+    match typ {
+        &ghvm::Type::Int => Token::Integer(value),
+        _ => Token::None
+    }
+}

@@ -39,7 +39,8 @@ fn read() -> Token {
     grammar::token(&input).unwrap()
 }
 
-fn unpack(typ: &ghvm::Type, value: i64) -> Token {
+
+pub fn unpack(typ: &ghvm::Type, value: i64) -> Token {
     match typ {
         &ghvm::Type::Int => Token::Integer(value),
         _ => Token::None

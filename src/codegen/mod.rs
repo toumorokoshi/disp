@@ -1,33 +1,37 @@
 mod core;
+mod types;
+mod error;
 
 use ghvm;
-use self::core::CodeGenerator;
+use self::core::{Context, Object};
+use self::error::CodeGenError;
 use super::{Block, Token};
+
+pub type CodegenResult = Result<Object, CodegenError>;
 
 // compile a token into a set of VM opcodes.
 // NOTE: this can also execute code due to the compile-time
 // execution support.
-pub fn compile(block: &mut Block, token: &Token) -> ghvm::Function {
-    let mut code_generator = CodeGenerator::new();
-    let mut builder = ghvm::FunctionBuilder::new();
-    let result_obj = gen_token(&mut builder, token);
-    builder.add_return(&result_obj);
+pub fn compile(block: &mut Block, token: &Token) -> Result<ghvm::Function, CodegenError> {
+    let mut context = Context::new();
+    let result_obj = gen_token(&mut context, token);
+    context.builder.add_return(&result_obj);
     return builder.build();
 }
 
-fn gen_token(builder: &mut ghvm::FunctionBuilder, token: &Token) -> ghvm::BuildObject {
+fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
     match token {
-        &Token::Expression(ref tl) => gen_expr(builder, tl),
-        &Token::List(ref tl) => add_int(builder, 0),
+        &Token::Expression(ref tl) => gen_expr(context, tl),
+        &Token::List(ref tl) => add_int(context, 0),
         &Token::Symbol(ref s) => panic!("symbol found for non-expr"),
         &Token::BangSymbol(ref s) => panic!("bang symbol found for non-expr"),
-        &Token::Integer(i) => add_int(builder, i),
-        &Token::Boolean(b) => add_int(builder, if b {1} else {0}),
-        &Token::None => add_int(builder, 1)
+        &Token::Integer(i) => add_int(context, i),
+        &Token::Boolean(b) => add_int(context, if b {1} else {0}),
+        &Token::None => add_int(context, 1)
     }
 }
 
-fn gen_expr(builder: &mut ghvm::FunctionBuilder, expr: &Vec<Token>) -> ghvm::BuildObject {
+fn gen_expr(context: &mut Context, expr: &Vec<Token>) -> CodegenResult {
     /* let mut func: Option<DFunc> = None;
     let Some((func_token, args)) = statement.split_first() {
         {
@@ -37,8 +41,8 @@ fn gen_expr(builder: &mut ghvm::FunctionBuilder, expr: &Vec<Token>) -> ghvm::Bui
     add_int(builder, 10)
 }
 
-fn add_int(builder: &mut ghvm::FunctionBuilder, value: i64) -> ghvm::BuildObject {
-    let obj = builder.allocate_local(ghvm::Type::Int);
-    builder.ops.push(ghvm::Op::IntLoad{register: obj.register, constant: value});
-    return obj;
+fn add_int(context: &mut Context, value: i64) -> CodegenResult {
+    let obj = context.builder.allocate_local(ghvm::Type::Int);
+    context.builder.ops.push(ghvm::Op::IntLoad{register: obj.register, constant: value});
+    return Object::from_build_object(obj);
 }
