@@ -30,24 +30,37 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
     }
 }
 
-fn gen_expr(context: &mut Context, expr: &Vec<Token>) -> CodegenResult {
-    let mut func: Option<Production> = None;
-    if let Some((func_token, args)) = expr.split_first() {
-        let name = ensure_symbol(func_token);
-        match name {
-            "+" => { func = Some(plus_production as Production); },
-            _ => {}
-        }
-        match func {
-            Some(f) => {return f(context, args);},
-            None => {}
-        }
+fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult {
+    let mut owned_args = args.to_owned();
+    owned_args.insert(0, Token::Symbol(Box::new(String::from(name))));
+    let ref mut vm = context.vm;
+    let func = try!(compile(vm, &Token::Expression(owned_args)));
+    let result = vm.execute_function(&func);
+    let value = context.builder.load_value(&func.return_type, result);
+    Ok(Object::from_build_object(value))
+}
+
+fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> CodegenResult {
+    let func: Production = match func_name {
+        "+" => plus_production as Production,
+        _ => {return Err(String::from("no function found."))}
+    };
+    return func(context, args);
+}
+
+fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult {
+    if let Some((func_token, args)) = args.split_first() {
+        return match func_token {
+            &Token::Symbol(ref s) => compile_expr(context, s, args),
+            &Token::BangSymbol(ref s) => run_expr(context, s, args),
+            _ => Err(String::from("first token must be a symbol for expression"))
+        };
     }
-    return Err(String::from("no method found"));
+    Err(String::from("no method found"))
 }
 
 fn add_int(context: &mut Context, value: i64) -> Object {
-    let obj = context.builder.allocate_local(ghvm::Type::Int);
+    let obj = context.builder.allocate_local(&ghvm::Type::Int);
     context.builder.ops.push(ghvm::Op::IntLoad{register: obj.register, constant: value});
-    return Object::from_build_object(obj);
+    Object::from_build_object(obj)
 }

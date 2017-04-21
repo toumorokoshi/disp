@@ -34,11 +34,11 @@ pub fn unpack(typ: &ghvm::Type, value: i64) -> Token {
 pub struct Context<'a> {
     pub block: Block,
     pub builder: ghvm::FunctionBuilder,
-    pub vm: &'a ghvm::VM
+    pub vm: &'a mut ghvm::VM
 }
 
 impl<'a> Context<'a> {
-    pub fn new(vm: &'a ghvm::VM) -> Context {
+    pub fn new(vm: &'a mut ghvm::VM) -> Context {
         return Context {
             block: Block::new(),
             builder: ghvm::FunctionBuilder::new(),
