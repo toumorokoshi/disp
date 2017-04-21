@@ -1,10 +1,12 @@
+mod builtins;
 mod core;
 mod error;
 
 use ghvm;
-use self::core::{Context, Object, CodegenResult};
+use self::builtins::plus_production;
+use self::core::{Context, Object, CodegenResult, Production};
 use self::error::CodegenError;
-use super::{Token};
+use super::{ensure_symbol, Token};
 
 // compile a token into a set of VM opcodes.
 // NOTE: this can also execute code due to the compile-time
@@ -29,13 +31,19 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
 }
 
 fn gen_expr(context: &mut Context, expr: &Vec<Token>) -> CodegenResult {
-    /* let mut func: Option<DFunc> = None;
-    let Some((func_token, args)) = statement.split_first() {
-        {
-            let func_name = ensure_symbol(func_token)
+    let mut func: Option<Production> = None;
+    if let Some((func_token, args)) = expr.split_first() {
+        let name = ensure_symbol(func_token);
+        match name {
+            "+" => { func = Some(plus_production as Production); },
+            _ => {}
         }
-    } */
-    Ok(add_int(context, 10))
+        match func {
+            Some(f) => {return f(context, args);},
+            None => {}
+        }
+    }
+    return Err(String::from("no method found"));
 }
 
 fn add_int(context: &mut Context, value: i64) -> Object {

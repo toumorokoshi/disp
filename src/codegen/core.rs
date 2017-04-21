@@ -48,8 +48,8 @@ impl<'a> Context<'a> {
 }
 
 pub struct Object {
-    typ: ghvm::Type, // the type of the register
-    register: usize // the register containing the value
+    pub typ: ghvm::Type, // the type of the register
+    pub register: usize // the register containing the value
 }
 
 impl Object {
