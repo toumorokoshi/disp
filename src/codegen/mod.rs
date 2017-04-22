@@ -3,7 +3,11 @@ mod core;
 mod error;
 
 use ghvm;
-use self::builtins::plus_production;
+use self::builtins::{
+    equals_production,
+    not_equals_production,
+    plus_production
+};
 use self::core::{Context, Object, CodegenResult, Production};
 use self::error::CodegenError;
 use super::{ensure_symbol, Token};
@@ -43,6 +47,8 @@ fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult 
 fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> CodegenResult {
     let func: Production = match func_name {
         "+" => plus_production as Production,
+        "=" => equals_production as Production,
+        "!=" => not_equals_production as Production,
         _ => {return Err(String::from("no function found."))}
     };
     return func(context, args);
