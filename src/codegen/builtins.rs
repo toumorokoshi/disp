@@ -45,3 +45,7 @@ pub fn not_equals_production(context: &mut Context, args: &[Token]) -> CodegenRe
     });
     return Ok(Object::from_build_object(obj));
 }
+
+/* pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
+    let condition = try!(ensure_type!(ghvm::Type::Bool, try!(gen_token(context, &args[0]))));
+} */
