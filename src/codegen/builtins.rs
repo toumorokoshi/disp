@@ -46,6 +46,20 @@ pub fn not_equals_production(context: &mut Context, args: &[Token]) -> CodegenRe
     return Ok(Object::from_build_object(obj));
 }
 
-/* pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
+// TODO: this should return a join algebraic type
+// of both blocks in the case that they are different,
+// and return a single type if they are the same.
+// but support for algebraic types need to be added first.
+pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let condition = try!(ensure_type!(ghvm::Type::Bool, try!(gen_token(context, &args[0]))));
-} */
+    let branch_index = context.builder.ops.len();
+    // placeholder to replace with branch
+    context.builder.ops.push(ghvm::Op::Noop{});
+    // if true block
+    try!(gen_token(context, &args[1]));
+    // false block
+    let false_index = context.builder.ops.len();
+    try!(gen_token(context, &args[2]));
+    context.builder.ops[branch_index] = ghvm::Op::Branch{condition: condition.register, if_false: false_index};
+    return Ok(Object{typ: ghvm::Type::None, register: 0});
+}

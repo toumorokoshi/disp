@@ -16,7 +16,7 @@ pub list -> Vec<ast::Token> = "[" tl:token_list "]" { tl }
 pub expression -> Vec<ast::Token> = "(" tl:token_list ")" { tl }
 
 pub true_value -> bool = "true" { true };
-pub false_value -> bool = "false" { true };
+pub false_value -> bool = "false" { false };
 
 
 pub spaces -> usize = s:" "+ { s.len() }

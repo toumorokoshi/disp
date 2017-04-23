@@ -5,6 +5,7 @@ mod error;
 use ghvm;
 use self::builtins::{
     equals_production,
+    if_production,
     not_equals_production,
     plus_production
 };
@@ -29,8 +30,12 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
         &Token::Symbol(ref s) => panic!("symbol found for non-expr"),
         &Token::BangSymbol(ref s) => panic!("bang symbol found for non-expr"),
         &Token::Integer(i) => Ok(add_int(context, i)),
-        &Token::Boolean(b) => Ok(add_int(context, if b {1} else {0})),
-        &Token::None => Ok(add_int(context, 1))
+        &Token::Boolean(b) => Ok(Object::from_build_object({
+            let obj = context.builder.allocate_local(&ghvm::Type::Bool);
+            context.builder.ops.push(ghvm::Op::BoolLoad{register: obj.register, constant: b});
+            obj
+        })),
+        &Token::None => Ok(Object{typ: ghvm::Type::None, register: 0})
     }
 }
 
@@ -46,9 +51,10 @@ fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult 
 
 fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> CodegenResult {
     let func: Production = match func_name {
-        "+" => plus_production as Production,
         "=" => equals_production as Production,
+        "if" => if_production as Production,
         "!=" => not_equals_production as Production,
+        "+" => plus_production as Production,
         _ => {return Err(String::from("no function found."))}
     };
     return func(context, args);

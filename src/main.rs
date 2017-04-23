@@ -43,6 +43,8 @@ fn read() -> Token {
 pub fn unpack(typ: &ghvm::Type, value: i64) -> Token {
     match typ {
         &ghvm::Type::Int => Token::Integer(value),
+        &ghvm::Type::Bool => Token::Boolean(if value == 1 {true} else {false}),
+        &ghvm::Type::None => Token::None,
         _ => Token::None
     }
 }
