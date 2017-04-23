@@ -23,10 +23,10 @@ fn main() {
         let vm_result = vm.execute_function(&func);
         let result = unpack(&func.return_type, vm_result);
         println!("{}", result);
-        /*
-        println!("ops: ");
-        func.print_ops();
-         */
+        if cfg!(feature = "debug") {
+            println!("DEBUG: ops: ");
+            func.print_ops();
+        }
     }
 }
 
