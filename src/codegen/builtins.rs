@@ -52,14 +52,22 @@ pub fn not_equals_production(context: &mut Context, args: &[Token]) -> CodegenRe
 // but support for algebraic types need to be added first.
 pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let condition = try!(ensure_type!(ghvm::Type::Bool, try!(gen_token(context, &args[0]))));
+    // TODO: support more than int
+    let return_value = context.builder.allocate_local(&ghvm::Type::Int);
     let branch_index = context.builder.ops.len();
     // placeholder to replace with branch
     context.builder.ops.push(ghvm::Op::Noop{});
     // if true block
-    try!(gen_token(context, &args[1]));
+    let true_result = try!(gen_token(context, &args[1]));
+    context.builder.ops.push(ghvm::Op::Assign{source: true_result.register, target: return_value.register});
+    // placeholder for jump to the end.
+    let goto_index = context.builder.ops.len();
+    context.builder.ops.push(ghvm::Op::Noop{});
     // false block
     let false_index = context.builder.ops.len();
-    try!(gen_token(context, &args[2]));
+    let false_result = try!(gen_token(context, &args[2]));
+    context.builder.ops.push(ghvm::Op::Assign{source: false_result.register, target: return_value.register});
     context.builder.ops[branch_index] = ghvm::Op::Branch{condition: condition.register, if_false: false_index};
-    return Ok(Object{typ: ghvm::Type::None, register: 0});
+    context.builder.ops[goto_index] = ghvm::Op::Goto{position: context.builder.ops.len()};
+    return Ok(Object{typ: ghvm::Type::Int, register: return_value.register});
 }
