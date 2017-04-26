@@ -16,7 +16,7 @@ use super::{ensure_symbol, Token};
 // compile a token into a set of VM opcodes.
 // NOTE: this can also execute code due to the compile-time
 // execution support.
-pub fn compile(vm: &mut ghvm::VM, token: &Token) -> Result<ghvm::Function, CodegenError> {
+pub fn compile(vm: &mut ghvm::VM, token: &Token) -> Result<ghvm::VMFunction, CodegenError> {
     let mut context = Context::new(vm);
     let result_obj = try!(gen_token(&mut context, token));
     context.builder.add_return(&result_obj.to_build_object());
