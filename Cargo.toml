@@ -6,6 +6,7 @@ authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
 [dependencies]
 peg = "0.5.2"
 peg-syntax-ext = "0.5.2"
+getopts = "0.2"
 ghvm = { path = "../greyhawk-vm" }
 
 [features]

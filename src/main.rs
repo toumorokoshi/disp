@@ -12,10 +12,20 @@ use ast::{Token, ensure_symbol};
 use std::{env};
 use std::collections::HashMap;
 use std::io::{self, Write};
+use std::fs::File;
+use std::io::prelude::*;
 use codegen::{compile};
 use parser::{parse};
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    match args.len() {
+        2 => execute(&args[1]),
+        _ => repl()
+    }
+}
+
+fn repl() {
     let mut vm = ghvm::VM::new();
     loop {
         let inp = read();
@@ -27,6 +37,22 @@ fn main() {
             println!("DEBUG: ops: ");
             func.print_ops();
         }
+   }
+}
+
+fn execute(path: &str) {
+    let mut vm = ghvm::VM::new();
+    let mut file = File::open(path).unwrap();
+    let mut input = String::new();
+    file.read_to_string(&mut input).unwrap();
+    let inp = grammar::token(&input).unwrap();
+    let func = compile(&mut vm, &inp).unwrap();
+    let vm_result = vm.execute_function(&func);
+    let result = unpack(&func.return_type, vm_result);
+    println!("{}", result);
+    if cfg!(feature = "debug") {
+        println!("DEBUG: ops: ");
+        func.print_ops();
     }
 }
 
