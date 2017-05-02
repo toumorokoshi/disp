@@ -71,3 +71,9 @@ pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     context.builder.ops[goto_index] = ghvm::Op::Goto{position: context.builder.ops.len()};
     return Ok(Object{typ: ghvm::Type::Int, register: return_value.register});
 }
+
+
+pub fn print(vm: &mut ghvm::VM, mut args: ghvm::ValueList) -> ghvm::Value {
+    println!("{0}", args[0]);
+    0
+}

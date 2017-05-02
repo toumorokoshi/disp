@@ -8,7 +8,8 @@ use self::builtins::{
     equals_production,
     if_production,
     not_equals_production,
-    plus_production
+    plus_production,
+    print,
 };
 use self::core::{Context, Object, CodegenResult, Production};
 use self::error::CodegenError;
@@ -56,6 +57,17 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         "if" => if_production as Production,
         "!=" => not_equals_production as Production,
         "+" => plus_production as Production,
+        "print" => {
+            let result = context.builder.allocate_local(&ghvm::Type::None);
+            let print_arg = try!(gen_token(context, &args[0]));
+            let args = vec![print_arg.register];
+            context.builder.ops.push(ghvm::Op::Call{
+                func: ghvm::Function::Native(Rc::new(print)),
+                args: args,
+                target: result.register
+            });
+            return Ok(Object{typ: ghvm::Type::None, register: 0});
+        },
         _ => {return Err(String::from("no function found."))}
     };
     return func(context, args);
