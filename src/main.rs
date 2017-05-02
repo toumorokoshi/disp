@@ -18,9 +18,8 @@ fn main() {
     let mut vm = ghvm::VM::new();
     loop {
         let inp = read();
-        // let result = eval(&mut block, &inp);
         let func = compile(&mut vm, &inp).unwrap();
-        let vm_result = vm.execute_function(&func);
+        let vm_result = func.execute(&mut vm, vec![]);
         let result = unpack(&func.return_type, vm_result);
         println!("{}", result);
         if cfg!(feature = "debug") {

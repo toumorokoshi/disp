@@ -3,6 +3,7 @@ mod core;
 mod error;
 
 use ghvm;
+use std::rc::Rc;
 use self::builtins::{
     equals_production,
     if_production,
@@ -44,7 +45,7 @@ fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult 
     owned_args.insert(0, Token::Symbol(Box::new(String::from(name))));
     let ref mut vm = context.vm;
     let func = try!(compile(vm, &Token::Expression(owned_args)));
-    let result = vm.execute_function(&func);
+    let result = func.execute(vm, vec![]);
     let value = context.builder.load_value(&func.return_type, result);
     Ok(Object::from_build_object(value))
 }
