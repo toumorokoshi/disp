@@ -1,4 +1,7 @@
-use super::ast;
+use super::{Token, Context};
+
+#![arguments(context: &Context)]
+
 
 pub symbol -> String = match_str:$([a-zA-Z0-9_=+!]) s:symbol { let mut result = match_str.to_owned();
                                                                result.push_str(&s);
@@ -11,9 +14,9 @@ pub newline -> bool = [\n]+ { true }
 
 pub integer -> i64 = i:$([0-9]+) { i.parse().unwrap() }
 
-pub list -> Vec<ast::Token> = "[" tl:token_list "]" { tl }
+pub list -> Vec<Token> = "[" tl:token_list "]" { tl }
 
-pub expression -> Vec<ast::Token> = "(" tl:token_list ")" { tl }
+pub expression -> Vec<Token> = "(" tl:token_list ")" { tl }
 
 pub true_value -> bool = "true" { true };
 pub false_value -> bool = "false" { false };
@@ -21,7 +24,7 @@ pub false_value -> bool = "false" { false };
 
 pub spaces -> usize = s:" "+ { s.len() }
 
-pub token_list -> Vec<ast::Token> =
+pub token_list -> Vec<Token> =
   t:token spaces tl:token_list spaces? {
     let mut new_tokens = Vec::new();
     new_tokens.push(t);
@@ -34,11 +37,11 @@ pub token_list -> Vec<ast::Token> =
     new_tokens
   }
 
-pub token -> ast::Token =
-      i:integer { ast::Token::Integer(i) }
-    / tl:list { ast::Token::List(tl) }
-    / e:expression { ast::Token::Expression(e) }
-    / b:true_value { ast::Token::Boolean(b) }
-    / b:false_value { ast::Token::Boolean(b) }
-    / s:bang_symbol { ast::Token::BangSymbol(Box::new(s)) }
-    / s:symbol { ast::Token::Symbol(Box::new(s)) }
+pub token -> Token =
+      i:integer { Token::Integer(i) }
+    / tl:list { Token::List(tl) }
+    / e:expression { Token::Expression(e) }
+    / b:true_value { Token::Boolean(b) }
+    / b:false_value { Token::Boolean(b) }
+    / s:bang_symbol { Token::BangSymbol(Box::new(s)) }
+    / s:symbol { Token::Symbol(Box::new(s)) }

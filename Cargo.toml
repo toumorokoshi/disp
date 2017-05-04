@@ -4,8 +4,8 @@ version = "0.0.1"
 authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
 
 [dependencies]
-peg = "0.5.0"
-peg-syntax-ext = "0.5.0"
+peg = "0.5.2"
+peg-syntax-ext = "0.5.2"
 ghvm = { path = "../greyhawk-vm" }
 
 [features]

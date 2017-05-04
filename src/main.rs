@@ -1,9 +1,9 @@
 #![feature(plugin)]
 #![plugin(peg_syntax_ext)]
-peg_file! grammar("grammar.rustpeg");
 extern crate ghvm;
 
 mod ast;
+mod parser;
 // mod builtins;
 mod codegen;
 // mod runtime;
@@ -13,6 +13,7 @@ use std::{env};
 use std::collections::HashMap;
 use std::io::{self, Write};
 use codegen::{compile};
+use parser::{parse};
 
 fn main() {
     let mut vm = ghvm::VM::new();
@@ -35,7 +36,7 @@ fn read() -> Token {
     let mut input = String::new();
     io::stdin().read_line(&mut input).ok().expect("Failed to read line");
     input = input.replace("\n", "");
-    grammar::token(&input).unwrap()
+    parse(&input)
 }
 
 
