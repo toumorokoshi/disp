@@ -28,7 +28,7 @@ pub fn compile(vm: &mut ghvm::VM, token: &Token) -> Result<ghvm::VMFunction, Cod
 fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
     match token {
         &Token::Expression(ref tl) => gen_expr(context, tl),
-        &Token::List(ref tl) => Ok(add_int(context, 0)),
+        &Token::List(ref tl) => gen_list(context, tl),
         &Token::Symbol(ref s) => panic!("symbol found for non-expr"),
         &Token::BangSymbol(ref s) => panic!("bang symbol found for non-expr"),
         &Token::Integer(i) => Ok(add_int(context, i)),
@@ -71,6 +71,14 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         _ => {return Err(String::from("no function found."))}
     };
     return func(context, args);
+}
+
+fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult {
+    let mut result = Err(String::from("0 size list"));
+    for t in args {
+        result = gen_token(context, t);
+    }
+    return result;
 }
 
 fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult {
