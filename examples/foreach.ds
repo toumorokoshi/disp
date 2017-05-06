@@ -1,0 +1,2 @@
+foreach i [0, 1, 2]
+  print i
