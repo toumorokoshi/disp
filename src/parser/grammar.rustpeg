@@ -1,7 +1,4 @@
-use super::{Token, Context};
-
-#![arguments(context: &Context)]
-
+use super::{Token};
 
 pub symbol -> String = match_str:$([a-zA-Z0-9_=+!]) s:symbol { let mut result = match_str.to_owned();
                                                                result.push_str(&s);

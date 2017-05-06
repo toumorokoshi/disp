@@ -7,72 +7,97 @@ mod tests;
 
 
 /// context for the parser
-pub struct Context {}
+struct ParserContext {
+    start_of_line: bool,
+    autowrap_parens: bool,
+    current_indent: usize,
+}
 
 pub fn parse(body: &str) -> Token {
     let processed_body = preprocess(body);
-    let mut context = Context{};
-    grammar::token(&processed_body, &mut context).unwrap()
+    grammar::token(&processed_body).unwrap()
 }
 
-
-/// preprocess a string, returning
-/// back something that can be processed
-/// by the peg parser
-///
-/// converts all newline + indents into
-/// an indented string.
 pub fn preprocess(input: &str) -> String {
-    let mut current_indent = 0;
-    let mut processed_buffer = String::new();
+    let mut context = ParserContext{
+        start_of_line: true,
+        current_indent: 0,
+        autowrap_parens: true,
+    };
     let mut buffer = input.chars().peekable();
-    loop {
-        if let Some(c) = buffer.next() {
-            match c {
-                '\n' => {
-                    processed_buffer.push(' ');
-                    let mut new_indent = 0;
-                    loop {
-                        let mut next = false;
-                        if let Some(&'\t') = buffer.peek() {
-                            next = true;
-                        }
-                        if next {
-                            buffer.next();
-                            new_indent += 1;
-                        } else {
-                            break;
-                        }
-                    }
-                    if new_indent > current_indent {
-                        processed_buffer.push('[');
-                    } else if new_indent < current_indent {
-                        processed_buffer.push(']');
-                    }
-                    current_indent = new_indent;
-                },
-                '\t'|' ' => {
-                    loop {
-                        let mut next = false;
-                        if let Some(c) = buffer.peek() {
-                            match c {
-                                &'\t'|&' ' => {next = true},
-                                _ => {}
-                            }
-                        }
-                        if next {
-                            buffer.next();
-                        } else {
-                            break;
-                        }
-                    }
-                    processed_buffer.push(' ');
-                },
-                _ => processed_buffer.push(c)
-            }
-        } else {
-            break;
+    let mut processed_buffer = String::from("[");
+
+    let mut maybe_next_char = None;
+    {
+        match buffer.peek() {
+            Some(r) => {maybe_next_char = Some(r.clone());},
+            _ => {}
         }
     }
+
+    while let Some(next_char) = maybe_next_char {
+        if context.start_of_line {
+            context.autowrap_parens = next_char != '(';
+            context.start_of_line = false;
+            processed_buffer.push('(');
+        }
+        match next_char {
+            '\n' => {
+                buffer.next();
+                let mut new_indent = 0;
+                loop {
+                    let next = Some(&'\t') == buffer.peek();
+                    if next {
+                        buffer.next();
+                        new_indent += 1;
+                    } else {
+                        break;
+                    }
+                }
+                context.start_of_line = true;
+                if new_indent > context.current_indent {
+                    processed_buffer.push(' ');
+                    processed_buffer.push('[');
+                } else if new_indent < context.current_indent {
+                    if context.autowrap_parens {
+                        processed_buffer.push(')');
+                    }
+                    processed_buffer.push(' ');
+                    processed_buffer.push(']');
+                } else {
+                    processed_buffer.push(' ');
+                    if context.autowrap_parens {
+                        processed_buffer.push(')');
+                    }
+                }
+            },
+            _ => {
+                processed_buffer.push(next_char);
+                buffer.next();
+            }
+        }
+        match buffer.peek() {
+            Some(r) => {
+                maybe_next_char = Some(r.clone());
+            },
+            None => {
+                maybe_next_char = None;
+            }
+        }
+    }
+
+    if context.current_indent > 0 {
+        if context.autowrap_parens {
+            processed_buffer.push(')');
+        }
+        processed_buffer.push(' ');
+        processed_buffer.push(']');
+    }
+
+    if context.autowrap_parens {
+        processed_buffer.push(')');
+    }
+
+    processed_buffer.push(']');
     return processed_buffer;
 }
