@@ -24,3 +24,12 @@ fn test_preprocess_parens() {
     println!("{}", result);
     assert_eq!(result, "[(+ 1 1) (+ 1 2) ]")
 }
+
+
+// TODO: support this case
+fn test_preprocess_list() {
+    let ident_text = "[(+ 1 1)]";
+    let result = preprocess(ident_text);
+    println!("{}", result);
+    assert_eq!(result, "[(+ 1 1)]");
+}

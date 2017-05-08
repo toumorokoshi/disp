@@ -86,7 +86,10 @@ fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult {
         return match func_token {
             &Token::Symbol(ref s) => compile_expr(context, s, args),
             &Token::BangSymbol(ref s) => run_expr(context, s, args),
-            _ => Err(String::from("first token must be a symbol for expression"))
+            _ => {
+                println!("{}", func_token);
+                Err(String::from("first token must be a symbol for expression"))
+            }
         };
     }
     Err(String::from("no method found"))
