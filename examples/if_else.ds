@@ -1,0 +1,22 @@
+if (== 1 0)
+	print "It's true"
+	---
+	print "It's false!"
+
+if (== 1 0)
+	print "It's true!"
+	print "It's true!"
+
+match x
+	true:
+		foo-bar
+	false:
+
+while (foo)
+		this is
+
+try!({})
+match x {
+  true:
+
+}

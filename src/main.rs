@@ -45,9 +45,9 @@ fn execute(path: &str) {
     let mut file = File::open(path).unwrap();
     let mut input = String::new();
     file.read_to_string(&mut input).unwrap();
-    let inp = grammar::token(&input).unwrap();
+    let inp = parse(&input);
     let func = compile(&mut vm, &inp).unwrap();
-    let vm_result = vm.execute_function(&func);
+    let vm_result = func.execute(&mut vm, vec![]);
     let result = unpack(&func.return_type, vm_result);
     println!("{}", result);
     if cfg!(feature = "debug") {
