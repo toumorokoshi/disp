@@ -29,6 +29,7 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
     match token {
         &Token::Expression(ref tl) => gen_expr(context, tl),
         &Token::List(ref tl) => gen_list(context, tl),
+        &Token::Dict(ref d) => Ok(add_int(context, 0)),
         &Token::Symbol(ref s) => panic!("symbol found for non-expr"),
         &Token::BangSymbol(ref s) => panic!("bang symbol found for non-expr"),
         &Token::Integer(i) => Ok(add_int(context, i)),

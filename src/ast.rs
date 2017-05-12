@@ -1,10 +1,11 @@
 use std::fmt;
+use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Token {
     List(Vec<Token>),
     Expression(Vec<Token>),
-    // Dict(HashMap<Token, Token>)
+    Dict(Box<HashMap<String, Token>>),
     Symbol(Box<String>),
     BangSymbol(Box<String>),
     Integer(i64),
@@ -33,7 +34,14 @@ impl fmt::Display for Token {
             &Token::Symbol(ref s) => write!(f, "{}", s),
             &Token::Integer(i) => write!(f, "{}", i),
             &Token::Boolean(b) => write!(f, "{}", b),
-            &Token::None => write!(f, "None")
+            &Token::Dict(ref d) => {
+                write!(f, "{{");
+                for (key, value) in d.iter() {
+                    write!(f, "{}: {}", key, value);
+                }
+                write!(f, "}}")
+            }
+            &Token::None => write!(f, "None"),
         }
     }
 }

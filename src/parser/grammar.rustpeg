@@ -1,4 +1,5 @@
 use super::{Token};
+use std::collections::HashMap;
 
 pub symbol -> String = match_str:$([a-zA-Z0-9_=+!]) s:symbol { let mut result = match_str.to_owned();
                                                                result.push_str(&s);
@@ -15,11 +16,27 @@ pub list -> Vec<Token> = "[" tl:token_list "]" { tl }
 
 pub expression -> Vec<Token> = "(" tl:token_list ")" { tl }
 
+pub dict -> HashMap<String, Token> = "{" d: dict_pairs "}" { d }
+
 pub true_value -> bool = "true" { true };
 pub false_value -> bool = "false" { false };
 
 
 pub spaces -> usize = s:" "+ { s.len() }
+
+pub dict_pairs -> HashMap<String, Token> =
+    spaces? key:symbol spaces? ":" spaces? value:token spaces? "," spaces? d:dict_pairs {
+        let mut new_d = HashMap::new();
+        for (key, value) in &d {
+            new_d.insert(key.clone(), value.clone());
+        }
+        new_d
+    }
+    / spaces? key:symbol spaces? ":" spaces? value:token spaces? {
+        let mut d = HashMap::new();
+        d.insert(key, value);
+        d
+    }
 
 pub token_list -> Vec<Token> =
   t:token spaces tl:token_list spaces? {
@@ -38,6 +55,7 @@ pub token -> Token =
       i:integer { Token::Integer(i) }
     / tl:list { Token::List(tl) }
     / e:expression { Token::Expression(e) }
+    / d:dict { Token::Dict(Box::new(d)) }
     / b:true_value { Token::Boolean(b) }
     / b:false_value { Token::Boolean(b) }
     / s:bang_symbol { Token::BangSymbol(Box::new(s)) }
