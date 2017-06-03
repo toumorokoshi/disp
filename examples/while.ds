@@ -1,0 +1,6 @@
+mut x 0
+print x
+while (!= x 10)
+	print x
+	mut x (+ x 1)
+print x

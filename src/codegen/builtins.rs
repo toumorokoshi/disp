@@ -6,7 +6,7 @@ macro_rules! ensure_type {
     ($x:pat, $y:expr) => {
         match $y.typ {
             $x => Ok($y),
-            _ => Err(String::from("type did not match"))
+            _ => Err(format!("type did not match. found {}", $y.typ))
         }
     }
 }
@@ -36,7 +36,7 @@ pub fn equals_production(context: &mut Context, args: &[Token]) -> CodegenResult
 pub fn not_equals_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let lhs = try!(ensure_type!(ghvm::Type::Int, try!(gen_token(context, &args[0]))));
     let rhs = try!(ensure_type!(ghvm::Type::Int, try!(gen_token(context, &args[1]))));
-    let obj = context.builder.allocate_local(&ghvm::Type::Int);
+    let obj = context.builder.allocate_local(&ghvm::Type::Bool);
     context.builder.ops.push(ghvm::Op::IntCmp{
         lhs: lhs.register, rhs: rhs.register, target: obj.register
     });
@@ -77,8 +77,8 @@ pub fn while_production(context: &mut Context, args: &[Token]) -> CodegenResult 
     let return_value = context.builder.allocate_local(&ghvm::Type::Int);
     let condition = try!(ensure_type!(ghvm::Type::Bool, try!(gen_token(context, &args[0]))));
     // placeholder for the condition check
-    context.builder.ops.push(ghvm::Op::Noop{});
     let branch_index = context.builder.ops.len();
+    context.builder.ops.push(ghvm::Op::Noop{});
     let return_value = try!(gen_token(context, &args[1]));
     context.builder.ops.push(ghvm::Op::Goto{position: start_index});
     let loop_end_index = context.builder.ops.len();
