@@ -12,7 +12,8 @@ pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult
 pub type CodegenResult = Result<Object, CodegenError>;
 
 pub struct Block {
-    pub locals: HashMap<String, Production>
+    // string w / register
+    pub locals: HashMap<String, usize>
 }
 
 impl Block {
@@ -66,4 +67,5 @@ impl Object {
             register: self.register
         };
     }
+
 }

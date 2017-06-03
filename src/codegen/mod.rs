@@ -8,6 +8,7 @@ use self::builtins::{
     equals_production,
     if_production,
     not_equals_production,
+    mut_production,
     plus_production,
     print,
 };
@@ -30,7 +31,7 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
         &Token::Expression(ref tl) => gen_expr(context, tl),
         &Token::List(ref tl) => gen_list(context, tl),
         &Token::Dict(ref d) => Ok(add_int(context, 0)),
-        &Token::Symbol(ref s) => panic!("symbol found for non-expr"),
+        &Token::Symbol(ref s) => evaluate_symbol(context, s),
         &Token::BangSymbol(ref s) => panic!("bang symbol found for non-expr"),
         &Token::Integer(i) => Ok(add_int(context, i)),
         &Token::Boolean(b) => Ok(Object::from_build_object({
@@ -58,6 +59,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         "if" => if_production as Production,
         "!=" => not_equals_production as Production,
         "+" => plus_production as Production,
+        "mut" => mut_production as Production,
         "print" => {
             let result = context.builder.allocate_local(&ghvm::Type::None);
             let print_arg = try!(gen_token(context, &args[0]));
@@ -94,6 +96,13 @@ fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult {
         };
     }
     Err(String::from("no method found"))
+}
+
+fn evaluate_symbol(context: &mut Context, symbol: &String) -> CodegenResult {
+    match context.builder.get_var(symbol) {
+        Some(obj) => Ok(Object::from_build_object(obj)),
+        None => Err(format!("unable to find symbol {}", symbol))
+    }
 }
 
 fn add_int(context: &mut Context, value: i64) -> Object {

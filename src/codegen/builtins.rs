@@ -86,6 +86,24 @@ pub fn while_production(context: &mut Context, args: &[Token]) -> CodegenResult 
     return Ok(Object{typ: ghvm::Type::Int, register: return_value.register});
 }
 
+pub fn mut_production(context: &mut Context, args: &[Token]) -> CodegenResult {
+    match args[0] {
+        Token::Symbol(ref s) => {
+            let source = try!(gen_token(context, &args[1]));
+            let target = Object::from_build_object(context.builder.get_insert_local_var(&source.typ, s));
+            if source.typ != target.typ {
+                Err(String::from("mut expression type collision"))
+            } else {
+                context.builder.ops.push(
+                    ghvm::Op::Assign{target: target.register, source: source.register}
+                );
+                Ok(target)
+            }
+        },
+        _ => Err(String::from("first value must be a symbol."))
+    }
+}
+
 
 pub fn print(vm: &mut ghvm::VM, mut args: ghvm::ValueList) -> ghvm::Value {
     println!("{0}", args[0]);
