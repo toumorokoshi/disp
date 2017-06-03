@@ -105,6 +105,22 @@ pub fn mut_production(context: &mut Context, args: &[Token]) -> CodegenResult {
 }
 
 
+pub fn match_production(context: &mut Context, args: &[Token]) -> CodegenResult {
+    let result = try!(gen_token(context, &args[0]));
+    match &args[1] {
+        &Token::Dict(ref d) => {
+            let result = context.builder.allocate_local(&ghvm::Type::Int);
+            for (key, value) in d.iter() {
+                // let resolved_key = try!(gen_token(key,
+            }
+            // TODO: replace none with the successful result.
+            Ok(Object::from_build_object(result))
+        },
+        _ => Err(format!("second argument to a match should be a dict"))
+    }
+}
+
+
 pub fn print(vm: &mut ghvm::VM, mut args: ghvm::ValueList) -> ghvm::Value {
     println!("{0}", args[0]);
     0

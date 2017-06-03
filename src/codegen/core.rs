@@ -67,5 +67,4 @@ impl Object {
             register: self.register
         };
     }
-
 }
