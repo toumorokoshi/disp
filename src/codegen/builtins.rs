@@ -11,7 +11,7 @@ macro_rules! ensure_type {
     }
 }
 
-pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult;
+// pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult;
 
 pub fn plus_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let lhs = try!(ensure_type!(ghvm::Type::Int, try!(gen_token(context, &args[0]))));
@@ -74,14 +74,13 @@ pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
 
 pub fn while_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let start_index = context.builder.ops.len();
-    let return_value = context.builder.allocate_local(&ghvm::Type::Int);
     let condition = try!(ensure_type!(ghvm::Type::Bool, try!(gen_token(context, &args[0]))));
     // placeholder for the condition check
     let branch_index = context.builder.ops.len();
     context.builder.ops.push(ghvm::Op::Noop{});
     let return_value = try!(gen_token(context, &args[1]));
     context.builder.ops.push(ghvm::Op::Goto{position: start_index});
-    let loop_end_index = context.builder.ops.len();
+    // let loop_end_index = context.builder.ops.len();
     context.builder.ops[branch_index] = ghvm::Op::BranchFalse{condition: condition.register, if_false: context.builder.ops.len()};
     return Ok(Object{typ: ghvm::Type::Int, register: return_value.register});
 }
@@ -123,7 +122,7 @@ pub fn match_production(context: &mut Context, args: &[Token]) -> CodegenResult 
 
             let head_index = context.builder.ops.len();
             // then, we create empty registers to replace with branching
-            for i in 0..key_objects.len() {
+            for _ in 0..key_objects.len() {
                 // we need two ops: an IntCmp and a BranchTrue afterward
                 context.builder.ops.push(ghvm::Op::Noop{});
                 context.builder.ops.push(ghvm::Op::Noop{});
@@ -160,7 +159,7 @@ pub fn match_production(context: &mut Context, args: &[Token]) -> CodegenResult 
 }
 
 
-pub fn print(vm: &mut ghvm::VM, mut args: ghvm::ValueList) -> ghvm::Value {
+pub fn print(_: &mut ghvm::VM, args: ghvm::ValueList) -> ghvm::Value {
     println!("{0}", args[0]);
     0
 }

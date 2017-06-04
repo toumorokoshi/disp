@@ -1,9 +1,8 @@
 use std::iter::Peekable;
 use std::slice::Iter;
-use std::str::Chars;
 
 pub fn preprocess(input: &str) -> String {
-    let mut lines = to_lines(input);
+    let lines = to_lines(input);
     let mut write_buffer = String::new();
     let mut read_buffer = lines.iter().peekable();
     parse_block(0, &mut read_buffer, &mut write_buffer);
@@ -74,8 +73,8 @@ fn parse_block(indent: usize, lines: &mut Peekable<Iter<Line>>, buffer: &mut Str
 }
 
 fn parse_statement(indent: usize, input: &mut Peekable<Iter<Line>>, buffer: &mut String) {
-    let mut is_first_line = true;
-    let mut autoparen = false;
+    // let mut is_first_line = true;
+    // let mut autoparen = false;
     // process first line differently
     let first_line = match input.peek() {
         Some(l) => Some(l.clone()),

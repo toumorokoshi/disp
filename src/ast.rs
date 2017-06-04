@@ -38,16 +38,16 @@ impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &Token::List(ref tl) => {
-                write!(f, "[");
+                try!(write!(f, "["));
                 for t in tl {
-                    write!(f, "{} ", t);
+                    try!(write!(f, "{} ", t));
                 }
                 write!(f, "]")
             },
             &Token::Expression(ref tl) => {
-                write!(f, "(");
+                try!(write!(f, "("));
                 for t in tl {
-                    write!(f, "{} ", t);
+                    try!(write!(f, "{} ", t));
                 }
                 write!(f, ")")
             },
@@ -56,9 +56,9 @@ impl fmt::Display for Token {
             &Token::Integer(i) => write!(f, "{}", i),
             &Token::Boolean(b) => write!(f, "{}", b),
             &Token::Dict(ref d) => {
-                write!(f, "{{");
+                try!(write!(f, "{{"));
                 for (key, value) in d.iter() {
-                    write!(f, "{}: {}", key, value);
+                    try!(write!(f, "{}: {}", key, value));
                 }
                 write!(f, "}}")
             }
@@ -66,22 +66,6 @@ impl fmt::Display for Token {
         }
     }
 }
-
-
-pub fn ensure_symbol<'a>(t: &'a Token) -> &'a str {
-    if let &Token::Symbol(ref s) = t {
-        return s;
-    }
-    panic!("string token expected.");
-}
-
-pub fn ensure_int(t: Token) -> i64 {
-    if let Token::Integer(i) = t {
-        return i;
-    }
-    panic!("int token expected.");
-}
-
 
 impl fmt::Display for HashableToken {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

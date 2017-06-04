@@ -8,9 +8,8 @@ mod parser;
 mod codegen;
 // mod runtime;
 
-use ast::{Dict, Token, HashableToken, ensure_symbol};
+use ast::{Dict, Token, HashableToken};
 use std::{env};
-use std::collections::HashMap;
 use std::io::{self, Write};
 use std::fs::File;
 use std::io::prelude::*;

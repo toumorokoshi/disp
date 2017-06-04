@@ -16,7 +16,7 @@ use self::builtins::{
 };
 use self::core::{Context, Object, CodegenResult, Production};
 use self::error::CodegenError;
-use super::{ensure_symbol, Token};
+use super::{Token};
 
 // compile a token into a set of VM opcodes.
 // NOTE: this can also execute code due to the compile-time
@@ -32,9 +32,10 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
     match token {
         &Token::Expression(ref tl) => gen_expr(context, tl),
         &Token::List(ref tl) => gen_list(context, tl),
-        &Token::Dict(ref d) => Ok(add_int(context, 0)),
+        // TODO: represent dictionaries in the VM
+        &Token::Dict(_) => Ok(add_int(context, 0)),
         &Token::Symbol(ref s) => evaluate_symbol(context, s),
-        &Token::BangSymbol(ref s) => panic!("bang symbol found for non-expr"),
+        &Token::BangSymbol(ref s) => Err(format!("bang symbol {} found for non-expr", s)),
         &Token::Integer(i) => Ok(add_int(context, i)),
         &Token::Boolean(b) => Ok(Object::from_build_object({
             let obj = context.builder.allocate_local(&ghvm::Type::Bool);
