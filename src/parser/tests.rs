@@ -25,6 +25,17 @@ fn test_preprocess_parens() {
     assert_eq!(result, "[(+ 1 1) (+ 1 2) ]")
 }
 
+/// dictionaries should be preprocessed into a single line
+#[test]
+fn test_preprocess_dict() {
+    let indent_text = r#"match 1 {
+    1: (print 2)
+}"#;
+    let result = preprocess(indent_text);
+    println!("{}", result);
+    assert_eq!(result, "[(match 1 {    1: (print 2)}) ]");
+}
+
 
 // TODO: support this case
 fn test_preprocess_list() {

@@ -25,14 +25,19 @@ impl Line {
 
 fn to_lines(input: &str) -> Vec<Line> {
     let mut lines = vec![];
+    // a buffer to track characters that should nest. these
+    // will be considered a single line regardless.
+    let mut nested_buffer = vec![];
     let mut is_new_line = true;
     let mut current_line = Line::new();
     for c in input.chars() {
         match c {
             '\n' => {
-                is_new_line = true;
-                lines.push(current_line);
-                current_line = Line::new();
+                if nested_buffer.len() == 0 {
+                    is_new_line = true;
+                    lines.push(current_line);
+                    current_line = Line::new();
+                }
             },
             '\t' => {
                 if is_new_line {
@@ -40,6 +45,34 @@ fn to_lines(input: &str) -> Vec<Line> {
                 } else {
                     current_line.buffer.push('\t');
                 }
+            },
+            '{' => {
+                nested_buffer.push('{');
+                current_line.buffer.push('{');
+            },
+            '}' => {
+                let do_pop = match nested_buffer.len() {
+                    0 => false,
+                    n => nested_buffer[n - 1] == '{'
+                };
+                if do_pop {
+                    nested_buffer.pop();
+                }
+                current_line.buffer.push('}');
+            },
+            '[' => {
+                nested_buffer.push('[');
+                current_line.buffer.push('[');
+            },
+            ']' => {
+                let do_pop = match nested_buffer.len() {
+                    0 => false,
+                    n => nested_buffer[n - 1] == '['
+                };
+                if do_pop {
+                    nested_buffer.pop();
+                }
+                current_line.buffer.push(']');
             },
             _ => {
                 is_new_line = false;
@@ -73,8 +106,6 @@ fn parse_block(indent: usize, lines: &mut Peekable<Iter<Line>>, buffer: &mut Str
 }
 
 fn parse_statement(indent: usize, input: &mut Peekable<Iter<Line>>, buffer: &mut String) {
-    // let mut is_first_line = true;
-    // let mut autoparen = false;
     // process first line differently
     let first_line = match input.peek() {
         Some(l) => Some(l.clone()),
