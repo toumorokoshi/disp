@@ -1,4 +1,4 @@
-use super::{Token};
+use super::{Token, HashableToken, Dict};
 use std::collections::HashMap;
 
 pub symbol -> String = match_str:$([a-zA-Z0-9_=+!]) s:symbol { let mut result = match_str.to_owned();
@@ -12,11 +12,13 @@ pub newline -> bool = [\n]+ { true }
 
 pub integer -> i64 = i:$([0-9]+) { i.parse().unwrap() }
 
+pub none -> Token = "None" { Token::None }
+
 pub list -> Vec<Token> = "[" tl:token_list "]" { tl }
 
 pub expression -> Vec<Token> = "(" tl:token_list ")" { tl }
 
-pub dict -> HashMap<String, Token> = "{" d: dict_pairs "}" { d }
+pub dict -> Dict = "{" d: dict_pairs "}" { d }
 
 pub true_value -> bool = "true" { true };
 pub false_value -> bool = "false" { false };
@@ -24,15 +26,15 @@ pub false_value -> bool = "false" { false };
 
 pub spaces -> usize = s:" "+ { s.len() }
 
-pub dict_pairs -> HashMap<String, Token> =
-    spaces? key:symbol spaces? ":" spaces? value:token spaces? "," spaces? d:dict_pairs {
-        let mut new_d = HashMap::new();
+pub dict_pairs -> Dict =
+        spaces? key:hashable_token spaces? ":" spaces? value:token spaces? "," spaces? d:dict_pairs {
+        let mut new_d = Dict::new();
         for (key, value) in &d {
             new_d.insert(key.clone(), value.clone());
         }
         new_d
     }
-    / spaces? key:symbol spaces? ":" spaces? value:token spaces? {
+    / spaces? key:hashable_token spaces? ":" spaces? value:token spaces? {
         let mut d = HashMap::new();
         d.insert(key, value);
         d
@@ -60,3 +62,11 @@ pub token -> Token =
     / b:false_value { Token::Boolean(b) }
     / s:bang_symbol { Token::BangSymbol(Box::new(s)) }
     / s:symbol { Token::Symbol(Box::new(s)) }
+    / n:none { n }
+
+pub hashable_token -> HashableToken =
+      i:integer { HashableToken::Integer(i) }
+    / b:true_value { HashableToken::Boolean(b) }
+    / b:false_value { HashableToken::Boolean(b) }
+    / s:symbol { HashableToken::Symbol(Box::new(s)) }
+    / n:none { HashableToken::None }

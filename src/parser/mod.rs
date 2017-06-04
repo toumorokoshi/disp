@@ -1,5 +1,5 @@
 /// contains all the parsing structures of ghvm
-use super::{Token};
+use super::{Token, HashableToken, Dict};
 use std::iter::Peekable;
 peg_file! grammar("grammar.rustpeg");
 

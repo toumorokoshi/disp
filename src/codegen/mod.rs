@@ -11,6 +11,7 @@ use self::builtins::{
     mut_production,
     plus_production,
     while_production,
+    match_production,
     print,
 };
 use self::core::{Context, Object, CodegenResult, Production};
@@ -62,6 +63,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         "+" => plus_production as Production,
         "mut" => mut_production as Production,
         "while" => while_production as Production,
+        "match" => match_production as Production,
         "print" => {
             let result = context.builder.allocate_local(&ghvm::Type::None);
             let print_arg = try!(gen_token(context, &args[0]));

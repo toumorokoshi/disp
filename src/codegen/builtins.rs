@@ -1,6 +1,6 @@
 use ghvm;
 use super::{Context, CodegenResult, Object, gen_token};
-use super::super::{Token};
+use super::super::{Token, HashableToken};
 
 macro_rules! ensure_type {
     ($x:pat, $y:expr) => {
@@ -67,7 +67,7 @@ pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let false_index = context.builder.ops.len();
     let false_result = try!(gen_token(context, &args[2]));
     context.builder.ops.push(ghvm::Op::Assign{source: false_result.register, target: return_value.register});
-    context.builder.ops[branch_index] = ghvm::Op::Branch{condition: condition.register, if_false: false_index};
+    context.builder.ops[branch_index] = ghvm::Op::BranchFalse{condition: condition.register, if_false: false_index};
     context.builder.ops[goto_index] = ghvm::Op::Goto{position: context.builder.ops.len()};
     return Ok(Object{typ: ghvm::Type::Int, register: return_value.register});
 }
@@ -82,7 +82,7 @@ pub fn while_production(context: &mut Context, args: &[Token]) -> CodegenResult 
     let return_value = try!(gen_token(context, &args[1]));
     context.builder.ops.push(ghvm::Op::Goto{position: start_index});
     let loop_end_index = context.builder.ops.len();
-    context.builder.ops[branch_index] = ghvm::Op::Branch{condition: condition.register, if_false: context.builder.ops.len()};
+    context.builder.ops[branch_index] = ghvm::Op::BranchFalse{condition: condition.register, if_false: context.builder.ops.len()};
     return Ok(Object{typ: ghvm::Type::Int, register: return_value.register});
 }
 
@@ -106,13 +106,52 @@ pub fn mut_production(context: &mut Context, args: &[Token]) -> CodegenResult {
 
 
 pub fn match_production(context: &mut Context, args: &[Token]) -> CodegenResult {
-    let result = try!(gen_token(context, &args[0]));
+    let var_to_match = try!(gen_token(context, &args[0]));
     match &args[1] {
         &Token::Dict(ref d) => {
+            let condition_temp = context.builder.allocate_local(&ghvm::Type::Bool);
             let result = context.builder.allocate_local(&ghvm::Type::Int);
-            for (key, value) in d.iter() {
-                // let resolved_key = try!(gen_token(key,
+            let pairs: Vec<(&HashableToken, &Token)> = d.iter().collect();
+
+            // first, we build the key objects
+            let mut key_objects = vec![];
+            for pair in &pairs {
+                let resolved_key_token = (*pair).0.as_token();
+                let key = try!(gen_token(context, &resolved_key_token));
+                key_objects.push(key);
             }
+
+            let head_index = context.builder.ops.len();
+            // then, we create empty registers to replace with branching
+            for i in 0..key_objects.len() {
+                // we need two ops: an IntCmp and a BranchTrue afterward
+                context.builder.ops.push(ghvm::Op::Noop{});
+                context.builder.ops.push(ghvm::Op::Noop{});
+            }
+            // one last op to replace with a goto if nothing matches.
+            let final_goto_index = context.builder.ops.len();
+            context.builder.ops.push(ghvm::Op::Noop{});
+
+            // finally, we build the bodies, and replace the noops with
+            // branches
+            for (index, pair) in pairs.iter().enumerate() {
+                let key_object = &key_objects[index];
+                context.builder.ops[head_index + index * 2] = ghvm::Op::IntCmp{
+                    lhs: var_to_match.register,
+                    rhs: key_object.register,
+                    target: condition_temp.register
+                };
+                context.builder.ops[head_index + index * 2 + 1] = ghvm::Op::BranchTrue{
+                    condition: condition_temp.register, if_true: context.builder.ops.len()
+                };
+                let block_result = try!(gen_token(context, (*pair).1));
+                context.builder.ops.push(ghvm::Op::Assign{
+                    source: block_result.register, target: result.register,
+                });
+            }
+            context.builder.ops[final_goto_index] = ghvm::Op::Goto{
+                position: context.builder.ops.len() - 1
+            };
             // TODO: replace none with the successful result.
             Ok(Object::from_build_object(result))
         },
