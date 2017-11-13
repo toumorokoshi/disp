@@ -1,0 +1,6 @@
+None printHelloWorld():
+	None printAnotherHelloWorld():
+			print("hi")
+	printAnotherHelloWorld()
+
+printHelloWorld()
