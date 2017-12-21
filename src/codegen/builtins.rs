@@ -23,6 +23,17 @@ pub fn plus_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     return Ok(Object::from_build_object(obj));
 }
 
+pub fn minus_production(context: &mut Context, args: &[Token]) -> CodegenResult {
+    let lhs = try!(ensure_type!(ghvm::Type::Int, try!(gen_token(context, &args[0]))));
+    let rhs = try!(ensure_type!(ghvm::Type::Int, try!(gen_token(context, &args[1]))));
+    let obj = context.builder.allocate_local(&ghvm::Type::Int);
+    context.builder.ops.push(ghvm::Op::IntSub{
+        lhs: lhs.register, rhs: rhs.register, target: obj.register
+    });
+    return Ok(Object::from_build_object(obj));
+}
+
+
 pub fn equals_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let lhs = try!(ensure_type!(ghvm::Type::Int, try!(gen_token(context, &args[0]))));
     let rhs = try!(ensure_type!(ghvm::Type::Int, try!(gen_token(context, &args[1]))));
