@@ -1,10 +1,10 @@
 use super::{Token, HashableToken, Dict};
 use std::collections::HashMap;
 
-pub symbol -> String = match_str:$([a-zA-Z0-9_=+!]) s:symbol { let mut result = match_str.to_owned();
+pub symbol -> String = match_str:$([a-zA-Z0-9_=+!-]) s:symbol { let mut result = match_str.to_owned();
                                                                result.push_str(&s);
                                                                result }
-                     / match_str:($[a-zA-Z0-9_=+]) { match_str.to_string() }
+                     / match_str:($[a-zA-Z0-9_=+-]) { match_str.to_string() }
 
 pub bang_symbol -> String = s:symbol "!" { s }
 
