@@ -21,7 +21,7 @@ YUI is interesting, because it allows three different methods to compose an obje
   functionality of an instance, not a class (prototype)
 
 The expressed desires of each of these are different. It doesn't seem
-like inheritance provides anything useful that the exension model can't handle:
+like inheritance provides anything useful that the extension model can't handle:
 
 * extensions: I want to compose my class out of multiple components
 * plugins: I want to modify the functionality of my object

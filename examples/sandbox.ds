@@ -1,0 +1,27 @@
+import system
+
+defun queue
+
+  defun
+
+set channel []
+
+
+defun writer (channel)
+  set payload (pull channel)
+  print payload
+
+set writer_pool
+
+defun reader (socket writer_channel)
+  set payload (read socket)
+  write writer_channel payload
+
+set x (spawn foo)
+
+send x
+
+
+; primitives for message passing include
+; send x foo : send foo to x
+;
