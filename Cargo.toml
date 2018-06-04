@@ -1,0 +1,6 @@
+[package]
+name = "warpspeed"
+version = "0.1.0"
+authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
+
+[dependencies]
