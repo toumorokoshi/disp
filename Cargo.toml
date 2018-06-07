@@ -5,6 +5,7 @@ authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
 
 [dependencies]
 futures = "0.1"
+nix = "0.11"
 num_cpus = "1.0"
 spmc = "0.2"
 serde = "1.0"

@@ -1,6 +1,7 @@
 #![feature(test)]
 extern crate test;
 extern crate futures;
+extern crate nix;
 extern crate num_cpus;
 extern crate serde;
 extern crate serde_json;
