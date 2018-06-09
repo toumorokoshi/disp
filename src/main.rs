@@ -6,6 +6,7 @@ extern crate num_cpus;
 extern crate serde;
 extern crate serde_json;
 extern crate spmc;
+extern crate tokio;
 
 mod benchmark;
 mod vm;
@@ -14,7 +15,8 @@ mod vm;
 extern crate serde_derive;
 
 fn main() {
-    let vm_instance = vm::VM::new();
+    let mut vm_instance = vm::VM::new();
+    vm_instance.wait();
 }
 
 
