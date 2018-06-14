@@ -1,10 +1,17 @@
-use super::*;
 use std::thread;
 use std::time::{Instant};
 use test::Bencher;
 use serde_json::{Value, Error};
+use serde_json;
+use spmc;
 static BENCH_STRING: &'static str = "{\"name\": \"fred\", \"age\": 10}";
 static NUM_ITER:u8 = 10000000;
+
+#[derive(Serialize, Deserialize)]
+pub struct User {
+    age: u8,
+    name: String
+}
 
 /// This tests the theory of a single threaded
 /// application, with a tight loop, handling

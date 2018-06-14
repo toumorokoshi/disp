@@ -1,3 +1,11 @@
+# Next steps:
+
+* implement memory model, using native data types as much as possible
+  * smaller objects == more cache hits
+  * fewer pointer abstractions == less lookup
+* implement pure function-operate-on-data-model
+* port stuff over from greyhound-vm runtime.
+
 #keep.google.com
 
 https://internals.rust-lang.org/t/pre-rfc-thread-affinity/3117/9

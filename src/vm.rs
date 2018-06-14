@@ -1,8 +1,7 @@
-use super::num_cpus;
-use std::{thread, time};
-use std::vec::Vec;
+use num_cpus;
 use tokio::runtime::Runtime;
 use futures::{Future, Async};
+use super::{ValueList, Fiber, Op};
 
 
 
@@ -16,7 +15,9 @@ impl VM {
         // managing a worker per thread, and providing
         // apis to submit tasks to them.
         let mut runtime = Runtime::new().unwrap();
-        runtime.spawn(VMFuture::new());
+        let registers = ValueList::new();
+        let ops = vec![];
+        runtime.spawn(Fiber::new(registers, ops));
         // TODO: spawn one worker per thread.
         // TODO: thread pin.
         // NO easy way to get spawned threads.
@@ -34,25 +35,5 @@ impl VM {
 
     pub fn wait(mut self) {
         self.tokio_runtime.shutdown_on_idle().wait().unwrap();
-    }
-}
-
-struct VMFuture {
-}
-
-impl VMFuture {
-    pub fn new() -> VMFuture {
-        VMFuture{}
-    }
-}
-
-impl Future for VMFuture {
-    // TODO: find the right value for this
-    type Item = ();
-    type Error = ();
-
-    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        println!("polled");
-        return Ok(Async::NotReady);
     }
 }
