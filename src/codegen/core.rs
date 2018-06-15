@@ -3,10 +3,15 @@
 ///   disp-specific functionality, or the ghvm builder
 ///   needs to provide more rules about type construction.
 
-use ghvm;
 use std::collections::HashMap;
 use super::super::{Token};
 use super::{CodegenError};
+use warpspeed::{
+    BuildObject,
+    FunctionBuilder,
+    Type,
+    VM
+};
 
 pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult;
 pub type CodegenResult = Result<Object, CodegenError>;
@@ -27,35 +32,35 @@ impl Block {
 
 pub struct Context<'a> {
     pub block: Block,
-    pub builder: ghvm::FunctionBuilder,
-    pub vm: &'a mut ghvm::VM
+    pub builder: FunctionBuilder,
+    pub vm: &'a mut VM
 }
 
 impl<'a> Context<'a> {
-    pub fn new(vm: &'a mut ghvm::VM) -> Context {
+    pub fn new(vm: &'a mut VM) -> Context {
         return Context {
             block: Block::new(),
-            builder: ghvm::FunctionBuilder::new(),
+            builder: FunctionBuilder::new(),
             vm: vm
         }
     }
 }
 
 pub struct Object {
-    pub typ: ghvm::Type, // the type of the register
+    pub typ: Type, // the type of the register
     pub register: usize // the register containing the value
 }
 
 impl Object {
-    pub fn from_build_object(build_object: ghvm::BuildObject) -> Object {
+    pub fn from_build_object(build_object: BuildObject) -> Object {
         return Object {
             typ: build_object.typ,
             register: build_object.register
         };
     }
 
-    pub fn to_build_object(&self) -> ghvm::BuildObject {
-        return ghvm::BuildObject {
+    pub fn to_build_object(&self) -> BuildObject {
+        return BuildObject {
             typ: self.typ.clone(),
             register: self.register
         };

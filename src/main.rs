@@ -1,12 +1,11 @@
 #![feature(plugin)]
 #![plugin(peg_syntax_ext)]
-extern crate ghvm;
+extern crate warpspeed;
 
 mod ast;
 mod parser;
-// mod builtins;
 mod codegen;
-// mod runtime;
+mod vm;
 
 use ast::{Dict, Token, HashableToken};
 use std::{env};
@@ -15,6 +14,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use codegen::{compile};
 use parser::{parse};
+use warpspeed::{Type, VM};
+use vm::build_vm;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -25,11 +26,11 @@ fn main() {
 }
 
 fn repl() {
-    let mut vm = ghvm::VM::new();
+    let mut vm = build_vm();
     loop {
         let inp = read();
         let func = compile(&mut vm, &inp).unwrap();
-        let vm_result = func.execute(&mut vm, vec![]);
+        let vm_result = func.execute(&vm.handle(), vec![]);
         let result = unpack(&func.return_type, vm_result);
         println!("{}", result);
         if cfg!(feature = "debug") {
@@ -40,19 +41,19 @@ fn repl() {
 }
 
 fn execute(path: &str) {
-    let mut vm = ghvm::VM::new();
+    let mut vm = build_vm();
     let mut file = File::open(path).unwrap();
     let mut input = String::new();
     file.read_to_string(&mut input).unwrap();
     let inp = parse(&input);
     let func = compile(&mut vm, &inp).unwrap();
-    let vm_result = func.execute(&mut vm, vec![]);
-    let result = unpack(&func.return_type, vm_result);
-    println!("{}", result);
     if cfg!(feature = "debug") {
         println!("DEBUG: ops: ");
         func.print_ops();
     }
+    let vm_result = func.execute(&vm.handle(), vec![]);
+    let result = unpack(&func.return_type, vm_result);
+    println!("{}", result);
 }
 
 fn read() -> Token {
@@ -65,11 +66,11 @@ fn read() -> Token {
 }
 
 
-pub fn unpack(typ: &ghvm::Type, value: i64) -> Token {
+pub fn unpack(typ: &Type, value: i64) -> Token {
     match typ {
-        &ghvm::Type::Int => Token::Integer(value),
-        &ghvm::Type::Bool => Token::Boolean(if value == 1 {true} else {false}),
-        &ghvm::Type::None => Token::None,
+        &Type::Int => Token::Integer(value),
+        &Type::Bool => Token::Boolean(if value == 1 {true} else {false}),
+        &Type::None => Token::None,
         _ => Token::None
     }
 }

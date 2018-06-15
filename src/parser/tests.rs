@@ -16,6 +16,28 @@ fn test_preprocess_2() {
     assert_eq!(result, "[(if (== i 0) [(print hello) ]) ]");
 }
 
+
+#[test]
+fn test_preprocess_empty_line() {
+    let ident_text = r#"print 1
+"#;
+    let result = preprocess(ident_text);
+    println!("{}", result);
+    assert_eq!(result, "[(print 1) ]");
+}
+
+
+#[test]
+fn test_remove_comments() {
+    let ident_text = r#"print 1
+# this is a comment {}[]()
+"#;
+    let result = preprocess(ident_text);
+    println!("{}", result);
+    assert_eq!(result, "[(print 1) ]");
+}
+
+
 #[test]
 fn test_preprocess_parens() {
     let ident_text = r#"+ 1 1

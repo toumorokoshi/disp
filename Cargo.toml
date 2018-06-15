@@ -4,10 +4,10 @@ version = "0.0.1"
 authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
 
 [dependencies]
-peg = "0.5.2"
-peg-syntax-ext = "0.5.2"
+peg = "0.5.4"
+peg-syntax-ext = "0.5.5"
 getopts = "0.2"
-ghvm = { path = "../greyhawk-vm" }
+warpspeed = { path = "../warpspeed" }
 
 [features]
 debug = []

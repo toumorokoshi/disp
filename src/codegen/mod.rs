@@ -2,18 +2,18 @@ mod builtins;
 mod core;
 mod error;
 
-use ghvm;
-use std::rc::Rc;
+use warpspeed::{Op, Type, VM, VMFunction};
 use self::builtins::{
     equals_production,
+    function_production,
     if_production,
     not_equals_production,
+    const_production,
     mut_production,
     plus_production,
     minus_production,
     while_production,
     match_production,
-    print,
 };
 use self::core::{Context, Object, CodegenResult, Production};
 use self::error::CodegenError;
@@ -22,7 +22,7 @@ use super::{Token};
 // compile a token into a set of VM opcodes.
 // NOTE: this can also execute code due to the compile-time
 // execution support.
-pub fn compile(vm: &mut ghvm::VM, token: &Token) -> Result<ghvm::VMFunction, CodegenError> {
+pub fn compile(vm: &mut VM, token: &Token) -> Result<VMFunction, CodegenError> {
     let mut context = Context::new(vm);
     let result_obj = try!(gen_token(&mut context, token));
     context.builder.add_return(&result_obj.to_build_object());
@@ -39,20 +39,22 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
         &Token::BangSymbol(ref s) => Err(format!("bang symbol {} found for non-expr", s)),
         &Token::Integer(i) => Ok(add_int(context, i)),
         &Token::Boolean(b) => Ok(Object::from_build_object({
-            let obj = context.builder.allocate_local(&ghvm::Type::Bool);
-            context.builder.ops.push(ghvm::Op::BoolLoad{register: obj.register, constant: b});
+            let obj = context.builder.allocate_local(&Type::Bool);
+            context.builder.ops.push(Op::BoolLoad{register: obj.register, constant: b});
             obj
         })),
-        &Token::None => Ok(Object{typ: ghvm::Type::None, register: 0})
+        &Token::None => Ok(Object{typ: Type::None, register: 0})
     }
 }
 
 fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult {
     let mut owned_args = args.to_owned();
     owned_args.insert(0, Token::Symbol(Box::new(String::from(name))));
-    let ref mut vm = context.vm;
-    let func = try!(compile(vm, &Token::Expression(owned_args)));
-    let result = func.execute(vm, vec![]);
+    let func = {
+        let ref mut vm = context.vm;
+        try!(compile(vm, &Token::Expression(owned_args)))
+    };
+    let result = func.execute(&context.vm.handle(), vec![]);
     let value = context.builder.load_value(&func.return_type, result);
     Ok(Object::from_build_object(value))
 }
@@ -64,19 +66,26 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         "!=" => not_equals_production as Production,
         "+" => plus_production as Production,
         "-" => minus_production as Production,
+        "const" => const_production as Production,
         "mut" => mut_production as Production,
         "while" => while_production as Production,
         "match" => match_production as Production,
+        "fn" => function_production as Production,
         "print" => {
-            let result = context.builder.allocate_local(&ghvm::Type::None);
+            let result = context.builder.allocate_local(&Type::None);
+            let function = context.builder.allocate_local(&Type::FunctionNative);
             let print_arg = try!(gen_token(context, &args[0]));
             let args = vec![print_arg.register];
-            context.builder.ops.push(ghvm::Op::Call{
-                func: ghvm::Function::Native(Rc::new(print)),
-                args: args,
-                target: result.register
+            context.builder.ops.push(Op::FunctionNativeLoad{
+                func_name: String::from("print"),
+                target: function.register,
             });
-            return Ok(Object{typ: ghvm::Type::None, register: 0});
+            context.builder.ops.push(Op::CallNative{
+                function: function.register,
+                args: args,
+                target: result.register,
+            });
+            return Ok(Object{typ: Type::None, register: 0});
         },
         _ => {return Err(String::from("no function found."))}
     };
@@ -113,7 +122,7 @@ fn evaluate_symbol(context: &mut Context, symbol: &String) -> CodegenResult {
 }
 
 fn add_int(context: &mut Context, value: i64) -> Object {
-    let obj = context.builder.allocate_local(&ghvm::Type::Int);
-    context.builder.ops.push(ghvm::Op::IntLoad{register: obj.register, constant: value});
+    let obj = context.builder.allocate_local(&Type::Int);
+    context.builder.ops.push(Op::IntLoad{register: obj.register, constant: value});
     Object::from_build_object(obj)
 }

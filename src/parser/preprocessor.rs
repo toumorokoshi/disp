@@ -29,8 +29,16 @@ fn to_lines(input: &str) -> Vec<Line> {
     // will be considered a single line regardless.
     let mut nested_buffer = vec![];
     let mut is_new_line = true;
+    let mut is_comment = false;
     let mut current_line = Line::new();
     for c in input.chars() {
+        if is_comment {
+            if c != '\n' {
+                continue;
+            } else {
+                is_comment = false;
+            }
+        }
         match c {
             '\n' => {
                 if nested_buffer.len() == 0 {
@@ -45,6 +53,9 @@ fn to_lines(input: &str) -> Vec<Line> {
                 } else {
                     current_line.buffer.push('\t');
                 }
+            },
+            '#' => {
+                is_comment = true;
             },
             '{' => {
                 nested_buffer.push('{');
@@ -94,6 +105,8 @@ fn parse_block(indent: usize, lines: &mut Peekable<Iter<Line>>, buffer: &mut Str
         if let Some(line) = next_line {
             if line.indent < indent {
                 break;
+            } else if line.buffer.len() == 0 {
+                lines.next(); // consume an empty line
             } else {
                 parse_statement(indent, lines, buffer);
                 buffer.push(' ');
