@@ -1,16 +1,16 @@
 use futures::{Async, Future};
 use std::vec::{Vec};
-use super::{ValueList, Op};
+use super::{ValueList, Op, OpList};
 
 
 /// Tasks represent a single fiber on the vm.
 pub struct Fiber {
     registers: ValueList,
-    ops: Vec<Op>
+    ops: OpList
 }
 
 impl Fiber {
-    pub fn new(registers: ValueList, ops: Vec<Op>) -> Fiber {
+    pub fn new(registers: ValueList, ops: OpList) -> Fiber {
         Fiber{
             registers: registers,
             ops: ops
