@@ -1,35 +1,32 @@
 use futures::{Async, Future};
-use std::vec::{Vec};
-use super::{ValueList, Op, OpList};
+use super::{Function, Value, ValueList};
 
 
 /// Tasks represent a single fiber on the vm.
 pub struct Fiber {
-    registers: ValueList,
-    ops: OpList
+    registerCount: usize,
+    function: Function
 }
 
 impl Fiber {
-    pub fn new(registers: ValueList, ops: OpList) -> Fiber {
+    pub fn new(registerCount: usize, function: Function) -> Fiber {
         Fiber{
-            registers: registers,
-            ops: ops
+            registerCount: registerCount,
+            function: function
         }
     }
 }
 
+
 impl Future for Fiber {
     // TODO: find the right value for this
+    // Value
     type Item = ();
     type Error = ();
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        let mut i = 0;
-        while i < self.ops.len() {
-            let ref op = self.ops[i];
-            i += 1;
-        }
-        println!("hello world");
+        let mut registers = ValueList::with_capacity(self.registerCount);
+        self.function.execute(registers);
         Ok(Async::Ready(()))
     }
 }

@@ -15,9 +15,7 @@ impl VM {
         // managing a worker per thread, and providing
         // apis to submit tasks to them.
         let mut runtime = Runtime::new().unwrap();
-        let registers = ValueList::new();
-        let ops = vec![];
-        runtime.spawn(Fiber::new(registers, ops));
+        // runtime.spawn(Fiber::new(registers, ops));
         // TODO: spawn one worker per thread.
         // TODO: thread pin.
         // NO easy way to get spawned threads.
@@ -35,5 +33,10 @@ impl VM {
 
     pub fn wait(mut self) {
         self.tokio_runtime.shutdown_on_idle().wait().unwrap();
+    }
+
+    // submit a fiber for execution
+    pub fn submit(&mut self, fiber: Fiber) {
+        self.tokio_runtime.spawn(fiber);
     }
 }
