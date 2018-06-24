@@ -1,12 +1,11 @@
 use num_cpus;
-use tokio::runtime::Runtime;
 use futures::{Future, Async};
-use super::{ValueList, Fiber, Op};
+use super::{ValueList, Fiber, Op, Runtime};
 
 
 
 pub struct VM {
-    tokio_runtime: Runtime
+    runtime: Runtime
 }
 
 impl VM {
@@ -14,7 +13,7 @@ impl VM {
         // tokio handles a lot of the complexity around
         // managing a worker per thread, and providing
         // apis to submit tasks to them.
-        let mut runtime = Runtime::new().unwrap();
+        let mut runtime = Runtime::new();
         // runtime.spawn(Fiber::new(registers, ops));
         // TODO: spawn one worker per thread.
         // TODO: thread pin.
@@ -27,16 +26,16 @@ impl VM {
         // via getting the entry from the worker list in pool,
         // then calling submit_external.
         return VM {
-            tokio_runtime: runtime
+            runtime: runtime
         };
     }
 
-    pub fn wait(mut self) {
-        self.tokio_runtime.shutdown_on_idle().wait().unwrap();
+    pub fn wait(&mut self) {
+        self.runtime.shutdown_on_idle();
     }
 
     // submit a fiber for execution
     pub fn submit(&mut self, fiber: Fiber) {
-        self.tokio_runtime.spawn(fiber);
+        self.runtime.submit(fiber);
     }
 }

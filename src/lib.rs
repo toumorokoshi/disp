@@ -3,6 +3,7 @@ extern crate test;
 extern crate futures;
 extern crate nix;
 extern crate num_cpus;
+extern crate rand;
 extern crate serde;
 extern crate serde_json;
 extern crate spmc;
@@ -14,14 +15,16 @@ mod core;
 mod function;
 mod fiber;
 mod ops;
+mod runtime;
 mod types;
 mod vm;
 
 pub use builder::{BuildObject, FunctionBuilder};
-pub use ops::{Op, OpList};
 pub use core::{Register, RegisterList, Value, ValueList};
 pub use fiber::{Fiber};
 pub use function::{Function, VMFunction, NativeFunction};
+pub use ops::{Op, OpList};
+pub use runtime::Runtime;
 pub use types::{Type};
 pub use vm::VM;
 
