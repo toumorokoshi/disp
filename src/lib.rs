@@ -14,19 +14,23 @@ mod builder;
 mod core;
 mod function;
 mod fiber;
+mod heap;
 mod ops;
 mod runtime;
 mod types;
 mod vm;
+mod vm_handle;
 
 pub use builder::{BuildObject, FunctionBuilder};
 pub use core::{Register, RegisterList, Value, ValueList};
 pub use fiber::{Fiber};
 pub use function::{Function, VMFunction, NativeFunction};
+pub use heap::{Heap};
 pub use ops::{Op, OpList};
 pub use runtime::Runtime;
 pub use types::{Type};
 pub use vm::VM;
+pub use vm_handle::VMHandle;
 
 
 #[macro_use]

@@ -39,6 +39,9 @@ pub enum Op {
     IntLoad{register: usize, constant: i64},
     IntMul{lhs: usize, rhs: usize, target: usize},
     IntSub{lhs: usize, rhs: usize, target: usize},
+    /// Load a Function from the VM's Function Table
+    /// into the desired register
+    LoadFunc{func_index: usize, target: usize},
     Noop{},
     StringLoad{register: usize, constant: Arc<String>},
     Return{register: usize},
@@ -73,6 +76,7 @@ impl Op {
             &Op::IntLoad{register, constant} => format!("{0} <= {1} (Int)", register, constant),
             &Op::IntLessEqual{lhs, rhs, target} => format!("{2} <= {0} < {1} (int)", lhs, rhs, target),
             &Op::IntLessThan{lhs, rhs, target} => format!("{2} <= {0} <= {1} (int)", lhs, rhs, target),
+            &Op::LoadFunc{func_index, target} => format!("{1} <= func[{0}]", func_index, target),
             &Op::Noop{} => format!("noop"),
             &Op::StringLoad{register, ref constant} => format!("{0} <= {1} (String)", register, constant),
             &Op::Return{register} => format!("return {0}", register),

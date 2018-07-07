@@ -2,20 +2,27 @@ use std::{
     mem,
     sync::{Arc}
 };
-use super::{Register, Type, Op, OpList, Value, ValueList, VM};
+use super::{
+    Op,
+    OpList,
+    Type,
+    Value,
+    ValueList,
+    VM,
+    VMHandle
+};
 
 pub type NativeFunction = fn(&mut ValueList) -> Value;
 
 #[derive(Clone)]
 pub enum Function {
     VM(Arc<VMFunction>),
-    Native(Arc<NativeFunction>)
-}
+    Native(Arc<NativeFunction>) }
 
 impl Function {
-    pub fn execute(&self, mut args: ValueList) -> Value {
+    pub fn execute(&self, vm: &VMHandle, mut args: ValueList) -> Value {
         match self {
-            &Function::VM(ref func) => func.execute(args),
+            &Function::VM(ref func) => func.execute(vm, args),
             &Function::Native(ref func) => func(&mut args),
         }
     }
@@ -44,7 +51,7 @@ impl VMFunction {
         }
     }
 
-    pub fn execute(&self, mut args: ValueList) -> Value {
+    pub fn execute(&self, vm: &VMHandle, mut args: ValueList) -> Value {
         let target_size = args.len() + self.registers.len();
         args.resize(target_size, 0);
         // TODO: once rust supports allocating
@@ -89,7 +96,7 @@ impl VMFunction {
                         args_to_pass.push(registers[*index]);
                     }
                     // TODO: handle nested calls
-                    // registers[target] = func.execute(self, args_to_pass);
+                    registers[target] = func.execute(vm, args_to_pass);
                 },
                 &Op::IntAdd{lhs, rhs, target} => registers[target] = registers[lhs] + registers[rhs],
                 &Op::IntCmp{lhs, rhs, target} => registers[target] = if registers[lhs] == registers[rhs] {1} else {0},
@@ -146,6 +153,9 @@ impl VMFunction {
                 },
                 &Op::Goto{position} => {
                     i = position - 1;
+                },
+                &Op::LoadFunc{func_index, target} => unsafe {
+                    // registers[target] = mem::transmute::<Function, i64>(vm)
                 },
                 &Op::Noop{} => {},
                 // TODO: incomplete. ends up as the null pointer right now.
