@@ -6,7 +6,7 @@ use super::{Heap};
 /// worker to worker. it is an interface
 /// that can be shared across multiple threads.
 pub struct VMHandle {
-    heap: Arc<Heap>
+    pub heap: Arc<Heap>
 }
 
 impl VMHandle {

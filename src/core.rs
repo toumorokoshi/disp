@@ -1,5 +1,4 @@
 /// core VM data structures
-use super::{Op};
 
 pub type Register = i64;
 pub type RegisterList = Vec<Register>;

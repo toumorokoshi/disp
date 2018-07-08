@@ -1,4 +1,3 @@
-use super::{Function, Value};
 use std::sync::Arc;
 use std::fmt;
 
@@ -21,7 +20,7 @@ pub enum Op {
     // if the condition is false, jump n instructions to the registry.
     BranchTrue{condition: usize, if_true: usize},
     BranchFalse{condition: usize, if_false: usize},
-    Call{func: Function, args: Vec<usize>, target: usize},
+    CallNative{function: usize, args: Vec<usize>, target: usize},
     FloatAdd{lhs: usize, rhs: usize, target: usize},
     FloatCmp{lhs: usize, rhs: usize, target: usize},
     FloatDiv{lhs: usize, rhs: usize, target: usize},
@@ -30,6 +29,9 @@ pub enum Op {
     FloatLessThan{lhs: usize, rhs: usize, target: usize},
     FloatMul{lhs: usize, rhs: usize, target: usize},
     FloatSub{lhs: usize, rhs: usize, target: usize},
+    /// Load a Function from the VM's Function Table
+    /// into the desired register
+    FunctionNativeLoad{func_index: usize, target: usize},
     Goto{position: usize},
     IntAdd{lhs: usize, rhs: usize, target: usize},
     IntCmp{lhs: usize, rhs: usize, target: usize},
@@ -39,9 +41,6 @@ pub enum Op {
     IntLoad{register: usize, constant: i64},
     IntMul{lhs: usize, rhs: usize, target: usize},
     IntSub{lhs: usize, rhs: usize, target: usize},
-    /// Load a Function from the VM's Function Table
-    /// into the desired register
-    LoadFunc{func_index: usize, target: usize},
     Noop{},
     StringLoad{register: usize, constant: Arc<String>},
     Return{register: usize},
@@ -58,7 +57,7 @@ impl Op {
             &Op::BoolLoad{register, constant} => format!("{1} = {0}", register, constant),
             &Op::BranchTrue{condition, if_true} => format!("branch to {1} if {0} is true", condition, if_true),
             &Op::BranchFalse{condition, if_false} => format!("branch to {1} if {0} is false", condition, if_false),
-            &Op::Call{ref func, args: _, target} => format!("{0} <= <some_func>()", target),
+            &Op::CallNative{function, args: _, target} => format!("{0} <= native_func()", target),
             &Op::Goto{position} => format!("goto {0}", position),
             &Op::FloatAdd{lhs, rhs, target} => format!("{2} <= {0} + {1} (float)", lhs, rhs, target),
             &Op::FloatCmp{lhs, rhs, target} => format!("{2} <= {0} == {1} (float)", lhs, rhs, target),
@@ -68,6 +67,7 @@ impl Op {
             &Op::FloatLoad{register, constant} => format!("{0} <= {1} (float)", register, constant),
             &Op::FloatLessEqual{lhs, rhs, target} => format!("{2} <= {0} <= {1} (float)", lhs, rhs, target),
             &Op::FloatLessThan{lhs, rhs, target} => format!("{2} <= {0} < {1} (float)", lhs, rhs, target),
+            &Op::FunctionNativeLoad{func_index, target} => format!("{1} <= functions_native[{0}]", func_index, target),
             &Op::IntAdd{lhs, rhs, target} => format!("{2} <= {0} + {1} (Int)", lhs, rhs, target),
             &Op::IntCmp{lhs, rhs, target} => format!("{2} <= {0} == {1} (Int)", lhs, rhs, target),
             &Op::IntSub{lhs, rhs, target} => format!("{2} <= {0} - {1} (Int)", lhs, rhs, target),
@@ -76,7 +76,6 @@ impl Op {
             &Op::IntLoad{register, constant} => format!("{0} <= {1} (Int)", register, constant),
             &Op::IntLessEqual{lhs, rhs, target} => format!("{2} <= {0} < {1} (int)", lhs, rhs, target),
             &Op::IntLessThan{lhs, rhs, target} => format!("{2} <= {0} <= {1} (int)", lhs, rhs, target),
-            &Op::LoadFunc{func_index, target} => format!("{1} <= func[{0}]", func_index, target),
             &Op::Noop{} => format!("noop"),
             &Op::StringLoad{register, ref constant} => format!("{0} <= {1} (String)", register, constant),
             &Op::Return{register} => format!("return {0}", register),

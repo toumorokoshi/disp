@@ -1,7 +1,5 @@
 use std::thread;
-use std::time::{Instant};
-use test::Bencher;
-use serde_json::{Value, Error};
+use serde_json::{Error};
 use serde_json;
 use spmc;
 static BENCH_STRING: &'static str = "{\"name\": \"fred\", \"age\": 10}";

@@ -1,16 +1,17 @@
+use std::sync::Arc;
 use futures::{Async, Future};
-use super::{Function, ValueList, VMHandle};
+use super::{ValueList, VMFunction, VMHandle};
 
 
 /// Tasks represent a single fiber on the vm.
 pub struct Fiber {
     registerCount: usize,
-    function: Function,
+    function: Arc<VMFunction>,
     vm: VMHandle
 }
 
 impl Fiber {
-    pub fn new(registerCount: usize, function: Function, vm: VMHandle) -> Fiber {
+    pub fn new(registerCount: usize, function: Arc<VMFunction>, vm: VMHandle) -> Fiber {
         Fiber{
             registerCount: registerCount,
             function: function,

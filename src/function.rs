@@ -8,25 +8,11 @@ use super::{
     Type,
     Value,
     ValueList,
-    VM,
     VMHandle
 };
 
 pub type NativeFunction = fn(&mut ValueList) -> Value;
 
-#[derive(Clone)]
-pub enum Function {
-    VM(Arc<VMFunction>),
-    Native(Arc<NativeFunction>) }
-
-impl Function {
-    pub fn execute(&self, vm: &VMHandle, mut args: ValueList) -> Value {
-        match self {
-            &Function::VM(ref func) => func.execute(vm, args),
-            &Function::Native(ref func) => func(&mut args),
-        }
-    }
-}
 
 pub struct VMFunction {
     pub registers: Vec<Type>,
@@ -90,13 +76,16 @@ impl VMFunction {
                         i = if_false - 1;
                     }
                 },
-                &Op::Call{ref func, ref args, target} => {
+                &Op::CallNative{function, ref args, target} => {
                     let mut args_to_pass = Vec::new();
                     for index in args {
                         args_to_pass.push(registers[*index]);
                     }
                     // TODO: handle nested calls
-                    registers[target] = func.execute(vm, args_to_pass);
+                    unsafe {
+                        let func = mem::transmute::<i64, Arc<VMFunction>>(registers[function]);
+                        registers[target] = func.execute(vm, args_to_pass);
+                    }
                 },
                 &Op::IntAdd{lhs, rhs, target} => registers[target] = registers[lhs] + registers[rhs],
                 &Op::IntCmp{lhs, rhs, target} => registers[target] = if registers[lhs] == registers[rhs] {1} else {0},
@@ -151,11 +140,13 @@ impl VMFunction {
                         mem::transmute::<i64, f64>(registers[rhs])
                     { 1 } else { 0 };
                 },
+                &Op::FunctionNativeLoad{func_index, target} => unsafe {
+                    let func = vm.heap.functions_native[func_index].clone();
+                    registers[target] =
+                        mem::transmute::<Arc<VMFunction>, i64>(func);
+                },
                 &Op::Goto{position} => {
                     i = position - 1;
-                },
-                &Op::LoadFunc{func_index, target} => unsafe {
-                    // registers[target] = mem::transmute::<Function, i64>(vm)
                 },
                 &Op::Noop{} => {},
                 // TODO: incomplete. ends up as the null pointer right now.
