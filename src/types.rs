@@ -15,6 +15,7 @@ pub enum Type {
     Float,
     Array(Box<Type>),
     FunctionNative,
+    FunctionVM,
     None
 }
 
@@ -25,6 +26,7 @@ impl fmt::Display for Type {
             &Type::Int => write!(f, "Int"),
             &Type::Float => write!(f, "Float"),
             &Type::FunctionNative => write!(f, "FunctionNative"),
+            &Type::FunctionVM => write!(f, "FunctionVM"),
             &Type::Array(ref t) => write!(f, "Array<{0}>", t),
             &Type::None => write!(f, "None"),
         }

@@ -149,6 +149,11 @@ impl VMFunction {
                     registers[target] =
                         mem::transmute::<Arc<NativeFunction>, i64>(func);
                 },
+                &Op::FunctionVMLoad{func_index, target} => unsafe {
+                    let func = vm.heap.functions_vm[func_index].clone();
+                    registers[target] =
+                        mem::transmute::<Arc<VMFunction>, i64>(func);
+                },
                 &Op::Goto{position} => {
                     i = position - 1;
                 },

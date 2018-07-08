@@ -8,14 +8,14 @@ use super::{VMFunction, NativeFunction};
 /// this must be passed around workers.
 pub struct Heap {
     pub functions_native: HashMap<String, Arc<NativeFunction>>,
-    pub functions_vm: HashMap<String, Arc<VMFunction>>
+    pub functions_vm: Vec<Arc<VMFunction>>
 }
 
 impl Heap {
     pub fn new() -> Heap {
         return Heap {
             functions_native: HashMap::new(),
-            functions_vm: HashMap::new()
+            functions_vm: Vec::new(),
         };
     }
 }
