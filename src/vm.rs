@@ -13,7 +13,7 @@ pub struct VM {
     // fibers, and the spawning of 1 per worker
     runtime: Runtime,
     // the heap contains all data (functions, constants, etc)
-    heap: Arc<Heap>,
+    pub heap: Arc<Heap>,
 }
 
 impl VM {

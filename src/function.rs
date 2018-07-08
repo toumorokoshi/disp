@@ -49,13 +49,17 @@ impl VMFunction {
         let mut i = 0;
         while i < self.ops.len() {
             let ref op = self.ops[i];
+            if cfg!(feature = "debug") {
+                println!("DEBUG: running op {0}", op);
+            }
             match op {
+
                 &Op::Assign{source, target} => {
                     registers[target] = registers[source];
                 },
-                &Op::ArrayCreate{target, length_source} => unsafe {},
-                &Op::ArraySet{source, target, index_source} => unsafe {},
-                &Op::ArrayLoad{source, target, index_source} => unsafe {},
+                &Op::ArrayCreate{target, length_source} => {},
+                &Op::ArraySet{source, target, index_source} => {},
+                &Op::ArrayLoad{source, target, index_source} => {},
                 &Op::BoolNot{source, target} => {
                     registers[target] = if registers[source] != 1 { 1 } else { 0 };
                 },
@@ -83,8 +87,8 @@ impl VMFunction {
                     }
                     // TODO: handle nested calls
                     unsafe {
-                        let func = mem::transmute::<i64, Arc<VMFunction>>(registers[function]);
-                        registers[target] = func.execute(vm, args_to_pass);
+                        let func = mem::transmute::<i64, Arc<NativeFunction>>(registers[function]);
+                        registers[target] = func(&mut args_to_pass);
                     }
                 },
                 &Op::IntAdd{lhs, rhs, target} => registers[target] = registers[lhs] + registers[rhs],
@@ -140,10 +144,10 @@ impl VMFunction {
                         mem::transmute::<i64, f64>(registers[rhs])
                     { 1 } else { 0 };
                 },
-                &Op::FunctionNativeLoad{func_index, target} => unsafe {
-                    let func = vm.heap.functions_native[func_index].clone();
+                &Op::FunctionNativeLoad{ref func_name, target} => unsafe {
+                    let func = vm.heap.functions_native[func_name].clone();
                     registers[target] =
-                        mem::transmute::<Arc<VMFunction>, i64>(func);
+                        mem::transmute::<Arc<NativeFunction>, i64>(func);
                 },
                 &Op::Goto{position} => {
                     i = position - 1;

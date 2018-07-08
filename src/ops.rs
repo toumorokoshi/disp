@@ -31,7 +31,7 @@ pub enum Op {
     FloatSub{lhs: usize, rhs: usize, target: usize},
     /// Load a Function from the VM's Function Table
     /// into the desired register
-    FunctionNativeLoad{func_index: usize, target: usize},
+    FunctionNativeLoad{func_name: String, target: usize},
     Goto{position: usize},
     IntAdd{lhs: usize, rhs: usize, target: usize},
     IntCmp{lhs: usize, rhs: usize, target: usize},
@@ -57,7 +57,7 @@ impl Op {
             &Op::BoolLoad{register, constant} => format!("{1} = {0}", register, constant),
             &Op::BranchTrue{condition, if_true} => format!("branch to {1} if {0} is true", condition, if_true),
             &Op::BranchFalse{condition, if_false} => format!("branch to {1} if {0} is false", condition, if_false),
-            &Op::CallNative{function, args: _, target} => format!("{0} <= native_func()", target),
+            &Op::CallNative{function, args: _, target} => format!("{1} <= [{0}]()", function, target),
             &Op::Goto{position} => format!("goto {0}", position),
             &Op::FloatAdd{lhs, rhs, target} => format!("{2} <= {0} + {1} (float)", lhs, rhs, target),
             &Op::FloatCmp{lhs, rhs, target} => format!("{2} <= {0} == {1} (float)", lhs, rhs, target),
@@ -67,7 +67,7 @@ impl Op {
             &Op::FloatLoad{register, constant} => format!("{0} <= {1} (float)", register, constant),
             &Op::FloatLessEqual{lhs, rhs, target} => format!("{2} <= {0} <= {1} (float)", lhs, rhs, target),
             &Op::FloatLessThan{lhs, rhs, target} => format!("{2} <= {0} < {1} (float)", lhs, rhs, target),
-            &Op::FunctionNativeLoad{func_index, target} => format!("{1} <= functions_native[{0}]", func_index, target),
+            &Op::FunctionNativeLoad{ref func_name, target} => format!("{1} <= functions_native[{0}]", func_name, target),
             &Op::IntAdd{lhs, rhs, target} => format!("{2} <= {0} + {1} (Int)", lhs, rhs, target),
             &Op::IntCmp{lhs, rhs, target} => format!("{2} <= {0} == {1} (Int)", lhs, rhs, target),
             &Op::IntSub{lhs, rhs, target} => format!("{2} <= {0} - {1} (Int)", lhs, rhs, target),
