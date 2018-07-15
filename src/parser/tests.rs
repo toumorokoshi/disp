@@ -1,4 +1,4 @@
-use super::preprocess;
+use super::{preprocess, parse, Token};
 
 #[test]
 fn test_preprocess() {
@@ -59,10 +59,50 @@ fn test_preprocess_dict() {
 }
 
 
-// TODO: support this case
 fn test_preprocess_list() {
     let ident_text = "[(+ 1 1)]";
     let result = preprocess(ident_text);
     println!("{}", result);
     assert_eq!(result, "[(+ 1 1)]");
+}
+
+
+#[test]
+fn test_parser_integer() {
+    let ident_text = "10";
+    let result = parse(ident_text);
+    assert_eq!(result, Token::Integer(10));
+}
+
+#[test]
+fn test_parser_str() {
+    let ident_text = "foobar";
+    let result = parse(ident_text);
+    assert_eq!(result, Token::Symbol(Box::new(String::from("foobar"))));
+}
+
+#[test]
+fn test_parser_bangsymbol() {
+    let ident_text = "!foobar";
+    let result = parse(ident_text);
+    assert_eq!(result, Token::BangSymbol(Box::new(String::from("foobar"))));
+}
+
+
+#[test]
+fn test_parser_none() {
+    let ident_text = "None";
+    let result = parse(ident_text);
+    assert_eq!(result, Token::None);
+}
+
+
+#[test]
+fn test_parser_list() {
+    let ident_text = "[ 1 10 ]";
+    let result = parse(ident_text);
+    assert_eq!(result, Token::List(vec![
+        Token::Integer(1),
+        Token::Integer(10),
+    ]));
 }

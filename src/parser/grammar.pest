@@ -1,0 +1,14 @@
+Token = _{ None | Expression | Integer | List | BangSymbol | Symbol }
+
+Expression = { "(" ~ Whitespace? ~ TokenList ~ Whitespace? ~ ")"}
+Integer = { Digit+ }
+List = {"[" ~ Whitespace? ~ TokenList ~ Whitespace? ~ "]"}
+
+TokenList = _{ (Token ~ Whitespace?)+ }
+
+Digit = { '0'..'9' }
+None = { "None" }
+Newline = { "\n"+ }
+Symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=")+ }
+BangSymbol = { "!" ~ Symbol }
+Whitespace = _{ (" ")+ }

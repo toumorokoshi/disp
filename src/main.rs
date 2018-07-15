@@ -1,6 +1,8 @@
 #![feature(plugin)]
-#![plugin(peg_syntax_ext)]
 extern crate warpspeed;
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
 
 mod ast;
 mod parser;
@@ -13,7 +15,7 @@ use std::io::{self, Write};
 use std::fs::File;
 use std::io::prelude::*;
 use codegen::{compile};
-use parser::{parse};
+use parser::{full_parse};
 use warpspeed::{Type, VM};
 use vm::build_vm;
 
@@ -45,7 +47,7 @@ fn execute(path: &str) {
     let mut file = File::open(path).unwrap();
     let mut input = String::new();
     file.read_to_string(&mut input).unwrap();
-    let inp = parse(&input);
+    let inp = full_parse(&input);
     let func = compile(&mut vm, &inp).unwrap();
     if cfg!(feature = "debug") {
         println!("DEBUG: ops: ");
@@ -62,7 +64,7 @@ fn read() -> Token {
     let mut input = String::new();
     io::stdin().read_line(&mut input).ok().expect("Failed to read line");
     input = input.replace("\n", "");
-    parse(&input)
+    full_parse(&input)
 }
 
 

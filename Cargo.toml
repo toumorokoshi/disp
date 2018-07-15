@@ -6,6 +6,8 @@ authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
 [dependencies]
 peg = "0.5.4"
 peg-syntax-ext = "0.5.5"
+pest = "^1.0"
+pest_derive = "^1.0"
 getopts = "0.2"
 warpspeed = { path = "../warpspeed" }
 

@@ -1,7 +1,7 @@
 use std::fmt;
 use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum Token {
     List(Vec<Token>),
     Expression(Vec<Token>),
@@ -64,6 +64,12 @@ impl fmt::Display for Token {
             }
             &Token::None => write!(f, "None"),
         }
+    }
+}
+
+impl fmt::Debug for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }
 
