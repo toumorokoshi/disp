@@ -1,25 +1,62 @@
-use tokio::runtime::current_thread::{Handle, Runtime};
+use nix::{
+    sched::{sched_setaffinity, CpuSet},
+    unistd::Pid,
+};
 use super::{WorkerHeap};
+use std::{
+    rc::Rc,
+    sync::mpsc::channel,
+    thread::{spawn, JoinHandle}
+};
+use tokio::runtime::current_thread::{Handle, Runtime};
 
-
-/// Workers handle the execution of Fibers,
-/// and multiple can be associated with a single VM process.
-/// workers and it's structured cannot cross thread boundaries:
-/// it is intended to be owned by a single thread for it's lifetime.
-pub struct Worker {
-    runtime: Runtime,
-    heap: Rc<WorkerHeap>
+/// we declare the WorkerHeap as a thread local,
+/// as it's a bit difficult to wire in the WorkerHandle
+/// in the same fashion as how handlers work within Tokio
+///
+/// Executors within Tokio also rely on a few threadlocal
+/// variables, so this looks to be an ok pattern.
+thread_local! {
+    pub static WorkerHeap: Rc<WorkerHeap> = Rc::new(WorkerHeap::new());
 }
 
-/// WorkerHandles can
-pub struct WorkerHandle {
+
+/// Worker contain all objects required to
+/// interact with a specific worker.
+pub struct Worker {
+    pub thread: JoinHandle<()>,
+    pub runtime: Handle,
 }
 
 impl Worker {
-    pub fn new() -> Worker {
+    // spawn a worker in a new thread,
+    // set affinity of the worker thread to the desired
+    // cpu, and return the handle.
+    pub fn spawn(cpu_num: usize) -> Worker {
+        let (tx, rx) = channel();
+        let thread_handle = spawn(move || {
+            set_affinity(cpu_num);
+            let mut runtime = Runtime::new().unwrap();
+            {
+                tx.send(runtime.handle()).unwrap();
+            }
+            runtime.run().unwrap()
+        });
+        let runtime_handle = rx.recv().unwrap();
         return Worker {
-            runtime: Runtime::new().unwrap(),
-            heap: Rc::new(WorkerHeap::new())
+            thread: thread_handle,
+            runtime: runtime_handle,
         };
     }
+}
+
+
+/// set the thread in question to run on the cpu specified,
+/// preferably.
+fn set_affinity(cpu_num: usize) {
+    let mut cpu_set = CpuSet::new();
+    cpu_set.set(cpu_num).unwrap();
+    // setting affinity from 0 will set it for the current
+    // thread
+    sched_setaffinity(Pid::from_raw(0), &cpu_set).unwrap();
 }

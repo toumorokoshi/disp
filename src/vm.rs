@@ -34,7 +34,6 @@ impl VM {
         let ref worker = self.runtime.pool.workers[worker_id];
         let fiber = Fiber::new(
             function.clone(),
-            worker.heap.clone(),
             self.handle()
         );
         worker.runtime.spawn(fiber).unwrap();

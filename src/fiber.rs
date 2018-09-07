@@ -1,10 +1,8 @@
 use std::{
-    rc::Rc,
     sync::Arc
 };
 use futures::{Async, Future};
 use super::{
-    WorkerHeap,
     ValueList,
     VMFunction,
     VMHandle
@@ -14,19 +12,13 @@ use super::{
 /// Tasks represent a single fiber on the vm.
 pub struct Fiber {
     function: Arc<VMFunction>,
-    heap: Rc<WorkerHeap>,
     vm: VMHandle,
 }
 
 impl Fiber {
-    pub fn new(
-        function: Arc<VMFunction>,
-        heap: Rc<WorkerHeap>,
-        vm: VMHandle
-    ) -> Fiber {
-        Fiber{
+    pub fn new(function: Arc<VMFunction>, vm: VMHandle) -> Fiber {
+        Fiber {
             function: function,
-            heap: heap,
             vm: vm,
         }
     }
@@ -40,7 +32,7 @@ impl Future for Fiber {
     type Error = ();
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        let mut registers = ValueList::with_capacity(self.function.registers.len());
+        let registers = ValueList::with_capacity(self.function.registers.len());
         self.function.execute(&self.vm, registers);
         Ok(Async::Ready(()))
     }
