@@ -13,6 +13,8 @@ use ast::{Dict, Token, HashableToken};
 use std::{
     env,
     sync::Arc,
+    time::Duration,
+    thread::sleep,
 };
 use std::io::{self, Write};
 use std::fs::File;
@@ -34,15 +36,13 @@ fn repl() {
     let mut vm = build_vm();
     loop {
         let inp = read();
-        let func = compile(&mut vm, &inp).unwrap();
-        vm.submit(Arc::new(func), vec![]);
-        // let vm_result = func.execute(&vm.handle(), vec![]);
-        // let result = unpack(&func.return_type, vm_result);
-        // println!("{}", result);
-        // if cfg!(feature = "debug") {
-        //     println!("DEBUG: ops: ");
-        //     func.print_ops();
-        // }
+        let func = Arc::new(compile(&mut vm, &inp).unwrap());
+        if cfg!(feature = "debug") {
+            println!("DEBUG: ops: ");
+            func.print_ops();
+        }
+        vm.submit(func.clone(), vec![]);
+        sleep(Duration::from_millis(50));
    }
 }
 
@@ -58,9 +58,6 @@ fn execute(path: &str) {
         func.print_ops();
     }
     vm.submit(Arc::new(func), vec![])
-    // let vm_result = func.execute(&vm.handle(), vec![]);
-    // let result = unpack(&func.return_type, vm_result);
-    // println!("{}", result);
 }
 
 fn read() -> Token {
@@ -69,7 +66,7 @@ fn read() -> Token {
     let mut input = String::new();
     io::stdin().read_line(&mut input).ok().expect("Failed to read line");
     input = input.replace("\n", "");
-    full_parse(&input)
+    parse_with_print(&input)
 }
 
 
@@ -80,4 +77,13 @@ pub fn unpack(typ: &Type, value: i64) -> Token {
         &Type::None => Token::None,
         _ => Token::None
     }
+}
+
+/// Parse the body in question, and wrap in a print statement
+fn parse_with_print(body: &str) -> Token {
+    let input = full_parse(&body);
+    Token::Expression(vec![
+        Token::Symbol(Box::new(String::from("print"))),
+        input
+    ])
 }

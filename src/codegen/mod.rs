@@ -29,6 +29,7 @@ pub fn compile(vm: &mut VM, token: &Token) -> Result<VMFunction, CodegenError> {
     return Ok(context.builder.build());
 }
 
+
 fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
     match token {
         &Token::Expression(ref tl) => gen_expr(context, tl),

@@ -27,7 +27,6 @@ pub fn full_parse(body: &str) -> Token {
 fn parse(body: &str) -> Token {
     let mut pairs = DispParser::parse(Rule::Token, &body).unwrap_or_else(|e| panic!("{}", e));
     if let Some(pair) = pairs.next() {
-        println!("{}", pair);
         if cfg!(feature = "debug") {
             println!("DEBUG pest parser result: {}", pair.clone().into_span().as_str());
         }
@@ -36,7 +35,7 @@ fn parse(body: &str) -> Token {
     return Token::None;
 }
 
-// Take a pest token and return a
+/// Convert a token from the parser to a Disp token
 fn unpack(pair: Pair<Rule>) -> Token {
     match pair.clone().as_rule() {
         s @ Rule::BangSymbol => {
