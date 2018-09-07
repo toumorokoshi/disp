@@ -1,3 +1,7 @@
+use futures::{
+    Async,
+    Future,
+};
 use nix::{
     sched::{sched_setaffinity, CpuSet},
     unistd::Pid,
@@ -40,6 +44,7 @@ impl Worker {
             {
                 tx.send(runtime.handle()).unwrap();
             }
+            runtime.spawn(WorkerController{});
             runtime.run().unwrap()
         });
         let runtime_handle = rx.recv().unwrap();
@@ -59,4 +64,17 @@ fn set_affinity(cpu_num: usize) {
     // setting affinity from 0 will set it for the current
     // thread
     sched_setaffinity(Pid::from_raw(0), &cpu_set).unwrap();
+}
+
+pub struct WorkerController {
+}
+
+
+impl Future for WorkerController {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
+        Ok(Async::NotReady)
+    }
 }

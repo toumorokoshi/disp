@@ -1,7 +1,7 @@
 mod pool;
+
 use rand;
-use std::sync::Arc;
-use super::{Fiber, VMFunction};
+use super::{Fiber};
 pub use self::pool::WorkerPool;
 
 
@@ -16,11 +16,13 @@ impl Runtime {
         }
     }
 
-    /// return a random, valid worker id
     pub fn random_worker(&self) -> usize {
         rand::random::<usize>() % self.pool.len()
     }
 
     pub fn shutdown_on_idle(&self) {
+        // for i in 0..self.pool.len() {
+        //     self.pool.workers[i].handle.shutdown_on_idle();
+        // }
     }
 }
