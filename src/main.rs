@@ -10,7 +10,10 @@ mod codegen;
 mod vm;
 
 use ast::{Dict, Token, HashableToken};
-use std::{env};
+use std::{
+    env,
+    sync::Arc,
+};
 use std::io::{self, Write};
 use std::fs::File;
 use std::io::prelude::*;
@@ -32,13 +35,14 @@ fn repl() {
     loop {
         let inp = read();
         let func = compile(&mut vm, &inp).unwrap();
-        let vm_result = func.execute(&vm.handle(), vec![]);
-        let result = unpack(&func.return_type, vm_result);
-        println!("{}", result);
-        if cfg!(feature = "debug") {
-            println!("DEBUG: ops: ");
-            func.print_ops();
-        }
+        vm.submit(Arc::new(func), vec![]);
+        // let vm_result = func.execute(&vm.handle(), vec![]);
+        // let result = unpack(&func.return_type, vm_result);
+        // println!("{}", result);
+        // if cfg!(feature = "debug") {
+        //     println!("DEBUG: ops: ");
+        //     func.print_ops();
+        // }
    }
 }
 
@@ -53,9 +57,10 @@ fn execute(path: &str) {
         println!("DEBUG: ops: ");
         func.print_ops();
     }
-    let vm_result = func.execute(&vm.handle(), vec![]);
-    let result = unpack(&func.return_type, vm_result);
-    println!("{}", result);
+    vm.submit(Arc::new(func), vec![])
+    // let vm_result = func.execute(&vm.handle(), vec![]);
+    // let result = unpack(&func.return_type, vm_result);
+    // println!("{}", result);
 }
 
 fn read() -> Token {
