@@ -28,17 +28,16 @@ impl VM {
         self.runtime.shutdown_on_idle();
     }
 
-    // submit a fiber for execution
-    // pub fn submit(&mut self, fiber: Fiber) {
-    //     self.runtime.submit(fiber);
-    // }
-
-    /// submit a function for execution. This is a higher-level API over
-    /// submit, handling the creation of the fiber and submitting it.
-    pub fn submit_function(&mut self, function: VMFunction, args: ValueList) {
+    /// submit a function for execution.
+    pub fn submit(&mut self, function: Arc<VMFunction>, args: ValueList) {
         let worker_id = self.runtime.random_worker();
+        let ref worker = self.runtime.pool.workers[worker_id];
         let fiber = Fiber::new(
+            function.clone(),
+            worker.heap.clone(),
+            self.handle()
         );
+        worker.runtime.spawn(fiber).unwrap();
     }
 
     // return a handle to the VM. Rather than

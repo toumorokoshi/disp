@@ -14,8 +14,8 @@ use super::{
 /// Tasks represent a single fiber on the vm.
 pub struct Fiber {
     function: Arc<VMFunction>,
-    heap: WorkerHeap,
-    vm: Rc<VMHandle>,
+    heap: Rc<WorkerHeap>,
+    vm: VMHandle,
 }
 
 impl Fiber {

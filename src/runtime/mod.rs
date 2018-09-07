@@ -6,7 +6,7 @@ pub use self::pool::WorkerPool;
 
 
 pub struct Runtime {
-    pool: WorkerPool,
+    pub pool: WorkerPool,
 }
 
 impl Runtime {
@@ -16,19 +16,9 @@ impl Runtime {
         }
     }
 
-    /// submit a function to a random worker
-    pub fn submit(&self, function: Arc<VMFunction>) {
-        let worker_id = rand::random::<usize>() % self.pool.len();
-        self.submit_to_worker(worker_id, function);
-    }
-
-    /// submit a function to a specific worker
-    pub fn submit_to_worker(&self, worker_id: usize, function: Arc<VMFunction>) {
-        let ref worker = self.pool.workers[worker_id];
-        let fiber = Fiber::new(
-            function: function.clone(),
-        );
-        worker.runtime.spawn(fiber).unwrap()
+    /// return a random, valid worker id
+    pub fn random_worker(&self) -> usize {
+        rand::random::<usize>() % self.pool.len()
     }
 
     pub fn shutdown_on_idle(&self) {
