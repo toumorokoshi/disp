@@ -4,11 +4,13 @@ use nix::{
     unistd::Pid,
 };
 use std::{
-    thread::{spawn, JoinHandle},
+    rc::Rc,
     sync::mpsc::channel,
+    thread::{spawn, JoinHandle},
     vec::Vec
 };
 use tokio::runtime::current_thread::{Handle, Runtime};
+use super::super::{WorkerHeap};
 
 /// The pool is responsible for owning the reactors
 /// themselves.
@@ -18,7 +20,8 @@ pub struct WorkerPool {
 
 pub struct WorkerHandle {
     pub thread: JoinHandle<()>,
-    pub runtime: Handle
+    pub runtime: Handle,
+    pub heap: Rc<WorkerHeap>,
 }
 
 impl WorkerPool {
@@ -38,7 +41,8 @@ impl WorkerPool {
             let runtime_handle = rx.recv().unwrap();
             workers.push(WorkerHandle {
                 thread: thread_handle,
-                runtime: runtime_handle
+                runtime: runtime_handle,
+                heap: Rc::new(WorkerHeap::new()),
             });
         }
         return WorkerPool {

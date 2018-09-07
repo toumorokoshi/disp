@@ -11,6 +11,7 @@ pub struct Heap {
     pub functions_vm: Vec<Arc<VMFunction>>
 }
 
+
 impl Heap {
     pub fn new() -> Heap {
         return Heap {

@@ -17,6 +17,7 @@ mod fiber;
 mod heap;
 mod ops;
 mod runtime;
+mod worker_heap;
 mod types;
 mod vm;
 mod vm_handle;
@@ -28,6 +29,7 @@ pub use function::{VMFunction, NativeFunction};
 pub use heap::{Heap};
 pub use ops::{Op, OpList};
 pub use runtime::Runtime;
+pub use worker_heap::{WorkerHeap};
 pub use types::{Type};
 pub use vm::VM;
 pub use vm_handle::VMHandle;
@@ -36,7 +38,7 @@ pub use vm_handle::VMHandle;
 #[macro_use]
 extern crate serde_derive;
 
-fn main() {
-    let mut vm_instance = vm::VM::new();
-    vm_instance.wait();
-}
+// fn main() {
+//     let mut vm_instance = vm::VM::new();
+//     vm_instance.wait();
+// }

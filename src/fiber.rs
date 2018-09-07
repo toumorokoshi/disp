@@ -1,20 +1,32 @@
-use std::sync::Arc;
+use std::{
+    rc::Rc,
+    sync::Arc
+};
 use futures::{Async, Future};
-use super::{ValueList, VMFunction, VMHandle};
+use super::{
+    WorkerHeap,
+    ValueList,
+    VMFunction,
+    VMHandle
+};
 
 
 /// Tasks represent a single fiber on the vm.
 pub struct Fiber {
-    registerCount: usize,
     function: Arc<VMFunction>,
-    vm: VMHandle
+    heap: WorkerHeap,
+    vm: Rc<VMHandle>,
 }
 
 impl Fiber {
-    pub fn new(registerCount: usize, function: Arc<VMFunction>, vm: VMHandle) -> Fiber {
+    pub fn new(
+        function: Arc<VMFunction>,
+        heap: Rc<WorkerHeap>,
+        vm: VMHandle
+    ) -> Fiber {
         Fiber{
-            registerCount: registerCount,
             function: function,
+            heap: heap,
             vm: vm,
         }
     }
@@ -28,7 +40,7 @@ impl Future for Fiber {
     type Error = ();
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        let mut registers = ValueList::with_capacity(self.registerCount);
+        let mut registers = ValueList::with_capacity(self.function.registers.len());
         self.function.execute(&self.vm, registers);
         Ok(Async::Ready(()))
     }

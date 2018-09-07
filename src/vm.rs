@@ -3,6 +3,8 @@ use super::{
     Heap,
     Fiber,
     Runtime,
+    ValueList,
+    VMFunction,
     VMHandle,
 };
 
@@ -27,8 +29,16 @@ impl VM {
     }
 
     // submit a fiber for execution
-    pub fn submit(&mut self, fiber: Fiber) {
-        self.runtime.submit(fiber);
+    // pub fn submit(&mut self, fiber: Fiber) {
+    //     self.runtime.submit(fiber);
+    // }
+
+    /// submit a function for execution. This is a higher-level API over
+    /// submit, handling the creation of the fiber and submitting it.
+    pub fn submit_function(&mut self, function: VMFunction, args: ValueList) {
+        let worker_id = self.runtime.random_worker();
+        let fiber = Fiber::new(
+        );
     }
 
     // return a handle to the VM. Rather than
