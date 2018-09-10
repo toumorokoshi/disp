@@ -6,24 +6,11 @@ use nix::{
     sched::{sched_setaffinity, CpuSet},
     unistd::Pid,
 };
-use super::{WorkerHeap};
 use std::{
-    rc::Rc,
     sync::mpsc::channel,
     thread::{spawn, JoinHandle}
 };
 use tokio::runtime::current_thread::{Handle, Runtime};
-
-/// we declare the WorkerHeap as a thread local,
-/// as it's a bit difficult to wire in the WorkerHandle
-/// in the same fashion as how handlers work within Tokio
-///
-/// Executors within Tokio also rely on a few threadlocal
-/// variables, so this looks to be an ok pattern.
-thread_local! {
-    pub static WorkerHeap: Rc<WorkerHeap> = Rc::new(WorkerHeap::new());
-}
-
 
 /// Worker contain all objects required to
 /// interact with a specific worker.

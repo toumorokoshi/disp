@@ -6,12 +6,13 @@ use super::{
     Op,
     OpList,
     Type,
+    WorkerHeap,
     Value,
     ValueList,
     VMHandle
 };
 
-pub type NativeFunction = fn(&mut ValueList) -> Value;
+pub type NativeFunction = fn(vm: &VMHandle, &mut WorkerHeap, &mut ValueList) -> Value;
 
 
 pub struct VMFunction {
@@ -37,7 +38,7 @@ impl VMFunction {
         }
     }
 
-    pub fn execute(&self, vm: &VMHandle, mut args: ValueList) -> Value {
+    pub fn execute(&self, vm: &VMHandle, worker_heap: &mut WorkerHeap, mut args: ValueList) -> Value {
         let target_size = args.len() + self.registers.len();
         args.resize(target_size, 0);
         // TODO: once rust supports allocating
@@ -88,7 +89,7 @@ impl VMFunction {
                     // TODO: handle nested calls
                     unsafe {
                         let func = mem::transmute::<i64, Arc<NativeFunction>>(registers[function]);
-                        registers[target] = func(&mut args_to_pass);
+                        registers[target] = func(&vm, worker_heap, &mut args_to_pass);
                     }
                 },
                 &Op::IntAdd{lhs, rhs, target} => registers[target] = registers[lhs] + registers[rhs],

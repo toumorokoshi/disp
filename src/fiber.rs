@@ -5,7 +5,8 @@ use futures::{Async, Future};
 use super::{
     ValueList,
     VMFunction,
-    VMHandle
+    VMHandle,
+    WORKER_HEAP
 };
 
 
@@ -33,7 +34,9 @@ impl Future for Fiber {
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
         let registers = ValueList::with_capacity(self.function.registers.len());
-        self.function.execute(&self.vm, registers);
+        WORKER_HEAP.with(|worker_heap| {
+            self.function.execute(&self.vm, &mut worker_heap.borrow_mut(), registers);
+        });
         Ok(Async::Ready(()))
     }
 }

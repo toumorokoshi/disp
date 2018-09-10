@@ -31,7 +31,7 @@ pub use heap::{Heap};
 pub use ops::{Op, OpList};
 pub use runtime::Runtime;
 pub use worker::{Worker};
-pub use worker_heap::{WorkerHeap};
+pub use worker_heap::{WorkerHeap, WORKER_HEAP};
 pub use types::{Type};
 pub use vm::VM;
 pub use vm_handle::VMHandle;

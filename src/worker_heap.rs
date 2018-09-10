@@ -1,5 +1,19 @@
-use std::collections::HashMap;
+use std::{
+    cell::RefCell,
+    collections::HashMap,
+};
 use super::{Value};
+
+/// we declare the WorkerHeap as a thread local,
+/// as it's a bit difficult to wire in the WorkerHandle
+/// in the same fashion as how handlers work within Tokio
+///
+/// Executors within Tokio also rely on a few threadlocal
+/// variables, so this looks to be an ok pattern.
+thread_local! {
+    pub static WORKER_HEAP: RefCell<WorkerHeap> = RefCell::new(WorkerHeap::new());
+}
+
 
 /// The thread heap stores references to values that are allocated in a specific thread
 /// (such as reading a string from an input).
