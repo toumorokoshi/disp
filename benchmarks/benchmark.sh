@@ -16,13 +16,13 @@ time {
 }
 fi
 
-if [ -e "./benchmarks/$SCRIPT/$SCRIPT.gh" ]; then
+if [ -e "./benchmarks/$SCRIPT/$SCRIPT.ds" ]; then
 echo
 echo
-echo "Greyhawk:"
+echo "Disp:"
 time {
     for run in {1..$COUNT}; do
-        ./target/debug/greyhawk ./benchmarks/$SCRIPT/$SCRIPT.gh > /dev/null
+        ./target/release/disp ./benchmarks/$SCRIPT/$SCRIPT.ds > /dev/null
     done
 }
 fi
