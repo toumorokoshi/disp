@@ -1,7 +1,13 @@
 use std::sync::Arc;
 use warpspeed::{VM, VMFunction};
 mod functions;
-use self::functions::{print, print_string, read_line};
+use self::functions::{
+    int,
+    print,
+    print_string,
+    read_line,
+    set
+};
 
 /// build a specialized VM for disp, containing
 /// some builtins
@@ -12,6 +18,8 @@ pub fn build_vm() -> VM {
             heap.functions_native.insert(String::from("print"), Arc::new(print));
             heap.functions_native.insert(String::from("print-string"), Arc::new(print_string));
             heap.functions_native.insert(String::from("read-line"), Arc::new(read_line));
+            heap.functions_native.insert(String::from("Set"), Arc::new(set));
+            heap.functions_native.insert(String::from("Int"), Arc::new(int));
         },
         None => { panic!("unable to warmup vm");}
     }

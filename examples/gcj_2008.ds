@@ -1,1 +1,7 @@
-print-string (read-line)
+# let n 2
+# mut i 0
+# while (!= i n)
+#   let n (Set)
+#   print i
+print (Int (read-line))
+# print-string (read-line)
