@@ -18,7 +18,7 @@ pub fn read_line(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> 
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
     heap.strings.insert(0, input.clone());
-    println!("output: {}", input);
+    println!("{}", input);
     0
 }
 

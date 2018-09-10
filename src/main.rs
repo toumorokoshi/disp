@@ -57,7 +57,8 @@ fn execute(path: &str) {
         println!("DEBUG: ops: ");
         func.print_ops();
     }
-    vm.submit(Arc::new(func), vec![])
+    vm.submit(Arc::new(func), vec![]);
+    sleep(Duration::from_millis(50));
 }
 
 fn read() -> Token {

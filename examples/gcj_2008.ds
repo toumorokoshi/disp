@@ -1,1 +1,1 @@
-read-line
+print (read-line)
