@@ -74,53 +74,29 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         "while" => while_production as Production,
         "match" => match_production as Production,
         "fn" => function_production as Production,
-        "print" => {
-            let result = context.builder.allocate_local(&Type::None);
-            let function = context.builder.allocate_local(&Type::FunctionNative);
-            let print_arg = try!(gen_token(context, &args[0]));
-            let args = vec![print_arg.register];
-            context.builder.ops.push(Op::FunctionNativeLoad{
-                func_name: String::from("print"),
-                target: function.register,
-            });
-            context.builder.ops.push(Op::CallNative{
-                function: function.register,
-                args: args,
-                target: result.register,
-            });
-            return Ok(Object{typ: Type::None, register: 0});
-        },
-        "print-string" => {
-            let result = context.builder.allocate_local(&Type::None);
-            let function = context.builder.allocate_local(&Type::FunctionNative);
-            let print_arg = try!(gen_token(context, &args[0]));
-            let args = vec![print_arg.register];
-            context.builder.ops.push(Op::FunctionNativeLoad{
-                func_name: String::from("print-string"),
-                target: function.register,
-            });
-            context.builder.ops.push(Op::CallNative{
-                function: function.register,
-                args: args,
-                target: result.register,
-            });
-            return Ok(Object{typ: Type::None, register: 0});
-        },
-        "read-line" => {
-            let result = context.builder.allocate_local(&Type::None);
-            let function = context.builder.allocate_local(&Type::FunctionNative);
-            context.builder.ops.push(Op::FunctionNativeLoad{
-                func_name: String::from("read-line"),
-                target: function.register,
-            });
-            context.builder.ops.push(Op::CallNative{
-                function: function.register,
-                args: vec![],
-                target: result.register,
-            });
-            return Ok(Object{typ: Type::None, register: 0});
-        },
-        _ => {return Err(String::from("no function found."))}
+        symbol => {
+            if context.vm.heap.functions_native.contains_key(symbol) {
+                let result = context.builder.allocate_local(&Type::None);
+                let function = context.builder.allocate_local(&Type::FunctionNative);
+                let mut vm_args = Vec::with_capacity(args.len());
+                for a in args {
+                    let vm_a = try!(gen_token(context, a));
+                    vm_args.push(vm_a.register);
+                }
+                context.builder.ops.push(Op::FunctionNativeLoad{
+                    func_name: String::from(symbol),
+                    target: function.register,
+                });
+                context.builder.ops.push(Op::CallNative{
+                    function: function.register,
+                    args: vm_args,
+                    target: result.register,
+                });
+                return Ok(Object{typ: Type::None, register: 0});
+            } else {
+                return Err(String::from("no function found."));
+            }
+        }
     };
     return func(context, args);
 }
