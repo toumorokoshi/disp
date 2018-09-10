@@ -2,7 +2,7 @@ mod builtins;
 mod core;
 mod error;
 
-use warpspeed::{Op, Type, VM, VMFunction};
+use warpspeed::{Op, Type, WORKER_HEAP, VM, VMFunction};
 use self::builtins::{
     equals_production,
     function_production,
@@ -54,9 +54,11 @@ fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult 
         let ref mut vm = context.vm;
         try!(compile(vm, &Token::Expression(owned_args)))
     };
-    let result = func.execute(&context.vm.handle(), vec![]);
+    let result = WORKER_HEAP.with(|worker_heap| {
+        func.execute(&context.vm.handle(), &mut worker_heap.borrow_mut(),vec![])
+    });
     let value = context.builder.load_value(&func.return_type, result);
-    Ok(Object::from_build_object(value))
+    return Ok(Object::from_build_object(value));
 }
 
 fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> CodegenResult {
@@ -83,6 +85,20 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
             context.builder.ops.push(Op::CallNative{
                 function: function.register,
                 args: args,
+                target: result.register,
+            });
+            return Ok(Object{typ: Type::None, register: 0});
+        },
+        "read-line" => {
+            let result = context.builder.allocate_local(&Type::None);
+            let function = context.builder.allocate_local(&Type::FunctionNative);
+            context.builder.ops.push(Op::FunctionNativeLoad{
+                func_name: String::from("read-line"),
+                target: function.register,
+            });
+            context.builder.ops.push(Op::CallNative{
+                function: function.register,
+                args: vec![],
                 target: result.register,
             });
             return Ok(Object{typ: Type::None, register: 0});

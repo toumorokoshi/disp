@@ -1,10 +1,24 @@
 /// contains built in functions
-use warpspeed::{Value, ValueList};
+use warpspeed::{
+    VMHandle,
+    WorkerHeap,
+    Value,
+    ValueList
+};
 use std::io::{self, Read};
 
 
-pub fn print(args: &mut ValueList) -> Value {
+pub fn print(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
     println!("{0}", args[0]);
+    0
+}
+
+
+pub fn read_line(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    heap.strings.insert(0, input.clone());
+    println!("output: {}", input);
     0
 }
 

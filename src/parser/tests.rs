@@ -27,6 +27,8 @@ fn test_preprocess_empty_line() {
 }
 
 
+// TODO: include comments as part of the AST.
+// this helps a lot during rewriting.
 #[test]
 fn test_remove_comments() {
     let ident_text = r#"print 1
@@ -75,10 +77,11 @@ fn test_parser_integer() {
 }
 
 #[test]
-fn test_parser_str() {
-    let ident_text = "foobar";
-    let result = parse(ident_text);
+fn test_parser_symbol() {
+    let result = parse("foobar");
     assert_eq!(result, Token::Symbol(Box::new(String::from("foobar"))));
+    let result2 = parse("foobar-with-dash");
+    assert_eq!(result2, Token::Symbol(Box::new(String::from("foobar-with-dash"))));
 }
 
 #[test]
