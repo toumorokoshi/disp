@@ -90,6 +90,22 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
             });
             return Ok(Object{typ: Type::None, register: 0});
         },
+        "print-string" => {
+            let result = context.builder.allocate_local(&Type::None);
+            let function = context.builder.allocate_local(&Type::FunctionNative);
+            let print_arg = try!(gen_token(context, &args[0]));
+            let args = vec![print_arg.register];
+            context.builder.ops.push(Op::FunctionNativeLoad{
+                func_name: String::from("print-string"),
+                target: function.register,
+            });
+            context.builder.ops.push(Op::CallNative{
+                function: function.register,
+                args: args,
+                target: result.register,
+            });
+            return Ok(Object{typ: Type::None, register: 0});
+        },
         "read-line" => {
             let result = context.builder.allocate_local(&Type::None);
             let function = context.builder.allocate_local(&Type::FunctionNative);
