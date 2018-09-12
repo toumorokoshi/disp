@@ -100,7 +100,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                     args: vm_args,
                     target: result.register,
                 });
-                return Ok(Object{typ: Type::None, register: 0});
+                return Ok(Object{typ: Type::Int, register: result.register});
             } else {
                 return Err(String::from("no function found."));
             }

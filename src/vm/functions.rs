@@ -11,13 +11,13 @@ use std::io::{self, Read};
 /// Cast a string to an integer
 pub fn int(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
     let int_as_string = heap.strings[args[0] as usize].clone();
-    println!("{}", &int_as_string);
     return int_as_string.parse::<i64>().unwrap();
 }
 
 
 pub fn print(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
     println!("{0}", args[0]);
+    return (heap.strings.len() - 1) as Value;
     return 0
 }
 
@@ -37,12 +37,12 @@ pub fn read_line(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> 
         Ok(n) => {
             input.pop();
             heap.strings.push(input);
+            return (heap.strings.len() - 1) as Value;
         },
         Err(e) => {
             panic!("{}", e);
         }
     }
-    return (heap.strings.len() - 1) as Value;
 }
 
 pub fn set(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
