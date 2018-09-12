@@ -2,7 +2,7 @@ use std::{
     cell::RefCell,
     collections::HashMap,
 };
-use super::{Value};
+use super::{Type, Value};
 
 /// we declare the WorkerHeap as a thread local,
 /// as it's a bit difficult to wire in the WorkerHandle
@@ -30,13 +30,14 @@ thread_local! {
 ///
 /// TODO: figure out how to graduate strings or move them among workers.
 pub struct WorkerHeap {
-    pub strings: HashMap<Value, String>,
+    // pub object_types: Vec<Type>,
+    pub strings: Vec<String>
 }
 
 impl WorkerHeap {
     pub fn new() -> WorkerHeap {
         return WorkerHeap {
-            strings: HashMap::new()
+            strings: vec![]
         };
     }
 }

@@ -8,7 +8,7 @@ MOV <s:REG> <t:REG>, copy a value from s to t
 
  */
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Op {
     ArrayCreate{target: usize, length_source: usize},
     ArraySet{source: usize, target: usize, index_source: usize},
@@ -58,7 +58,9 @@ impl Op {
             &Op::BoolLoad{register, constant} => format!("{1} = {0}", register, constant),
             &Op::BranchTrue{condition, if_true} => format!("branch to {1} if {0} is true", condition, if_true),
             &Op::BranchFalse{condition, if_false} => format!("branch to {1} if {0} is false", condition, if_false),
-            &Op::CallNative{function, args: _, target} => format!("{1} <= [{0}]()", function, target),
+            &Op::CallNative{function, ref args, target} => {
+                format!("{1} <= [{0}]({2:?})", function, target, args)
+            }
             &Op::Goto{position} => format!("goto {0}", position),
             &Op::FloatAdd{lhs, rhs, target} => format!("{2} <= {0} + {1} (float)", lhs, rhs, target),
             &Op::FloatCmp{lhs, rhs, target} => format!("{2} <= {0} == {1} (float)", lhs, rhs, target),

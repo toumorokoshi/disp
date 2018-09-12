@@ -8,7 +8,7 @@
 /// where fields that fit inside a word can be compacted.
 use std::fmt;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Type {
     Bool,
     Int,

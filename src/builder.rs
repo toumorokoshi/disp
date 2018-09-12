@@ -3,12 +3,14 @@
 use super::{VMFunction, Type, OpList, Op};
 use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BuildObject {
     pub typ: Type, // the type of object
     pub register: usize // the register where the object lives
 }
 
+
+#[derive(Debug)]
 pub struct FunctionBuilder {
     pub registers: Vec<Type>,
     pub ops: OpList,
