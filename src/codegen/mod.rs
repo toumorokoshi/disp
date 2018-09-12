@@ -49,11 +49,19 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
 }
 
 fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult {
+    if cfg!(feature = "debug") {
+        println!("DEBUG running expression: {}", name);
+    }
     let mut owned_args = args.to_owned();
     owned_args.insert(0, Token::Symbol(Box::new(String::from(name))));
     let func = {
         let ref mut vm = context.vm;
-        try!(compile(vm, &Token::Expression(owned_args)))
+        match compile(vm, &Token::Expression(owned_args.clone())) {
+            Ok(func) => func,
+            Err(details) => {
+                return Err(format!("unable to execute expression on compile time: {:?}, {:?}", owned_args, details));
+            }
+        }
     };
     let result = WORKER_HEAP.with(|worker_heap| {
         func.execute(&context.vm.handle(), &mut worker_heap.borrow_mut(),vec![])
@@ -66,7 +74,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
     let func: Production = match func_name {
         "=" => equals_production as Production,
         "if" => if_production as Production,
-        "!=" => not_equals_production as Production,
+        "neq" => not_equals_production as Production,
         "+" => plus_production as Production,
         "-" => minus_production as Production,
         "const" => const_production as Production,

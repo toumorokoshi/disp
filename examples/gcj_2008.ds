@@ -1,7 +1,11 @@
+mut n (Int (read-line))
+mut i 0
+while (neq i n)
+	print n
+# print n
 # let n 2
 # mut i 0
 # while (!= i n)
 #   let n (Set)
 #   print i
-print (Int (read-line))
 # print-string (read-line)

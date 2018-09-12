@@ -35,7 +35,6 @@ pub fn read_line(vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> 
     let mut input = String::new();
     match io::stdin().read_line(&mut input) {
         Ok(n) => {
-            println!("{} bytes read", n);
             input.pop();
             heap.strings.push(input);
         },

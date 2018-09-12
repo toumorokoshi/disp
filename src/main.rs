@@ -42,7 +42,7 @@ fn repl() {
             func.print_ops();
         }
         vm.submit(func.clone(), vec![]);
-        sleep(Duration::from_millis(50));
+        sleep(Duration::from_millis(1000));
    }
 }
 
@@ -58,7 +58,7 @@ fn execute(path: &str) {
         func.print_ops();
     }
     vm.submit(Arc::new(func), vec![]);
-    sleep(Duration::from_millis(50));
+    sleep(Duration::from_millis(1000));
 }
 
 fn read() -> Token {
