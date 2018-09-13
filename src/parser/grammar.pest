@@ -1,14 +1,16 @@
-Token = _{ None | Expression | Integer | List | BangSymbol | Symbol }
+token = _{ none | expression | integer | list | bang_symbol | symbol }
 
-Expression = { "(" ~ Whitespace? ~ TokenList ~ Whitespace? ~ ")"}
-Integer = { Digit+ }
-List = {"[" ~ Whitespace? ~ TokenList ~ Whitespace? ~ "]"}
+expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
+integer = { digit+ }
+list = {"[" ~ delimiter? ~ token_list ~ delimiter? ~ "]"}
 
-TokenList = _{ (Token ~ Whitespace?)+ }
+token_list = _{ (token ~ delimiter?)+ }
 
-Digit = { '0'..'9' }
-None = { "None" }
-Newline = { "\n"+ }
-Symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=" | "-")+ }
-BangSymbol = { "!" ~ Symbol }
-Whitespace = _{ (" ")+ }
+digit = { '0'..'9' }
+none = { "None" }
+newline = { "\n"+ }
+symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=" | "-")+ }
+bang_symbol = { "!" ~ symbol }
+// this rule is not named 'whitespace', as that has a
+// special meaning in pest.
+delimiter = _{ (" ")+ }

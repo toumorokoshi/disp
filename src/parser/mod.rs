@@ -25,10 +25,11 @@ pub fn full_parse(body: &str) -> Token {
 }
 
 fn parse(body: &str) -> Token {
-    let mut pairs = DispParser::parse(Rule::Token, &body).unwrap_or_else(|e| panic!("{}", e));
+    let mut pairs = DispParser::parse(Rule::token, &body).unwrap_or_else(|e| panic!("{}", e));
     if let Some(pair) = pairs.next() {
         if cfg!(feature = "debug") {
-            println!("DEBUG pest parser result: {}", pair.clone().into_span().as_str());
+            println!("DEBUG pest parser result: {:?}", pair.clone());
+            println!("DEBUG pest string: {:?}", pair.clone().into_span().as_str());
         }
         return unpack(pair);
     }
@@ -38,26 +39,27 @@ fn parse(body: &str) -> Token {
 /// Convert a token from the parser to a Disp token
 fn unpack(pair: Pair<Rule>) -> Token {
     match pair.clone().as_rule() {
-        s @ Rule::BangSymbol => {
+        _s @ Rule::bang_symbol => {
             // remove leading bang
             let string = pair.as_str().chars().skip(1).collect();
             Token::BangSymbol(Box::new(string))
         },
-        i @ Rule::Integer => {
+        _i @ Rule::integer => {
+            println!("{}", pair.as_str());
             Token::Integer(pair.as_str().parse::<i64>().unwrap())
         },
-        s @ Rule::Symbol => {
+        _s @ Rule::symbol => {
             Token::Symbol(Box::new(String::from(pair.as_str())))
         },
-        n @ Rule::None => Token::None,
-        e @ Rule::Expression => {
+        _n @ Rule::none => Token::None,
+        _e @ Rule::expression => {
             let mut tokens = vec![];
             for p in pair.into_inner() {
                 tokens.push(unpack(p));
             }
             Token::Expression(tokens)
         },
-        l @ Rule::List => {
+        _l @ Rule::list => {
             let mut tokens = vec![];
             for p in pair.into_inner() {
                 tokens.push(unpack(p));
