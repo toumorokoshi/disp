@@ -1,0 +1,4 @@
+# the way to declare
+# a function.
+fn [] [(print 1)]
+# const print_something (fn [] [(print x)])

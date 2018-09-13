@@ -1,0 +1,14 @@
+mut n (Int (read-line))
+mut i 0
+while (neq i n)
+	mut s (Int (read-line))
+	mut j 0
+	while (neq j s)
+		print-string (read-line)
+		mut j (+ j 1)
+	mut q (Int (read-line))
+	mut j 0
+	while (neq j q)
+		print-string (read-line)
+		mut j (+ j 1)
+	mut i (+ i 1)
