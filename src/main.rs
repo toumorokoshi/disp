@@ -9,7 +9,7 @@ mod parser;
 mod codegen;
 mod vm;
 
-use ast::{Dict, Token, HashableToken};
+use ast::{Token, HashableToken};
 use std::{
     env,
     sync::Arc,
@@ -21,7 +21,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use codegen::{compile};
 use parser::{full_parse};
-use warpspeed::{Type, VM};
+use warpspeed::{Type};
 use vm::build_vm;
 
 fn main() {

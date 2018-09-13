@@ -1,5 +1,5 @@
 /// contains all the parsing structures of ghvm
-use super::{Token, HashableToken, Dict};
+use super::{Token};
 use pest::{
     Parser,
     iterators::Pair,
@@ -45,7 +45,6 @@ fn unpack(pair: Pair<Rule>) -> Token {
             Token::BangSymbol(Box::new(string))
         },
         _i @ Rule::integer => {
-            println!("{}", pair.as_str());
             Token::Integer(pair.as_str().parse::<i64>().unwrap())
         },
         _s @ Rule::symbol => {

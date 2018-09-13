@@ -61,14 +61,6 @@ fn test_preprocess_dict() {
 }
 
 
-fn test_preprocess_list() {
-    let ident_text = "[(+ 1 1)]";
-    let result = preprocess(ident_text);
-    println!("{}", result);
-    assert_eq!(result, "[(+ 1 1)]");
-}
-
-
 #[test]
 fn test_parser_integer() {
     let ident_text = "10";

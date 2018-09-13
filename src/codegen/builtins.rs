@@ -139,7 +139,7 @@ pub fn const_production(context: &mut Context, args: &[Token]) -> CodegenResult 
 pub fn function_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     // the first argument is a list of variables, so we pull those.
     // TODO: parse into VMFunction declaration.
-    let variables = try!(gen_token(context, &args[0]));
+    let _variables = try!(gen_token(context, &args[0]));
     let function = compile(&mut context.vm, &args[1]).unwrap();
     // add the function to the VM, so it can be referenced in bytecode.
     match Arc::get_mut(&mut context.vm.heap) {
