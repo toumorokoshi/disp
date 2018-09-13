@@ -1,9 +1,10 @@
 /// contains all the parsing structures of ghvm
-use super::{Token};
 use pest::{
     Parser,
     iterators::Pair,
 };
+use super::{Token, Map};
+use std::collections::HashMap;
 
 
 #[derive(Parser)]
@@ -64,6 +65,9 @@ fn unpack(pair: Pair<Rule>) -> Token {
                 tokens.push(unpack(p));
             }
             Token::List(tokens)
+        },
+        _m @ Rule::map => {
+            Token::Map(Box::new(HashMap::new()))
         },
         _ => { Token::None }
     }

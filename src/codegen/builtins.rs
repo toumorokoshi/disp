@@ -160,7 +160,7 @@ pub fn function_production(context: &mut Context, args: &[Token]) -> CodegenResu
 pub fn match_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let var_to_match = try!(gen_token(context, &args[0]));
     match &args[1] {
-        &Token::Dict(ref d) => {
+        &Token::Map(ref d) => {
             let condition_temp = context.builder.allocate_local(&Type::Bool);
             let result = context.builder.allocate_local(&Type::Int);
             let pairs: Vec<(&HashableToken, &Token)> = d.iter().collect();

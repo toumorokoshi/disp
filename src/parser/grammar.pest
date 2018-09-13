@@ -1,4 +1,4 @@
-token = _{ none | expression | integer | list | bang_symbol | symbol }
+token = _{ none | expression | integer | list | bang_symbol | symbol | map }
 
 expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
 integer = { digit+ }
@@ -14,3 +14,4 @@ bang_symbol = { "!" ~ symbol }
 // this rule is not named 'whitespace', as that has a
 // special meaning in pest.
 delimiter = _{ (" ")+ }
+map = { "{" ~ delimiter? ~ "}" }

@@ -1,4 +1,4 @@
-use super::{preprocess, parse, Token};
+use super::{preprocess, parse, Token, Map};
 
 #[test]
 fn test_preprocess() {
@@ -100,4 +100,13 @@ fn test_parser_list() {
         Token::Integer(1),
         Token::Integer(10),
     ]));
+}
+
+
+#[test]
+fn test_parser_map() {
+    assert_eq!(
+        parse("{}"),
+        Token::Map(Box::new(Map::new()))
+    );
 }

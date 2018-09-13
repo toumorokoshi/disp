@@ -5,7 +5,7 @@ use std::collections::HashMap;
 pub enum Token {
     List(Vec<Token>),
     Expression(Vec<Token>),
-    Dict(Box<Dict>),
+    Map(Box<Map>),
     Symbol(Box<String>),
     BangSymbol(Box<String>),
     Integer(i64),
@@ -32,7 +32,7 @@ impl HashableToken {
     }
 }
 
-pub type Dict = HashMap<HashableToken, Token>;
+pub type Map = HashMap<HashableToken, Token>;
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -55,7 +55,7 @@ impl fmt::Display for Token {
             &Token::Symbol(ref s) => write!(f, "{}", s),
             &Token::Integer(i) => write!(f, "{}", i),
             &Token::Boolean(b) => write!(f, "{}", b),
-            &Token::Dict(ref d) => {
+            &Token::Map(ref d) => {
                 try!(write!(f, "{{"));
                 for (key, value) in d.iter() {
                     try!(write!(f, "{}: {}", key, value));

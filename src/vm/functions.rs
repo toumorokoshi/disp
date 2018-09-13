@@ -44,6 +44,7 @@ pub fn read_line(_vm: &VMHandle, heap: &mut WorkerHeap, _args: &mut ValueList) -
     }
 }
 
+// create and return a set? maybe we can start with a map...
 pub fn set(_vm: &VMHandle, _heap: &mut WorkerHeap, _args: &mut ValueList) -> Value {
     0
 }

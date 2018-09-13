@@ -35,7 +35,7 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
         &Token::Expression(ref tl) => gen_expr(context, tl),
         &Token::List(ref tl) => gen_list(context, tl),
         // TODO: represent dictionaries in the VM
-        &Token::Dict(_) => Ok(add_int(context, 0)),
+        &Token::Map(_) => Ok(add_int(context, 0)),
         &Token::Symbol(ref s) => evaluate_symbol(context, s),
         &Token::BangSymbol(ref s) => Err(format!("bang symbol {} found for non-expr", s)),
         &Token::Integer(i) => Ok(add_int(context, i)),
