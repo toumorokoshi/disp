@@ -35,7 +35,7 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
         &Token::Expression(ref tl) => gen_expr(context, tl),
         &Token::List(ref tl) => gen_list(context, tl),
         // TODO: represent dictionaries in the VM
-        &Token::Map(_) => Ok(add_int(context, 0)),
+        &Token::Map(_) => Ok(create_map(context)),
         &Token::Symbol(ref s) => evaluate_symbol(context, s),
         &Token::BangSymbol(ref s) => Err(format!("bang symbol {} found for non-expr", s)),
         &Token::Integer(i) => Ok(add_int(context, i)),
@@ -141,5 +141,13 @@ fn evaluate_symbol(context: &mut Context, symbol: &String) -> CodegenResult {
 fn add_int(context: &mut Context, value: i64) -> Object {
     let obj = context.builder.allocate_local(&Type::Int);
     context.builder.ops.push(Op::IntLoad{register: obj.register, constant: value});
+    Object::from_build_object(obj)
+}
+
+fn create_map(context: &mut Context) -> Object {
+    let obj = context.builder.allocate_local(&Type::Map(
+            Box::new(Type::Int), Box::new(Type::Int)
+    ));
+    context.builder.ops.push(Op::MapCreate{target: obj.register});
     Object::from_build_object(obj)
 }
