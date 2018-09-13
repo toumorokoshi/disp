@@ -24,7 +24,7 @@ mod vm;
 mod vm_handle;
 
 pub use builder::{BuildObject, FunctionBuilder};
-pub use core::{Register, RegisterList, Value, ValueList};
+pub use core::{Map, Register, RegisterList, Value, ValueList};
 pub use fiber::{Fiber};
 pub use function::{VMFunction, NativeFunction};
 pub use heap::{Heap};

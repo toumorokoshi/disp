@@ -31,13 +31,15 @@ thread_local! {
 /// TODO: figure out how to graduate strings or move them among workers.
 pub struct WorkerHeap {
     // pub object_types: Vec<Type>,
-    pub strings: Vec<String>
+    pub strings: Vec<String>,
+    pub maps: Vec<HashMap<Value, Value>>
 }
 
 impl WorkerHeap {
     pub fn new() -> WorkerHeap {
         return WorkerHeap {
-            strings: vec![]
+            strings: vec![],
+            maps: vec![],
         };
     }
 }

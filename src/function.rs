@@ -3,6 +3,7 @@ use std::{
     sync::{Arc}
 };
 use super::{
+    Map,
     Op,
     OpList,
     Type,
@@ -157,6 +158,10 @@ impl VMFunction {
                 },
                 &Op::Goto{position} => {
                     i = position - 1;
+                },
+                &Op::MapCreate{target} => {
+                    worker_heap.maps.push(Map::new());
+                    registers[target] = worker_heap.maps.len() as Value;
                 },
                 &Op::Noop{} => {},
                 // TODO: incomplete. ends up as the null pointer right now.

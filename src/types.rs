@@ -10,24 +10,26 @@ use std::fmt;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Type {
-    Bool,
-    Int,
-    Float,
     Array(Box<Type>),
+    Bool,
+    Float,
     FunctionNative,
     FunctionVM,
-    None
+    Map(Box<Type>, Box<Type>),
+    None,
+    Int,
 }
 
 impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            &Type::Array(ref t) => write!(f, "Array<{0}>", t),
             &Type::Bool => write!(f, "Bool"),
-            &Type::Int => write!(f, "Int"),
             &Type::Float => write!(f, "Float"),
             &Type::FunctionNative => write!(f, "FunctionNative"),
             &Type::FunctionVM => write!(f, "FunctionVM"),
-            &Type::Array(ref t) => write!(f, "Array<{0}>", t),
+            &Type::Int => write!(f, "Int"),
+            &Type::Map(ref key, ref value) => write!(f, "Map<{0}, {1}>", key, value),
             &Type::None => write!(f, "None"),
         }
     }
