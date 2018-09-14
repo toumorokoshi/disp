@@ -38,7 +38,7 @@ pub fn minus_production(context: &mut Context, args: &[Token]) -> CodegenResult 
 pub fn equals_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     let lhs = try!(ensure_type!(Type::Int, try!(gen_token(context, &args[0]))));
     let rhs = try!(ensure_type!(Type::Int, try!(gen_token(context, &args[1]))));
-    let obj = context.builder.allocate_local(&Type::Int);
+    let obj = context.builder.allocate_local(&Type::Bool);
     context.builder.ops.push(Op::IntCmp{
         lhs: lhs.register, rhs: rhs.register, target: obj.register
     });
@@ -77,8 +77,10 @@ pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     context.builder.ops.push(Op::Noop{});
     // false block
     let false_index = context.builder.ops.len();
-    let false_result = try!(gen_token(context, &args[2]));
-    context.builder.ops.push(Op::Assign{source: false_result.register, target: return_value.register});
+    if args.len() > 2 {
+        let false_result = try!(gen_token(context, &args[2]));
+        context.builder.ops.push(Op::Assign{source: false_result.register, target: return_value.register});
+    }
     context.builder.ops[branch_index] = Op::BranchFalse{condition: condition.register, if_false: false_index};
     context.builder.ops[goto_index] = Op::Goto{position: context.builder.ops.len()};
     return Ok(Object{typ: Type::Int, register: return_value.register});

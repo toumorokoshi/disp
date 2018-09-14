@@ -9,7 +9,7 @@ mod parser;
 mod codegen;
 mod vm;
 
-use ast::{Map, Token, HashableToken};
+use ast::{Token, HashableToken};
 use std::{
     env,
     sync::Arc,

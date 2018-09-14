@@ -7,7 +7,7 @@ while (neq i n)
 	while (neq j s)
 		mut e (read-line)
 		# print-string e
-		add possible-engines e True
+		add possible-engines e true
 		# print-string (read-line)
 		mut j (+ j 1)
 	mut q (Int (read-line))
@@ -17,13 +17,13 @@ while (neq i n)
 	while (neq j q)
 		mut e (read-line)
 		# print-string e
-		add seen-engines e True
-		#print (count seen-engines)
-		#print j
+		add seen-engines e true
+		# print (count seen-engines)
+		# print j
 		if (eq (count seen-engines) (count possible-engines))
 			mut seen-engines {}
 			mut switches (+ switches 1)
 		mut j (+ j 1)
 	mut i (+ i 1)
-	# print i
-	# print switches
+	print i
+	print switches

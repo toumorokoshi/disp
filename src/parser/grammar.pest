@@ -1,6 +1,9 @@
 token = _{
-  none | expression | integer | list | bang_symbol |
-  symbol | map | true_value | false_value 
+  none | expression | integer | list |
+  // ordering is important! symbol must come after
+  // any literals in the parser, or symbol will match first.
+  // e.j. "true" will be a symbol if the rule is after symbol.
+  bang_symbol | true_value | false_value | symbol | map
 }
 
 expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
