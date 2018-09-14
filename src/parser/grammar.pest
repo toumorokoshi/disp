@@ -15,3 +15,5 @@ bang_symbol = { "!" ~ symbol }
 // special meaning in pest.
 delimiter = _{ (" ")+ }
 map = { "{" ~ delimiter? ~ "}" }
+true = { "true" }
+false = { "false" }

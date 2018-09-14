@@ -1,6 +1,6 @@
 # codename: DISP
 
-DISP is an expiremential programming language, with the goal of
+DISP is an experimental programming language, with the goal of
 providing metaprogramming without significant sacrifices to
 performance.
 

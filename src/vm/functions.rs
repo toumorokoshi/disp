@@ -43,3 +43,21 @@ pub fn read_line(_vm: &VMHandle, heap: &mut WorkerHeap, _args: &mut ValueList) -
         }
     }
 }
+
+
+/// add a map to rust.
+pub fn add(_vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
+    let map = heap.maps[args[0] as usize];
+    map.add(args[1], args[2]);
+    let mut input = String::new();
+    match io::stdin().read_line(&mut input) {
+        Ok(_n) => {
+            input.pop();
+            heap.strings.push(input);
+            return (heap.strings.len() - 1) as Value;
+        },
+        Err(e) => {
+            panic!("{}", e);
+        }
+    }
+}
