@@ -24,9 +24,9 @@ use super::{Token};
 // execution support.
 pub fn compile(vm: &mut VM, token: &Token) -> Result<VMFunction, CodegenError> {
     let mut context = Context::new(vm);
-    let result_obj = try!(gen_token(&mut context, token));
-    context.builder.add_return(&result_obj.to_build_object());
-    return Ok(context.builder.build());
+    let result_object = gen_token(&mut context, token)?;
+    context.builder.add_return(&result_object.to_build_object());
+    Ok(context.builder.build())
 }
 
 
@@ -72,7 +72,7 @@ fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult 
 
 fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> CodegenResult {
     let func: Production = match func_name {
-        "=" => equals_production as Production,
+        "eq" => equals_production as Production,
         "if" => if_production as Production,
         "neq" => not_equals_production as Production,
         "+" => plus_production as Production,
@@ -88,7 +88,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                 let function = context.builder.allocate_local(&Type::FunctionNative);
                 let mut vm_args = Vec::with_capacity(args.len());
                 for a in args {
-                    let vm_a = try!(gen_token(context, a));
+                    let vm_a = gen_token(context, a)?;
                     vm_args.push(vm_a.register);
                 }
                 context.builder.ops.push(Op::FunctionNativeLoad{
@@ -112,29 +112,29 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
 fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult {
     let mut result = Err(String::from("0 size list"));
     for t in args {
-        result = gen_token(context, t);
+        result = Ok(gen_token(context, t)?);
     }
     return result;
 }
 
 fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult {
     if let Some((func_token, args)) = args.split_first() {
-        return match func_token {
+        match func_token {
             &Token::Symbol(ref s) => compile_expr(context, s, args),
             &Token::BangSymbol(ref s) => run_expr(context, s, args),
             _ => {
-                println!("{}", func_token);
-                Err(String::from("first token must be a symbol for expression"))
+                Err(format!("first token must be a symbol for expression, found {}", func_token))
             }
-        };
+        }
+    } else {
+        Err(String::from("no method found"))
     }
-    Err(String::from("no method found"))
 }
 
 fn evaluate_symbol(context: &mut Context, symbol: &String) -> CodegenResult {
     match context.builder.get_var(symbol) {
         Some(obj) => Ok(Object::from_build_object(obj)),
-        None => Err(format!("unable to find symbol {}", symbol))
+        None => Err(format!("unable to find symbol {}", symbol)),
     }
 }
 

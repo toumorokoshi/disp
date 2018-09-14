@@ -46,6 +46,7 @@ impl<'a> Context<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct Object {
     pub typ: Type, // the type of the register
     pub register: usize // the register containing the value

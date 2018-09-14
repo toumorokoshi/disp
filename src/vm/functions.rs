@@ -48,7 +48,16 @@ pub fn read_line(_vm: &VMHandle, heap: &mut WorkerHeap, _args: &mut ValueList) -
 /// add an entry. This will eventually be for multiple different
 /// types, but it only works for maps for now.
 pub fn add(_vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
+    println!("called");
     let map = &mut heap.maps[args[0] as usize];
     map.insert(args[1], args[2]);
     0
+}
+
+
+/// returns the count of the collection in question
+/// (only works for maps for now)
+pub fn count(_vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
+    let map = &heap.maps[args[0] as usize];
+    map.len() as Value
 }

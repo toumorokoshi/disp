@@ -161,7 +161,7 @@ impl VMFunction {
                 },
                 &Op::MapCreate{target} => {
                     worker_heap.maps.push(Map::new());
-                    registers[target] = worker_heap.maps.len() as Value;
+                    registers[target] = (worker_heap.maps.len() - 1) as Value;
                 },
                 &Op::Noop{} => {},
                 // TODO: incomplete. ends up as the null pointer right now.

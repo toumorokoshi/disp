@@ -52,13 +52,20 @@ fn execute(path: &str) {
     let mut input = String::new();
     file.read_to_string(&mut input).unwrap();
     let inp = full_parse(&input);
-    let func = compile(&mut vm, &inp).unwrap();
-    if cfg!(feature = "debug") {
-        println!("DEBUG: ops: ");
-        func.print_ops();
+    match compile(&mut vm, &inp) {
+        Ok(func) => {
+            if cfg!(feature = "debug") {
+                println!("DEBUG: ops: ");
+                func.print_ops();
+            }
+            vm.submit(Arc::new(func), vec![]);
+            sleep(Duration::from_millis(1000));
+        },
+        Err(e) => {
+            println!("unable to parse: {}", e);
+            println!("ast: {}", inp);
+        }
     }
-    vm.submit(Arc::new(func), vec![]);
-    sleep(Duration::from_millis(1000));
 }
 
 fn read() -> Token {
