@@ -1,4 +1,7 @@
-token = _{ none | expression | integer | list | bang_symbol | symbol | map }
+token = _{
+  none | expression | integer | list | bang_symbol |
+  symbol | map | true_value | false_value 
+}
 
 expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
 integer = { digit+ }
@@ -15,5 +18,5 @@ bang_symbol = { "!" ~ symbol }
 // special meaning in pest.
 delimiter = _{ (" ")+ }
 map = { "{" ~ delimiter? ~ "}" }
-true = { "true" }
-false = { "false" }
+true_value = { "true" }
+false_value = { "false" }

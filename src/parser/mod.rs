@@ -69,6 +69,8 @@ fn unpack(pair: Pair<Rule>) -> Token {
         _m @ Rule::map => {
             Token::Map(Box::new(HashMap::new()))
         },
+        _t @ Rule::true_value => Token::Boolean(true),
+        _f @ Rule::false_value => Token::Boolean(false),
         _ => { Token::None }
     }
 }
