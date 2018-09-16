@@ -44,7 +44,14 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
             context.builder.ops.push(Op::BoolLoad{register: obj.register, constant: b});
             obj
         })),
-        &Token::None => Ok(Object{typ: Type::None, register: 0})
+        &Token::None => Ok(Object{typ: Type::None, register: 0}),
+        &Token::String(ref s) => {
+            let obj = context.builder.allocate_local(&Type::String);
+            context.builder.ops.push(Op::StringLoad{
+                register: obj.register, constant: (**s).clone()
+            });
+            Ok(Object::from_build_object(obj))
+        }
     }
 }
 

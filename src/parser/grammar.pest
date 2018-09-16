@@ -3,6 +3,7 @@ token = _{
   // ordering is important! symbol must come after
   // any literals in the parser, or symbol will match first.
   // e.j. "true" will be a symbol if the rule is after symbol.
+  string_with_quotes |
   bang_symbol | true_value | false_value | symbol | map
 }
 
@@ -23,3 +24,5 @@ delimiter = _{ (" ")+ }
 map = { "{" ~ delimiter? ~ "}" }
 true_value = { "true" }
 false_value = { "false" }
+string_with_quotes = _{ "\"" ~ string ~ "\""}
+string = { ('a'..'z' | 'A'..'Z' | " ")+ }

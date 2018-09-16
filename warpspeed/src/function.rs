@@ -166,7 +166,7 @@ impl VMFunction {
                 &Op::Noop{} => {},
                 // TODO: incomplete. ends up as the null pointer right now.
                 &Op::StringLoad{register, ref constant} => unsafe {
-                    registers[register] = mem::transmute::<Arc<String>, i64>(constant.clone());
+                    registers[register] = worker_heap.add_string(constant.clone());
                 },
                 &Op::Return{register} => { return registers[register]; },
             };

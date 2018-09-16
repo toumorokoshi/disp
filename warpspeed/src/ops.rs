@@ -44,7 +44,7 @@ pub enum Op {
     IntSub{lhs: usize, rhs: usize, target: usize},
     MapCreate{target: usize},
     Noop{},
-    StringLoad{register: usize, constant: Arc<String>},
+    StringLoad{register: usize, constant: String},
     Return{register: usize},
 }
 
@@ -53,6 +53,7 @@ impl Op {
         match self {
             &Op::Assign{target, source} => format!("{0} <= {1}", target, source),
             &Op::ArrayCreate{target, length_source} => format!("{0} <= [{1}]", target, length_source),
+            &Op::ArraySet{source, target, index_source} => format!("{1}[{2}] <= {0}", source, target, index_source),
             &Op::ArraySet{source, target, index_source} => format!("{1}[{2}] <= {0}", source, target, index_source),
             &Op::ArrayLoad{source, target, index_source} => format!("{{{0}}} <= {{{1}}}[{{{2}}}]", target, source, index_source),
             &Op::BoolNot{source, target} => format!("{1} = !{0}", source, target),

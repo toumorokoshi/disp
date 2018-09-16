@@ -18,6 +18,7 @@ pub enum Type {
     Map(Box<Type>, Box<Type>),
     None,
     Int,
+    String,
 }
 
 impl fmt::Display for Type {
@@ -31,6 +32,7 @@ impl fmt::Display for Type {
             &Type::Int => write!(f, "Int"),
             &Type::Map(ref key, ref value) => write!(f, "Map<{0}, {1}>", key, value),
             &Type::None => write!(f, "None"),
+            &Type::String => write!(f, "String"),
         }
     }
 }

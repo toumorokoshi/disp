@@ -3,14 +3,15 @@ use std::collections::HashMap;
 
 #[derive(Clone, PartialEq)]
 pub enum Token {
-    List(Vec<Token>),
-    Expression(Vec<Token>),
-    Map(Box<Map>),
-    Symbol(Box<String>),
     BangSymbol(Box<String>),
-    Integer(i64),
     Boolean(bool),
-    None
+    Expression(Vec<Token>),
+    Integer(i64),
+    List(Vec<Token>),
+    Map(Box<Map>),
+    None,
+    Symbol(Box<String>),
+    String(Box<String>),
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -53,6 +54,7 @@ impl fmt::Display for Token {
             },
             &Token::BangSymbol(ref s) => write!(f, "{}!", s),
             &Token::Symbol(ref s) => write!(f, "{}", s),
+            &Token::String(ref s) => write!(f, "{}", s),
             &Token::Integer(i) => write!(f, "{}", i),
             &Token::Boolean(b) => write!(f, "{}", b),
             &Token::Map(ref d) => {

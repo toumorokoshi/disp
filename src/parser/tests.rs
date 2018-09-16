@@ -1,4 +1,4 @@
-use super::{preprocess, parse, Token, Map};
+use super::{preprocess, parse, Token, HashMap};
 
 #[test]
 fn test_preprocess() {
@@ -107,6 +107,6 @@ fn test_parser_list() {
 fn test_parser_map() {
     assert_eq!(
         parse("{}"),
-        Token::Map(Box::new(Map::new()))
+        Token::Map(Box::new(HashMap::new()))
     );
 }

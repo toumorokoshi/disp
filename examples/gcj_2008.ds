@@ -28,5 +28,4 @@ while (neq i n)
 	# print-string "Case #"
 	print i
 	# print-string ": "
-	print switches
-	# print-string "\n"
+	println switches
