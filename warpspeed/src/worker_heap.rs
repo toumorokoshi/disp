@@ -1,6 +1,10 @@
 use std::{
     cell::RefCell,
-    collections::HashMap,
+    collections::{
+        HashMap,
+        hash_map::DefaultHasher,
+    },
+    hash::{Hash, Hasher},
 };
 use super::{Type, Value};
 
@@ -31,15 +35,34 @@ thread_local! {
 /// TODO: figure out how to graduate strings or move them among workers.
 pub struct WorkerHeap {
     // pub object_types: Vec<Type>,
-    pub strings: Vec<String>,
+    pub strings: HashMap<u64, String>,
     pub maps: Vec<HashMap<Value, Value>>
 }
 
 impl WorkerHeap {
     pub fn new() -> WorkerHeap {
         return WorkerHeap {
-            strings: vec![],
+            strings: HashMap::new(),
             maps: vec![],
         };
     }
+
+    // add a string, and return back it's reference value.
+    pub fn add_string(&mut self, s: String) -> Value {
+        let hash = calculate_hash(&s);
+        if !self.strings.contains_key(&hash) {
+            self.strings.insert(hash, s);
+        }
+        hash as Value
+    }
+
+    pub fn get_string(&self, v: Value) -> String {
+        return self.strings.get(&(v as u64)).unwrap().clone();
+    }
+}
+
+fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    t.hash(&mut hasher);
+    hasher.finish()
 }

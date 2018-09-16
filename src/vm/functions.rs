@@ -10,7 +10,7 @@ use std::io::{self};
 
 /// Cast a string to an integer
 pub fn int(_vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
-    let int_as_string = heap.strings[args[0] as usize].clone();
+    let int_as_string = heap.get_string(args[0]).clone();
     return int_as_string.parse::<i64>().unwrap();
 }
 
@@ -22,7 +22,7 @@ pub fn print(_vm: &VMHandle, _heap: &mut WorkerHeap, args: &mut ValueList) -> Va
 
 
 pub fn print_string(_vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
-    println!("{0}", heap.strings[args[0] as usize]);
+    println!("{0}", heap.get_string(args[0]));
     return 0
 }
 
@@ -35,8 +35,7 @@ pub fn read_line(_vm: &VMHandle, heap: &mut WorkerHeap, _args: &mut ValueList) -
     match io::stdin().read_line(&mut input) {
         Ok(_n) => {
             input.pop();
-            heap.strings.push(input);
-            return (heap.strings.len() - 1) as Value;
+            heap.add_string(input)
         },
         Err(e) => {
             panic!("{}", e);
