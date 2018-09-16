@@ -7,6 +7,7 @@ use self::functions::{
     int,
     print,
     print_string,
+    println,
     read_line,
 };
 
@@ -19,6 +20,7 @@ pub fn build_vm() -> VM {
             heap.functions_native.insert(String::from("add"), Arc::new(add));
             heap.functions_native.insert(String::from("count"), Arc::new(count));
             heap.functions_native.insert(String::from("print"), Arc::new(print));
+            heap.functions_native.insert(String::from("println"), Arc::new(println));
             heap.functions_native.insert(String::from("print-string"), Arc::new(print_string));
             heap.functions_native.insert(String::from("read-line"), Arc::new(read_line));
             heap.functions_native.insert(String::from("Int"), Arc::new(int));

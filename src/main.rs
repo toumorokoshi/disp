@@ -91,7 +91,7 @@ pub fn unpack(typ: &Type, value: i64) -> Token {
 fn parse_with_print(body: &str) -> Token {
     let input = full_parse(&body);
     Token::Expression(vec![
-        Token::Symbol(Box::new(String::from("print"))),
+        Token::Symbol(Box::new(String::from("println"))),
         input
     ])
 }

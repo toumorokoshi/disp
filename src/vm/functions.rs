@@ -16,13 +16,19 @@ pub fn int(_vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value
 
 
 pub fn print(_vm: &VMHandle, _heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
+    print!("{0}", args[0]);
+    return 0
+}
+
+
+pub fn println(_vm: &VMHandle, _heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
     println!("{0}", args[0]);
     return 0
 }
 
 
 pub fn print_string(_vm: &VMHandle, heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
-    println!("{0}", heap.get_string(args[0]));
+    print!("{0}", heap.get_string(args[0]));
     return 0
 }
 
