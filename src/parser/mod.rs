@@ -71,6 +71,7 @@ fn unpack(pair: Pair<Rule>) -> Token {
         },
         _t @ Rule::true_value => Token::Boolean(true),
         _f @ Rule::false_value => Token::Boolean(false),
+        _s @ Rule::string => Token::String(Box::new(String::from(pair.as_str()))),
         _ => { Token::None }
     }
 }

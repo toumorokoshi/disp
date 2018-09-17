@@ -110,3 +110,24 @@ fn test_parser_map() {
         Token::Map(Box::new(HashMap::new()))
     );
 }
+
+
+#[test]
+fn test_parser_string() {
+    assert_eq!(
+        parse("\"foo\""),
+        Token::String(Box::new(String::from("foo")))
+    );
+}
+
+
+#[test]
+fn test_parser_string_expression() {
+    assert_eq!(
+        parse("(print-string \"foo\")"),
+        Token::Expression(vec![
+            Token::Symbol(Box::new(String::from("print-string"))),
+            Token::String(Box::new(String::from("foo")))
+        ])
+    );
+}

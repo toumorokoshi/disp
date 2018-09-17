@@ -30,6 +30,7 @@ fn to_lines(input: &str) -> Vec<Line> {
     let mut nested_buffer = vec![];
     let mut is_new_line = true;
     let mut is_comment = false;
+    let mut is_string = false;
     let mut current_line = Line::new();
     for c in input.chars() {
         if is_comment {
@@ -38,6 +39,12 @@ fn to_lines(input: &str) -> Vec<Line> {
             } else {
                 is_comment = false;
             }
+        } else if is_string {
+            if c == '"' {
+                is_string = false;
+            }
+            current_line.buffer.push(c);
+            continue;
         }
         match c {
             '\n' => {
@@ -84,6 +91,10 @@ fn to_lines(input: &str) -> Vec<Line> {
                     nested_buffer.pop();
                 }
                 current_line.buffer.push(']');
+            },
+            '"' => {
+                is_string = true;
+                current_line.buffer.push(c);
             },
             _ => {
                 is_new_line = false;
