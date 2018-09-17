@@ -25,4 +25,5 @@ map = { "{" ~ delimiter? ~ "}" }
 true_value = { "true" }
 false_value = { "false" }
 string_with_quotes = _{ "\"" ~ string ~ "\""}
-string = { ('a'..'z' | 'A'..'Z' | " ")+ }
+// string = { (any ~ !"\"")+ }
+string = { ('a'..'z' | 'A'..'Z' | "#" | " " | ":" )+ }
