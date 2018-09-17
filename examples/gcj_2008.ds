@@ -6,9 +6,7 @@ while (neq i n)
 	mut j 0
 	while (neq j s)
 		mut e (read-line)
-		# print-string e
 		add possible-engines e true
-		# print-string (read-line)
 		mut j (+ j 1)
 	mut q (Int (read-line))
 	mut j 0
@@ -16,10 +14,7 @@ while (neq i n)
 	mut seen-engines {}
 	while (neq j q)
 		mut e (read-line)
-		# print-string e
 		add seen-engines e true
-		# print (count seen-engines)
-		# print j
 		if (eq (count seen-engines) (count possible-engines))
 			mut seen-engines {}
 			mut switches (+ switches 1)
