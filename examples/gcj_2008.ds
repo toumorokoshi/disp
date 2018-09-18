@@ -17,6 +17,7 @@ while (neq i n)
 		add seen-engines e true
 		if (eq (count seen-engines) (count possible-engines))
 			mut seen-engines {}
+			add seen-engines e true
 			mut switches (+ switches 1)
 		mut j (+ j 1)
 	mut i (+ i 1)
