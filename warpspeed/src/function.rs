@@ -168,7 +168,9 @@ impl VMFunction {
                 &Op::StringLoad{register, ref constant} => unsafe {
                     registers[register] = worker_heap.add_string(constant.clone());
                 },
-                &Op::Return{register} => { return registers[register]; },
+                &Op::Return{register} => {
+                    return registers[register];
+                },
             };
             i +=1;
         }

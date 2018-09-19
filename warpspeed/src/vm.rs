@@ -24,10 +24,6 @@ impl VM {
         };
     }
 
-    pub fn wait(&mut self) {
-        self.runtime.shutdown_on_idle();
-    }
-
     /// submit a function for execution.
     pub fn submit(&mut self, function: Arc<VMFunction>, args: ValueList) {
         let worker_id = self.runtime.random_worker();
@@ -45,5 +41,9 @@ impl VM {
     // can modify the VM.
     pub fn handle(&self) -> VMHandle {
         return VMHandle::new(self.heap.clone());
+    }
+
+    pub fn shutdown_on_idle(self) {
+        self.runtime.shutdown_on_idle();
     }
 }

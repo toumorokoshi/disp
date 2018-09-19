@@ -59,7 +59,7 @@ fn execute(path: &str) {
                 func.print_ops();
             }
             vm.submit(Arc::new(func), vec![]);
-            sleep(Duration::from_millis(1000));
+            vm.shutdown_on_idle();
         },
         Err(e) => {
             println!("unable to parse: {}", e);

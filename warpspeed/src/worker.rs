@@ -1,16 +1,29 @@
 use futures::{
     Async,
+    future,
     Future,
+    task,
 };
 use nix::{
     sched::{sched_setaffinity, CpuSet},
     unistd::Pid,
 };
 use std::{
+    cell::RefCell,
     sync::mpsc::channel,
     thread::{spawn, JoinHandle}
 };
-use tokio::runtime::current_thread::{Handle, Runtime};
+use tokio::{
+    runtime::current_thread::{Handle, Runtime}
+};
+
+thread_local! {
+    /// if true, the worker should remain active.
+    /// if false, the coroutine keeping the worker alive
+    /// will die, resulting in the worker dying after
+    /// all tasks are complete.
+    pub static WORKER_ACTIVE: RefCell<bool> = RefCell::new(true);
+}
 
 /// Worker contain all objects required to
 /// interact with a specific worker.
@@ -32,15 +45,20 @@ impl Worker {
                 tx.send(runtime.handle()).unwrap();
             }
             runtime.spawn(WorkerController{});
-            runtime.run().unwrap()
+            runtime.run().unwrap();
         });
         let runtime_handle = rx.recv().unwrap();
         return Worker {
-            thread: thread_handle,
-            runtime: runtime_handle,
+            thread: thread_handle, runtime: runtime_handle,
         };
     }
+
+    /// notify the worker to shutdown when idle
+    pub fn shutdown(&self) {
+        self.runtime.spawn(WorkerShutdown{});
+    }
 }
+
 
 
 /// set the thread in question to run on the cpu specified,
@@ -62,6 +80,35 @@ impl Future for WorkerController {
     type Error = ();
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        Ok(Async::NotReady)
+        let mut result = false;
+        WORKER_ACTIVE.with(|wa_ref| {
+            result = *wa_ref.borrow();
+        });
+        return Ok(match result {
+            false => {
+                Async::Ready(())
+            },
+            true => {
+                task::current().notify();
+                Async::NotReady
+            }
+        })
+    }
+}
+
+
+pub struct WorkerShutdown {
+}
+
+
+impl Future for WorkerShutdown {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
+        WORKER_ACTIVE.with(|wa| {
+            *wa.borrow_mut() = false;
+        });
+        Ok(Async::Ready(()))
     }
 }

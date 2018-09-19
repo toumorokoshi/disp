@@ -20,9 +20,12 @@ impl Runtime {
         rand::random::<usize>() % self.pool.len()
     }
 
-    pub fn shutdown_on_idle(&self) {
-        // for i in 0..self.pool.len() {
-        //     self.pool.workers[i].handle.shutdown_on_idle();
-        // }
+    pub fn shutdown_on_idle(self) {
+        for i in 0..self.pool.len() {
+            self.pool.workers[i].shutdown();
+        }
+        for worker in self.pool.workers {
+            worker.thread.join();
+        }
     }
 }
