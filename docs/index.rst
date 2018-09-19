@@ -3,12 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to disp's documentation!
-================================
+Disp
+====
+
+Disp is a lisp-like, interpreted programming language, with the goal of high performance, powerful primitives, and easy to validate and modify code programmatically.
+
+To get a better understanding of where Disp shines, it's recommended to read some disp-cases (use cases that inspired disp's design):
+
+Table of Contents
+*****************
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :glob:
+
+   design/*
+   design/disp-cases/*
+   warpspeed/index
 
 
 
