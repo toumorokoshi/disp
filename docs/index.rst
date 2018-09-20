@@ -20,15 +20,6 @@ You can see a code example here (solving the qualifier problem a for Google Code
 
 To get a better understanding of where Disp shines, it's recommended to read some disp-cases (use cases that inspired disp's design):
 
-Disp-Cases
-**********
-
-.. toctree::
-  :maxdepth: 1
-  :glob:
-
-  design/disp-cases/*
-
 
 Table of Contents
 *****************
@@ -45,6 +36,15 @@ Table of Contents
    design/*
    warpspeed/index
 
+
+Disp-Cases
+**********
+
+.. toctree::
+  :maxdepth: 1
+  :glob:
+
+  design/disp-cases/*
 
 
 Indices and tables
