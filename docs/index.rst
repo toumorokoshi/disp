@@ -8,7 +8,27 @@ Disp
 
 Disp is a lisp-like, interpreted programming language, with the goal of high performance, powerful primitives, and easy to validate and modify code programmatically.
 
+.. warning::
+
+  Disp is not ready for use in any production project! Literally anything about the language can change until 1.0
+
+
+You can see a code example here (solving the qualifier problem a for Google Code Jam 2008):
+
+.. literalinclude:: ../examples/gcj_2008.ds
+  :language: lisp
+
 To get a better understanding of where Disp shines, it's recommended to read some disp-cases (use cases that inspired disp's design):
+
+Disp-Cases
+**********
+
+.. toctree::
+  :maxdepth: 1
+  :glob:
+
+  design/disp-cases/*
+
 
 Table of Contents
 *****************
@@ -17,8 +37,12 @@ Table of Contents
    :maxdepth: 2
    :glob:
 
+   design/discussion
+   design/performance
+   design/productivity
+   design/disp-cases
+   one-point-zero
    design/*
-   design/disp-cases/*
    warpspeed/index
 
 

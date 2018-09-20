@@ -1,5 +1,5 @@
-Using Disp for Configuration
-============================
+Configuration
+=============
 
 At Zillow in 2018, we had a process to pass environment-specific configuration to an application that looked like:
 
@@ -40,7 +40,7 @@ When you have a a lot of boilerplate, at some point a backwards incompatible cha
 1. iterate through all repos containing this configuration
 2. load yaml file
 3. rewrite value
-3. write yaml file
+4. write yaml file
 
 This loses comments since they aren't part of the data itself, but the application still works as expected.
 
