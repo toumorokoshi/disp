@@ -33,9 +33,9 @@ impl Future for Fiber {
     type Error = ();
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        let registers = ValueList::with_capacity(self.function.registers.len());
+        let mut registers = ValueList::with_capacity(self.function.registers.len());
         WORKER_HEAP.with(|worker_heap| {
-            self.function.execute(&self.vm, &mut worker_heap.borrow_mut(), registers);
+            self.function.execute(&self.vm, &mut worker_heap.borrow_mut(), &mut registers);
         });
         Ok(Async::Ready(()))
     }

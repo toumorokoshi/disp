@@ -16,6 +16,7 @@ use super::{
 pub type NativeFunction = fn(vm: &VMHandle, &mut WorkerHeap, &mut ValueList) -> Value;
 
 
+#[derive(Debug)]
 pub struct VMFunction {
     pub registers: Vec<Type>,
     pub return_type: Type,
@@ -39,7 +40,7 @@ impl VMFunction {
         }
     }
 
-    pub fn execute(&self, vm: &VMHandle, worker_heap: &mut WorkerHeap, mut args: ValueList) -> Value {
+    pub fn execute(&self, vm: &VMHandle, worker_heap: &mut WorkerHeap, args: &mut ValueList) -> Value {
         let target_size = args.len() + self.registers.len();
         args.resize(target_size, 0);
         // TODO: once rust supports allocating
@@ -155,6 +156,17 @@ impl VMFunction {
                     let func = vm.heap.functions_vm[func_index].clone();
                     registers[target] =
                         mem::transmute::<Arc<VMFunction>, i64>(func);
+                },
+                &Op::FunctionVMCall{function, ref args, target} => {
+                    let mut args_to_pass = Vec::new();
+                    for index in args {
+                        args_to_pass.push(registers[*index]);
+                    }
+                    // TODO: handle nested calls
+                    unsafe {
+                        let func = mem::transmute::<i64, Arc<VMFunction>>(registers[function]);
+                        registers[target] = func.execute(&vm, worker_heap, &mut args_to_pass);
+                    }
                 },
                 &Op::Goto{position} => {
                     i = position - 1;

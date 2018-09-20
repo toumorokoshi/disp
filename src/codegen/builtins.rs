@@ -148,7 +148,7 @@ pub fn function_production(context: &mut Context, args: &[Token]) -> CodegenResu
         None => Err(String::from("unable to get add a method to the vm (unable to get a heap handle)")),
         Some(heap) => {
             heap.functions_vm.push(Arc::new(function));
-            let function_index = heap.functions_vm.len();
+            let function_index = heap.functions_vm.len() - 1;
             let function_register = context.builder.allocate_local(&Type::FunctionVM);
             context.builder.ops.push(Op::FunctionVMLoad{
                 func_index: function_index,

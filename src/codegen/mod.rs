@@ -71,7 +71,7 @@ fn run_expr(context: &mut Context, name: &str, args: &[Token]) -> CodegenResult 
         }
     };
     let result = WORKER_HEAP.with(|worker_heap| {
-        func.execute(&context.vm.handle(), &mut worker_heap.borrow_mut(),vec![])
+        func.execute(&context.vm.handle(), &mut worker_heap.borrow_mut(), &mut vec![])
     });
     let value = context.builder.load_value(&func.return_type, result);
     return Ok(Object::from_build_object(value));
@@ -90,14 +90,15 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         "match" => match_production as Production,
         "fn" => function_production as Production,
         symbol => {
+            let mut vm_args = Vec::with_capacity(args.len());
+            for a in args {
+                let vm_a = gen_token(context, a)?;
+                vm_args.push(vm_a.register);
+            }
+            let result = context.builder.allocate_local(&Type::Int);
+
             if context.vm.heap.functions_native.contains_key(symbol) {
-                let result = context.builder.allocate_local(&Type::None);
                 let function = context.builder.allocate_local(&Type::FunctionNative);
-                let mut vm_args = Vec::with_capacity(args.len());
-                for a in args {
-                    let vm_a = gen_token(context, a)?;
-                    vm_args.push(vm_a.register);
-                }
                 context.builder.ops.push(Op::FunctionNativeLoad{
                     func_name: String::from(symbol),
                     target: function.register,
@@ -108,8 +109,18 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                     target: result.register,
                 });
                 return Ok(Object{typ: Type::Int, register: result.register});
+            } else if let Some(maybe_function) = context.builder.locals.get(symbol) {
+                if maybe_function.typ != Type::FunctionVM {
+                    return Err(format!("symbol {} is a local, but not a function.", symbol));
+                }
+                context.builder.ops.push(Op::FunctionVMCall{
+                    function: maybe_function.register,
+                    args: vm_args,
+                    target: result.register,
+                });
+                return Ok(Object{typ: Type::Int, register: result.register});
             } else {
-                return Err(String::from("no function found."));
+                return Err(format!("no function named {} found", symbol));
             }
         }
     };
@@ -117,7 +128,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
 }
 
 fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult {
-    let mut result = Err(String::from("0 size list"));
+    let mut result = Ok(Object{typ: Type::None, register: 0});
     for t in args {
         result = Ok(gen_token(context, t)?);
     }

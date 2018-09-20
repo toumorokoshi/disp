@@ -9,7 +9,7 @@ token = _{
 
 expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
 integer = { digit+ }
-list = {"[" ~ delimiter? ~ token_list ~ delimiter? ~ "]"}
+list = {"[" ~ delimiter? ~ token_list? ~ delimiter? ~ "]"}
 
 token_list = _{ (token ~ delimiter?)+ }
 

@@ -1,4 +1,5 @@
 # the way to declare
 # a function.
-fn [] [(print 1)]
+mut p (fn [] [(println 1)])
 # const print_something (fn [] [(print x)])
+p
