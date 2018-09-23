@@ -95,10 +95,10 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                 let vm_a = gen_token(context, a)?;
                 vm_args.push(vm_a.register);
             }
-            let result = context.builder.allocate_local(&Type::Int);
 
             if context.vm.heap.functions_native.contains_key(symbol) {
                 let function = context.builder.allocate_local(&Type::FunctionNative);
+                let result = context.builder.allocate_local(&Type::Int);
                 context.builder.ops.push(Op::FunctionNativeLoad{
                     func_name: String::from(symbol),
                     target: function.register,
@@ -109,19 +109,26 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                     target: result.register,
                 });
                 return Ok(Object{typ: Type::Int, register: result.register});
-            } else if let Some(maybe_function) = context.builder.locals.get(symbol) {
-                if maybe_function.typ != Type::FunctionVM {
-                    return Err(format!("symbol {} is a local, but not a function.", symbol));
-                }
-                context.builder.ops.push(Op::FunctionVMCall{
-                    function: maybe_function.register,
-                    args: vm_args,
-                    target: result.register,
-                });
-                return Ok(Object{typ: Type::Int, register: result.register});
-            } else {
-                return Err(format!("no function named {} found", symbol));
             }
+            let (func_register, vm_function) = {
+                let maybe_function = context.builder.locals.get(symbol).clone();
+                match maybe_function {
+                    None => {return Err(format!("no symbol {} found", symbol));},
+                    Some(function) => {
+                        if function.typ != Type::FunctionVM {
+                            return Err(format!("symbol {} is a local, but not a function.", symbol));
+                        }
+                        (function.register, context.vm.heap.functions_vm[function.register].clone())
+                    }
+                }
+            };
+            let result = context.builder.allocate_local(&vm_function.return_type);
+            context.builder.ops.push(Op::FunctionVMCall{
+                function: func_register,
+                args: vm_args,
+                target: result.register,
+            });
+            return Ok(Object{typ: Type::Int, register: result.register});
         }
     };
     return func(context, args);

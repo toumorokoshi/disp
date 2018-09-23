@@ -13,7 +13,14 @@ use super::{
     VMHandle
 };
 
-pub type NativeFunction = fn(vm: &VMHandle, &mut WorkerHeap, &mut ValueList) -> Value;
+
+pub struct NativeFunction {
+    pub registers: Vec<Type>,
+    pub return_type: Type,
+    pub func: NativeFunctionFunc,
+}
+
+pub type NativeFunctionFunc = fn(vm: &VMHandle, &mut WorkerHeap, &mut ValueList) -> Value;
 
 
 #[derive(Debug)]
@@ -91,7 +98,7 @@ impl VMFunction {
                     // TODO: handle nested calls
                     unsafe {
                         let func = mem::transmute::<i64, Arc<NativeFunction>>(registers[function]);
-                        registers[target] = func(&vm, worker_heap, &mut args_to_pass);
+                        registers[target] = (func.func)(&vm, worker_heap, &mut args_to_pass);
                     }
                 },
                 &Op::IntAdd{lhs, rhs, target} => registers[target] = registers[lhs] + registers[rhs],
