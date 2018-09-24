@@ -76,10 +76,10 @@ impl FunctionBuilder {
 
     pub fn build(&mut self) -> VMFunction {
         let mut function = VMFunction::new();
-        match self.return_type {
-            Some(ref t) => {function.return_type = t.clone();},
-            None => {function.return_type = Type::None}
-        }
+        function.return_type = match self.return_type {
+            Some(ref t) => t.clone(),
+            None => Type::None,
+        };
         function.registers = self.registers.to_owned();
         function.ops = self.ops.to_owned();
         return function;

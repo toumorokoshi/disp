@@ -16,19 +16,25 @@ use warpspeed::{
 pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult;
 pub type CodegenResult = Result<Object, CodegenError>;
 
+/// function prototypes are an unevaluated declaration
+/// of a function. These are used to generate actual
+/// functions within the VM, when types are passed.
 pub struct Block {
     // string w / register
-    pub locals: HashMap<String, usize>
+    pub locals: HashMap<String, usize>,
+    pub function_prototypes: HashMap<String, Token>,
 }
 
 impl Block {
     pub fn new() -> Block {
         let block = Block {
             locals: HashMap::new(),
+            function_prototypes: HashMap::new(),
         };
         return block;
     }
 }
+
 
 pub struct Context<'a> {
     pub block: Block,

@@ -1,0 +1,2 @@
+mut add (fn [l Int r Int] [(+ l r)])
+println (add 1 10)

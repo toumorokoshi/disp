@@ -13,29 +13,34 @@ use super::{
     VMHandle
 };
 
-
 #[derive(Debug, Clone)]
-pub struct NativeFunction {
-    pub return_type: Type,
-    pub func_index: usize,
+pub enum FunctionType {
+    Native,
+    VM,
 }
 
-pub type NativeFunctionFunc = fn(vm: &VMHandle, &mut WorkerHeap, &mut ValueList) -> Value;
 
+#[derive(Debug, Clone)]
+pub struct FunctionSignature {
+    pub return_type: Type,
+    pub function_type: FunctionType,
+    pub function_index: usize,
+}
 
-#[derive(Debug)]
+pub type NativeFunction = fn(vm: &VMHandle, &mut WorkerHeap, &mut ValueList) -> Value;
 pub struct VMFunction {
     pub registers: Vec<Type>,
     pub return_type: Type,
-    pub ops: OpList
+    pub ops: OpList,
 }
 
+
 impl VMFunction {
-    pub fn new() -> VMFunction {
+    pub fn new() -> VMFunction{
         return VMFunction {
             registers: Vec::new(),
+            return_type: Type::None,
             ops: OpList::new(),
-            return_type: Type::None
         };
     }
 
@@ -97,7 +102,7 @@ impl VMFunction {
                     }
                     // TODO: handle nested calls
                     unsafe {
-                        let func = mem::transmute::<i64, Arc<NativeFunctionFunc>>(registers[function]);
+                        let func = mem::transmute::<i64, Arc<NativeFunction>>(registers[function]);
                         registers[target] = func(&vm, worker_heap, &mut args_to_pass);
                     }
                 },
@@ -155,12 +160,12 @@ impl VMFunction {
                     { 1 } else { 0 };
                 },
                 &Op::FunctionNativeLoad{func_index, target} => unsafe {
-                    let func = vm.heap.functions_native_funcs[func_index].clone();
+                    let func = vm.heap.function_native[func_index].clone();
                     registers[target] =
-                        mem::transmute::<Arc<NativeFunctionFunc>, i64>(func);
+                        mem::transmute::<Arc<NativeFunction>, i64>(func);
                 },
                 &Op::FunctionVMLoad{func_index, target} => unsafe {
-                    let func = vm.heap.functions_vm[func_index].clone();
+                    let func = vm.heap.function_vm[func_index].clone();
                     registers[target] =
                         mem::transmute::<Arc<VMFunction>, i64>(func);
                 },

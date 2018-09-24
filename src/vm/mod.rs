@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use warpspeed::{VM, NativeFunction, Type};
+use warpspeed::{VM, Type};
 mod functions;
 use self::functions::{
     add,

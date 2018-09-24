@@ -2,7 +2,11 @@ mod builtins;
 mod core;
 mod error;
 
-use warpspeed::{Op, Type, WORKER_HEAP, VM, VMFunction};
+use warpspeed::{
+    Op, Type, WORKER_HEAP, VM,
+    FunctionType,
+    VMFunction,
+};
 use self::builtins::{
     equals_production,
     function_production,
@@ -97,20 +101,36 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                 vm_args.push(vm_a.register);
                 vm_args_types.push(vm_a.typ);
             }
-            if let Some(native_func) = context.vm.heap.get_native_func(&String::from(symbol), vm_args_types) {
+            if let Some(func) = context.vm.heap.get_func(&String::from(symbol), vm_args_types) {
                 let function_register = context.builder.allocate_local(&Type::FunctionNative);
-                let result = context.builder.allocate_local(&native_func.return_type);
-                context.builder.ops.push(Op::FunctionNativeLoad{
-                    func_index: native_func.func_index,
-                    target: function_register.register,
-                });
-                context.builder.ops.push(Op::CallNative{
-                    function: function_register.register,
-                    args: vm_args,
-                    target: result.register,
-                });
-                return Ok(Object{typ: native_func.return_type, register: result.register});
+                let result = context.builder.allocate_local(&func.return_type);
+                match func.function_type {
+                    FunctionType::Native => {
+                        context.builder.ops.push(Op::FunctionNativeLoad{
+                            func_index: func.function_index,
+                            target: function_register.register,
+                        });
+                        context.builder.ops.push(Op::CallNative{
+                            function: function_register.register,
+                            args: vm_args,
+                            target: result.register,
+                        });
+                    },
+                    // TODO: do a check first for local variable function assignment.
+                    // right now this will only resolve if the heap has a function of the
+                    // specific name, but it should allow for arbitrary re-assignment of function
+                    // names.
+                    FunctionType::VM => {
+                        context.builder.ops.push(Op::FunctionVMCall{
+                            function: function_register.register,
+                            args: vm_args,
+                            target: result.register,
+                        });
+                    }
+                }
+                return Ok(Object{typ: func.return_type, register: result.register});
             }
+
             let (func_register, vm_function) = {
                 let maybe_function = context.builder.locals.get(symbol).clone();
                 match maybe_function {
@@ -119,7 +139,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                         if function.typ != Type::FunctionVM {
                             return Err(format!("symbol {} is a local, but not a function.", symbol));
                         }
-                        (function.register, context.vm.heap.functions_vm[function.register].clone())
+                        (function.register, context.vm.heap.function_vm[function.register].clone())
                     }
                 }
             };
