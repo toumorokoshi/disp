@@ -22,14 +22,14 @@ pub type CodegenResult = Result<Object, CodegenError>;
 pub struct Block {
     // string w / register
     pub locals: HashMap<String, usize>,
-    pub function_prototypes: HashMap<String, Token>,
+    pub function_prototypes: Vec<Vec<Token>>,
 }
 
 impl Block {
     pub fn new() -> Block {
         let block = Block {
             locals: HashMap::new(),
-            function_prototypes: HashMap::new(),
+            function_prototypes: vec![],
         };
         return block;
     }
@@ -55,14 +55,29 @@ impl<'a> Context<'a> {
 #[derive(Debug)]
 pub struct Object {
     pub typ: Type, // the type of the register
-    pub register: usize // the register containing the value
+    // the register containing the value.
+    pub register: usize,
+    pub function_index: Option<usize>,
 }
 
 impl Object {
+    pub fn New(typ: Type, register: usize) -> Object {
+        Object{
+            typ: typ,
+            register: register,
+            function_index: None
+        }
+    }
+
+    pub fn None() -> Object {
+        Object::New(Type::None, register: 0)
+    }
+
     pub fn from_build_object(build_object: BuildObject) -> Object {
         return Object {
             typ: build_object.typ,
-            register: build_object.register
+            register: build_object.register,
+            function_index: None
         };
     }
 

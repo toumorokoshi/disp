@@ -1,5 +1,6 @@
 mod builtins;
 mod core;
+mod function;
 mod error;
 
 use warpspeed::{
@@ -9,7 +10,6 @@ use warpspeed::{
 };
 use self::builtins::{
     equals_production,
-    function_production,
     if_production,
     not_equals_production,
     const_production,
@@ -18,6 +18,9 @@ use self::builtins::{
     minus_production,
     while_production,
     match_production,
+};
+use self::function::{
+    function_production,
 };
 use self::core::{Context, Object, CodegenResult, Production};
 use self::error::CodegenError;
@@ -48,7 +51,7 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult {
             context.builder.ops.push(Op::BoolLoad{register: obj.register, constant: b});
             obj
         })),
-        &Token::None => Ok(Object{typ: Type::None, register: 0}),
+        &Token::None => Ok(Object::None()),
         &Token::String(ref s) => {
             let obj = context.builder.allocate_local(&Type::String);
             context.builder.ops.push(Op::StringLoad{
@@ -102,7 +105,9 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                 vm_args_types.push(vm_a.typ);
             }
             if let Some(func) = context.vm.heap.get_func(&String::from(symbol), vm_args_types) {
-                let function_register = context.builder.allocate_local(&Type::FunctionNative);
+                let function_register = context.builder.allocate_local(
+                    &Type::Function(Box::new(vm_args_types.clone()), Box::new(func.return_type.clone()))
+                );
                 let result = context.builder.allocate_local(&func.return_type);
                 match func.function_type {
                     FunctionType::Native => {
@@ -128,35 +133,38 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                         });
                     }
                 }
-                return Ok(Object{typ: func.return_type, register: result.register});
+                return Ok(Object::from_build_object(result));
             }
 
-            let (func_register, vm_function) = {
+            let (func_register, argument_types, return_type) = {
                 let maybe_function = context.builder.locals.get(symbol).clone();
                 match maybe_function {
                     None => {return Err(format!("no symbol {} found", symbol));},
                     Some(function) => {
-                        if function.typ != Type::FunctionVM {
-                            return Err(format!("symbol {} is a local, but not a function.", symbol));
+                        match function.typ {
+                            Type::Function(ref argument_types, ref return_type) =>
+                                (function.register, argument_types.clone(), return_type.clone()),
+                            _ => {
+                                return Err(format!("symbol {} is a local, but not a function.", symbol));
+                            }
                         }
-                        (function.register, context.vm.heap.function_vm[function.register].clone())
                     }
                 }
             };
-            let result = context.builder.allocate_local(&vm_function.return_type);
+            let result = context.builder.allocate_local(&return_type);
             context.builder.ops.push(Op::FunctionVMCall{
                 function: func_register,
                 args: vm_args,
                 target: result.register,
             });
-            return Ok(Object{typ: Type::Int, register: result.register});
+            return Ok(Object::from_build_object(result));
         }
     };
     return func(context, args);
 }
 
 fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult {
-    let mut result = Ok(Object{typ: Type::None, register: 0});
+    let mut result = Ok(Object::New(Type::None, 0));
     for t in args {
         result = Ok(gen_token(context, t)?);
     }
