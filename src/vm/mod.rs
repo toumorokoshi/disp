@@ -17,41 +17,48 @@ pub fn build_vm() -> VM {
     let mut vm = VM::new();
     match Arc::get_mut(&mut vm.heap) {
         Some(heap) => {
-            heap.functions_native.insert(String::from("add"), Arc::new(NativeFunction{
-                registers: vec![Type::Int, Type::Int],
-                return_type: Type::Int,
-                func: add
-            }));
-            heap.functions_native.insert(String::from("count"), Arc::new(NativeFunction{
-                registers: vec![Type::Map(Box::new(Type::String), Box::new(Type::Bool))],
-                return_type: Type::Int,
-                func: count
-            }));
-            heap.functions_native.insert(String::from("print"), Arc::new(NativeFunction{
-                registers: vec![Type::Int],
-                return_type: Type::None,
-                func: print
-            }));
-            heap.functions_native.insert(String::from("println"), Arc::new(NativeFunction{
-                registers: vec![Type::Int],
-                return_type: Type::None,
-                func: println
-            }));
-            heap.functions_native.insert(String::from("print-string"), Arc::new(NativeFunction{
-                registers: vec![Type::Int],
-                return_type: Type::None,
-                func: print_string,
-            }));
-            heap.functions_native.insert(String::from("read-line"), Arc::new(NativeFunction{
-                registers: vec![],
-                return_type: Type::String,
-                func: read_line,
-            }));
-            heap.functions_native.insert(String::from("Int"), Arc::new(NativeFunction{
-                registers: vec![Type::String],
-                return_type: Type::Int,
-                func: int,
-            }));
+            heap.add_native_func(
+                String::from("add"),
+                vec![Type::Map(Box::new(Type::String), Box::new(Type::Bool)), Type::String, Type::Bool],
+                Type::Int,
+                add
+            );
+            heap.add_native_func(
+                String::from("count"),
+                vec![Type::Map(Box::new(Type::String), Box::new(Type::Bool))],
+                Type::Int,
+                count
+            );
+            heap.add_native_func(
+                String::from("print"),
+                vec![Type::Int],
+                Type::None,
+                print
+            );
+            heap.add_native_func(
+                String::from("print"),
+                vec![Type::String],
+                Type::None,
+                print_string,
+            );
+            heap.add_native_func(
+                String::from("println"),
+                vec![Type::Int],
+                Type::None,
+                println
+            );
+            heap.add_native_func(
+                String::from("read-line"),
+                vec![],
+                Type::String,
+                read_line,
+            );
+            heap.add_native_func(
+                String::from("Int"),
+                vec![Type::String],
+                Type::Int,
+                int,
+            );
         },
         None => { panic!("unable to warmup vm");}
     }

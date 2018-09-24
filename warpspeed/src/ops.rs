@@ -31,7 +31,7 @@ pub enum Op {
     FloatSub{lhs: usize, rhs: usize, target: usize},
     /// Load a Function from the VM's Function Table
     /// into the desired register
-    FunctionNativeLoad{func_name: String, target: usize},
+    FunctionNativeLoad{func_index: usize, target: usize},
     FunctionVMLoad{func_index: usize, target: usize},
     FunctionVMCall{function: usize, args: Vec<usize>, target: usize},
     Goto{position: usize},
@@ -73,7 +73,7 @@ impl Op {
             &Op::FloatLoad{register, constant} => format!("{0} <= {1} (float)", register, constant),
             &Op::FloatLessEqual{lhs, rhs, target} => format!("{2} <= {0} <= {1} (float)", lhs, rhs, target),
             &Op::FloatLessThan{lhs, rhs, target} => format!("{2} <= {0} < {1} (float)", lhs, rhs, target),
-            &Op::FunctionNativeLoad{ref func_name, target} => format!("{1} <= functions_native[{0}]", func_name, target),
+            &Op::FunctionNativeLoad{func_index, target} => format!("{1} <= functions_native[{0}]", func_index, target),
             &Op::FunctionVMLoad{func_index, target} => format!("{1} <= functions_vm[{0}]", func_index, target),
             &Op::FunctionVMCall{function, ref args, target} => format!("{1} <= vm_functions at [{0}]({2:?})", function, target, args),
             &Op::IntAdd{lhs, rhs, target} => format!("{2} <= {0} + {1} (Int)", lhs, rhs, target),

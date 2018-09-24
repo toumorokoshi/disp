@@ -21,7 +21,7 @@ while (neq i n)
 			mut switches (+ switches 1)
 		mut j (+ j 1)
 	mut i (+ i 1)
-	print-string "Case #"
+	print "Case #"
 	print i
-	print-string ": "
+	print ": "
 	println switches

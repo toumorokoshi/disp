@@ -14,10 +14,10 @@ use super::{
 };
 
 
+#[derive(Debug, Clone)]
 pub struct NativeFunction {
-    pub registers: Vec<Type>,
     pub return_type: Type,
-    pub func: NativeFunctionFunc,
+    pub func_index: usize,
 }
 
 pub type NativeFunctionFunc = fn(vm: &VMHandle, &mut WorkerHeap, &mut ValueList) -> Value;
@@ -97,8 +97,8 @@ impl VMFunction {
                     }
                     // TODO: handle nested calls
                     unsafe {
-                        let func = mem::transmute::<i64, Arc<NativeFunction>>(registers[function]);
-                        registers[target] = (func.func)(&vm, worker_heap, &mut args_to_pass);
+                        let func = mem::transmute::<i64, Arc<NativeFunctionFunc>>(registers[function]);
+                        registers[target] = func(&vm, worker_heap, &mut args_to_pass);
                     }
                 },
                 &Op::IntAdd{lhs, rhs, target} => registers[target] = registers[lhs] + registers[rhs],
@@ -154,10 +154,10 @@ impl VMFunction {
                         mem::transmute::<i64, f64>(registers[rhs])
                     { 1 } else { 0 };
                 },
-                &Op::FunctionNativeLoad{ref func_name, target} => unsafe {
-                    let func = vm.heap.functions_native[func_name].clone();
+                &Op::FunctionNativeLoad{func_index, target} => unsafe {
+                    let func = vm.heap.functions_native_funcs[func_index].clone();
                     registers[target] =
-                        mem::transmute::<Arc<NativeFunction>, i64>(func);
+                        mem::transmute::<Arc<NativeFunctionFunc>, i64>(func);
                 },
                 &Op::FunctionVMLoad{func_index, target} => unsafe {
                     let func = vm.heap.functions_vm[func_index].clone();
@@ -184,9 +184,7 @@ impl VMFunction {
                 },
                 &Op::Noop{} => {},
                 // TODO: incomplete. ends up as the null pointer right now.
-                &Op::StringLoad{register, ref constant} => unsafe {
-                    registers[register] = worker_heap.add_string(constant.clone());
-                },
+                &Op::StringLoad{register, ref constant} => registers[register] = worker_heap.add_string(constant.clone()),
                 &Op::Return{register} => {
                     return registers[register];
                 },

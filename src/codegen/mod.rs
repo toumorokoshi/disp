@@ -91,24 +91,25 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
         "fn" => function_production as Production,
         symbol => {
             let mut vm_args = Vec::with_capacity(args.len());
+            let mut vm_args_types = Vec::with_capacity(args.len());
             for a in args {
                 let vm_a = gen_token(context, a)?;
                 vm_args.push(vm_a.register);
+                vm_args_types.push(vm_a.typ);
             }
-
-            if context.vm.heap.functions_native.contains_key(symbol) {
-                let function = context.builder.allocate_local(&Type::FunctionNative);
-                let result = context.builder.allocate_local(&Type::Int);
+            if let Some(native_func) = context.vm.heap.get_native_func(&String::from(symbol), vm_args_types) {
+                let function_register = context.builder.allocate_local(&Type::FunctionNative);
+                let result = context.builder.allocate_local(&native_func.return_type);
                 context.builder.ops.push(Op::FunctionNativeLoad{
-                    func_name: String::from(symbol),
-                    target: function.register,
+                    func_index: native_func.func_index,
+                    target: function_register.register,
                 });
                 context.builder.ops.push(Op::CallNative{
-                    function: function.register,
+                    function: function_register.register,
                     args: vm_args,
                     target: result.register,
                 });
-                return Ok(Object{typ: Type::Int, register: result.register});
+                return Ok(Object{typ: native_func.return_type, register: result.register});
             }
             let (func_register, vm_function) = {
                 let maybe_function = context.builder.locals.get(symbol).clone();
@@ -171,7 +172,7 @@ fn add_int(context: &mut Context, value: i64) -> Object {
 
 fn create_map(context: &mut Context) -> Object {
     let obj = context.builder.allocate_local(&Type::Map(
-            Box::new(Type::Int), Box::new(Type::Int)
+            Box::new(Type::String), Box::new(Type::Bool)
     ));
     context.builder.ops.push(Op::MapCreate{target: obj.register});
     Object::from_build_object(obj)
