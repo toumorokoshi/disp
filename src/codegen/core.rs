@@ -5,7 +5,10 @@
 
 use std::collections::HashMap;
 use super::super::{Token};
-use super::{CodegenError};
+use super::{
+    CodegenError,
+    FunctionPrototype,
+};
 use warpspeed::{
     BuildObject,
     FunctionBuilder,
@@ -15,6 +18,9 @@ use warpspeed::{
 
 pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult;
 pub type CodegenResult = Result<Object, CodegenError>;
+pub fn function_prototype() -> Type {
+    Type::Function(Box::new(Vec::new()), Box::new(Type::None))
+}
 
 /// function prototypes are an unevaluated declaration
 /// of a function. These are used to generate actual
@@ -22,7 +28,7 @@ pub type CodegenResult = Result<Object, CodegenError>;
 pub struct Block {
     // string w / register
     pub locals: HashMap<String, usize>,
-    pub function_prototypes: Vec<Vec<Token>>,
+    pub function_prototypes: Vec<FunctionPrototype>,
 }
 
 impl Block {
@@ -32,6 +38,13 @@ impl Block {
             function_prototypes: vec![],
         };
         return block;
+    }
+
+    pub fn get_local(&self, key: &String) -> Option<usize>{
+        match self.locals.get(key) {
+            Some(v) => Some(v.clone()),
+            None => None
+        }
     }
 }
 
@@ -52,7 +65,7 @@ impl<'a> Context<'a> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Object {
     pub typ: Type, // the type of the register
     // the register containing the value.
@@ -61,7 +74,7 @@ pub struct Object {
 }
 
 impl Object {
-    pub fn New(typ: Type, register: usize) -> Object {
+    pub fn new(typ: Type, register: usize) -> Object {
         Object{
             typ: typ,
             register: register,
@@ -69,8 +82,8 @@ impl Object {
         }
     }
 
-    pub fn None() -> Object {
-        Object::New(Type::None, register: 0)
+    pub fn none() -> Object {
+        Object::new(Type::None, 0)
     }
 
     pub fn from_build_object(build_object: BuildObject) -> Object {

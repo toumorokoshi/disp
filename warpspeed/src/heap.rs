@@ -52,6 +52,31 @@ impl Heap {
         self.function_signatures.insert(name.clone(), map);
     }
 
+    /// add a native function to the vm heap
+    pub fn add_vm_func(&mut self,
+        name: String, params: Vec<Type>,
+        return_type: Type, func: VMFunction,
+    ) -> usize {
+        self.function_vm.push(Arc::new(func));
+        let func_index = self.function_native.len() - 1;
+        if let Some(ref mut map) = self.function_signatures.get_mut(&name) {
+            map.insert(params.clone(), FunctionSignature{
+                return_type: return_type,
+                function_type: FunctionType::Native,
+                function_index: func_index,
+            });
+            return func_index;
+        }
+        let mut map = HashMap::new();
+        map.insert(params.clone(), FunctionSignature {
+            return_type: return_type,
+            function_type: FunctionType::Native,
+            function_index: func_index,
+        });
+        self.function_signatures.insert(name.clone(), map);
+        return func_index;
+    }
+
     pub fn get_func(&self, name: &String, arguments: Vec<Type>) -> Option<FunctionSignature> {
         match self.function_signatures.get(name) {
             None => None,

@@ -1,6 +1,9 @@
-use std::sync::Arc;
 use warpspeed::{Op, Type};
-use super::{compile, Context, CodegenResult, Object, gen_token};
+use super::{
+    Context, CodegenResult,
+    function_prototype,
+    Object, gen_token
+};
 use super::super::{Token, HashableToken};
 
 macro_rules! ensure_type {
@@ -83,7 +86,7 @@ pub fn if_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     }
     context.builder.ops[branch_index] = Op::BranchFalse{condition: condition.register, if_false: false_index};
     context.builder.ops[goto_index] = Op::Goto{position: context.builder.ops.len()};
-    return Ok(Object{typ: Type::Int, register: return_value.register});
+    return Ok(Object::new(Type::Int, return_value.register));
 }
 
 pub fn while_production(context: &mut Context, args: &[Token]) -> CodegenResult {
@@ -96,21 +99,29 @@ pub fn while_production(context: &mut Context, args: &[Token]) -> CodegenResult 
     context.builder.ops.push(Op::Goto{position: start_index});
     // let loop_end_index = context.builder.ops.len();
     context.builder.ops[branch_index] = Op::BranchFalse{condition: condition.register, if_false: context.builder.ops.len()};
-    return Ok(Object{typ: Type::Int, register: return_value.register});
+    return Ok(Object::new(Type::Int, return_value.register));
 }
 
 pub fn mut_production(context: &mut Context, args: &[Token]) -> CodegenResult {
     match args[0] {
         Token::Symbol(ref s) => {
             let source = try!(gen_token(context, &args[1]));
-            let target = Object::from_build_object(context.builder.get_insert_local_var(&source.typ, s));
-            if source.typ != target.typ {
-                Err(String::from("mut expression type collision"))
-            } else {
-                context.builder.ops.push(
-                    Op::Assign{target: target.register, source: source.register}
-                );
-                Ok(target)
+            match source.function_index {
+                None => {
+                    let target = Object::from_build_object(context.builder.get_insert_local_var(&source.typ, s));
+                    if source.typ != target.typ {
+                        Err(String::from("mut expression type collision"))
+                    } else {
+                        context.builder.ops.push(
+                            Op::Assign{target: target.register, source: source.register}
+                        );
+                        Ok(target)
+                    }
+                }
+                Some(prototype_index) => {
+                    context.block.locals.insert((**s).clone(), prototype_index);
+                    Ok(source.clone())
+                }
             }
         },
         _ => Err(String::from("first value must be a symbol."))
