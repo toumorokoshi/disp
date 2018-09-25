@@ -1,2 +1,1 @@
-defun + {a: Dict, b: Dict}
-  1["x"] + l["y"]
+mut subtract (fn [l r] [(- l r)])

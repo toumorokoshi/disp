@@ -5,11 +5,14 @@ extern crate pest;
 extern crate pest_derive;
 
 mod ast;
+mod error;
 mod parser;
 mod codegen;
+mod loader;
 mod vm;
 
 use ast::{Token, HashableToken};
+use error::DispError;
 use std::{
     env,
     sync::Arc,
@@ -17,26 +20,29 @@ use std::{
     thread::sleep,
 };
 use std::io::{self, Write};
-use std::fs::File;
-use std::io::prelude::*;
 use codegen::{compile};
 use parser::{full_parse};
+use loader::{exec_file};
 use warpspeed::{Type};
 use vm::build_vm;
 
+
 fn main() {
     let args: Vec<String> = env::args().collect();
-    match args.len() {
+    let result = match args.len() {
         2 => execute(&args[1]),
         _ => repl()
+    };
+    if let Err(ref message) = result {
+        panic!("{}", message);
     }
 }
 
-fn repl() {
+fn repl() -> Result<(), DispError> {
     let mut vm = build_vm();
     loop {
-        let inp = read();
-        let func = Arc::new(compile(&mut vm, &inp).unwrap());
+        let inp = read()?;
+        let func = Arc::new(compile(&mut vm, &inp)?);
         if cfg!(feature = "debug") {
             println!("DEBUG: ops: ");
             func.print_ops();
@@ -46,35 +52,20 @@ fn repl() {
    }
 }
 
-fn execute(path: &str) {
+fn execute(path: &str) -> Result<(), DispError>{
     let mut vm = build_vm();
-    let mut file = File::open(path).unwrap();
-    let mut input = String::new();
-    file.read_to_string(&mut input).unwrap();
-    let inp = full_parse(&input);
-    match compile(&mut vm, &inp) {
-        Ok(func) => {
-            if cfg!(feature = "debug") {
-                println!("DEBUG: ops: ");
-                func.print_ops();
-            }
-            vm.submit(Arc::new(func), vec![]);
-            vm.shutdown_on_idle();
-        },
-        Err(e) => {
-            println!("unable to parse: {}", e);
-            println!("ast: {}", inp);
-        }
-    }
+    exec_file(&mut vm, path)?;
+    vm.shutdown_on_idle();
+    Ok(())
 }
 
-fn read() -> Token {
-    std::io::stdout().write(b">>> ").unwrap();
-    std::io::stdout().flush().unwrap();
+fn read() -> Result<Token, DispError> {
+    std::io::stdout().write(b">>> ")?;
+    std::io::stdout().flush()?;
     let mut input = String::new();
-    io::stdin().read_line(&mut input).ok().expect("Failed to read line");
+    io::stdin().read_line(&mut input)?;
     input = input.replace("\n", "");
-    parse_with_print(&input)
+    Ok(parse_with_print(&input))
 }
 
 

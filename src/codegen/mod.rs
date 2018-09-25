@@ -1,7 +1,8 @@
 mod builtins;
 mod core;
-mod function;
 mod error;
+mod function;
+mod macro_set;
 
 use warpspeed::{
     Op, Type, WORKER_HEAP, VM,
@@ -28,6 +29,7 @@ use self::core::{
     Context, Object, CodegenResult, Production,
     function_prototype
 };
+use self::macro_set::build_macro;
 use self::error::CodegenError;
 use super::{Token};
 
@@ -159,7 +161,13 @@ fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult {
     if let Some((func_token, args)) = args.split_first() {
         match func_token {
             &Token::Symbol(ref s) => compile_expr(context, s, args),
-            &Token::BangSymbol(ref s) => run_expr(context, s, args),
+            &Token::BangSymbol(ref s) => {
+                if **s == String::from("!macro") {
+                    build_macro(context, args)
+                } else {
+                    run_expr(context, s, args)
+                }
+            },
             _ => {
                 Err(format!("first token must be a symbol for expression, found {}", func_token))
             }
