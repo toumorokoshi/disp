@@ -1,6 +1,5 @@
 use std::sync::Arc;
 use super::{
-    compile,
     CodegenResult,
     Context,
     function_prototype,
@@ -33,6 +32,7 @@ impl FunctionPrototype {
             inner_context.builder.get_insert_local_var(&passed_types[i], &self.arguments[i]);
         }
         // then, we generate the body.
+        println!("{:?}", &self.body);
         let result_object = gen_token(&mut inner_context, &Token::List(self.body.clone()))?;
         context.builder.add_return(&result_object.to_build_object());
         Ok(context.builder.build())
@@ -71,42 +71,36 @@ pub fn function_production(context: &mut Context, args: &[Token]) -> CodegenResu
     });
      // TODO: this should be a function prototype, but we'll use
      // an empty function signature for now...
-     Ok(Object{
-         typ: function_prototype(),
-         register: 0,
-         function_index: Some(context.block.function_prototypes.len() - 1)
-     })
+    Ok(Object{
+        typ: function_prototype(),
+        register: 0,
+        function_index: Some(context.block.function_prototypes.len() - 1)
+    })
 }
 
 /// call a function
-pub fn call_function(context: &mut Context, name: &String, args: &[Token]) -> CodegenResult {
+pub fn call_function(context: &mut Context, name: &String, args: Vec<usize>, arg_types: Vec<Type>) -> CodegenResult {
     match context.block.get_local(name) {
         None => Err(format!("no such function declaration {} found", name)),
         Some(prototype_index) => {
             let prototype_function = context.block.function_prototypes[prototype_index].clone();
 
-            let mut vm_args = Vec::with_capacity(args.len());
-            let mut vm_args_types = Vec::with_capacity(args.len());
-
-            // first, we construct argument values + types
-            for a in args {
-                let vm_a = gen_token(context, a)?;
-                vm_args.push(vm_a.register);
-                vm_args_types.push(vm_a.typ);
-            };
-
             // next, we construct the inner function.
-            let function = prototype_function.build(context, vm_args_types.clone())?;
+            let function = prototype_function.build(context, arg_types.clone())?;
             let return_type = function.return_type.clone();
             // now that it's constructed, we add it to the VM.
             let func_index = match Arc::get_mut(&mut context.vm.heap) {
                 Some(heap) => {
-                    heap.add_vm_func(name.clone(), vm_args_types.clone(), return_type.clone(), function)
+                    if cfg!(feature = "debug") {
+                        println!("DEBUG: function {} ops:", heap.function_vm.len());
+                        function.print_ops();
+                    }
+                    heap.add_vm_func(name.clone(), arg_types.clone(), return_type.clone(), function)
                 },
                 None => { panic!("unable to warmup vm");}
             };
             let function_register = context.builder.allocate_local(
-                &Type::Function(Box::new(vm_args_types.clone()), Box::new(return_type.clone()))
+                &Type::Function(Box::new(arg_types.clone()), Box::new(return_type.clone()))
             );
             context.builder.ops.push(Op::FunctionVMLoad{
                 func_index: func_index,
@@ -115,38 +109,13 @@ pub fn call_function(context: &mut Context, name: &String, args: &[Token]) -> Co
             let result = context.builder.allocate_local(&return_type);
             context.builder.ops.push(Op::FunctionVMCall{
                 function: function_register.register,
-                args: vm_args,
+                args: args,
                 target: result.register,
             });
             Ok(Object::from_build_object(result))
         }
     }
 }
-
-pub fn _function_production(context: &mut Context, args: &[Token]) -> CodegenResult {
-    // the first argument is a list of variables, so we pull those.
-    // TODO: parse into VMFunction declaration.
-    let _variables = try!(gen_token(context, &args[0]));
-    let function = compile(&mut context.vm, &args[1]).unwrap();
-    // add the function to the VM, so it can be referenced in bytecode.
-    match Arc::get_mut(&mut context.vm.heap) {
-        None => Err(String::from("unable to get add a method to the vm (unable to get a heap handle)")),
-        Some(heap) => {
-            heap.function_vm.push(Arc::new(function));
-            let function_index = heap.function_vm.len() - 1;
-            let function_register = context.builder.allocate_local(
-                &Type::Function(Box::new(vec![]), Box::new(Type::None))
-            );
-            context.builder.ops.push(Op::FunctionVMLoad{
-                func_index: function_index,
-                target: function_register.register,
-            });
-            Ok(Object::from_build_object(function_register))
-        }
-    }
-}
-
-
 
 // call a VM function. This method
 // also includes the logic to compile new

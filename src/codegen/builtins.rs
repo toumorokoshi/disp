@@ -1,7 +1,6 @@
 use warpspeed::{Op, Type};
 use super::{
     Context, CodegenResult,
-    function_prototype,
     Object, gen_token
 };
 use super::super::{Token, HashableToken};

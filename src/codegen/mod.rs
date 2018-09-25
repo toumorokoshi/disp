@@ -106,7 +106,7 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
             let mut vm_args_types = Vec::with_capacity(args.len());
             for a in args {
                 let vm_a = gen_token(context, a)?;
-                vm_args.push(vm_a.register);
+                vm_args.push(vm_a.register as usize);
                 vm_args_types.push(vm_a.typ);
             }
 
@@ -141,14 +141,14 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                 }
                 return Ok(Object::from_build_object(result));
             }
-            // call_function(context, &String::from(symbol), &args)
+            return call_function(context, &String::from(symbol), vm_args, vm_args_types);
         }
     };
     return func(context, args);
 }
 
 fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult {
-    let mut result = Ok(Object::new(Type::None, 0));
+    let mut result = Ok(Object::none());
     for t in args {
         result = Ok(gen_token(context, t)?);
     }
