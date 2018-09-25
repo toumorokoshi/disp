@@ -58,7 +58,7 @@ impl Heap {
         return_type: Type, func: VMFunction,
     ) -> usize {
         self.function_vm.push(Arc::new(func));
-        let func_index = self.function_native.len() - 1;
+        let func_index = self.function_vm.len() - 1;
         if let Some(ref mut map) = self.function_signatures.get_mut(&name) {
             map.insert(params.clone(), FunctionSignature{
                 return_type: return_type,

@@ -32,10 +32,9 @@ impl FunctionPrototype {
             inner_context.builder.get_insert_local_var(&passed_types[i], &self.arguments[i]);
         }
         // then, we generate the body.
-        println!("{:?}", &self.body);
         let result_object = gen_token(&mut inner_context, &Token::List(self.body.clone()))?;
-        context.builder.add_return(&result_object.to_build_object());
-        Ok(context.builder.build())
+        inner_context.builder.add_return(&result_object.to_build_object());
+        Ok(inner_context.builder.build())
     }
 }
 
