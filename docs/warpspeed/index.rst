@@ -4,6 +4,12 @@ The Warpspeed VM
 The Warpspeed VM is a sub-project of Disp. The goal is to become a VM that can be used for
 other programming languages.
 
+.. warning::
+
+	The Warpspeed VM will most likely be deprecated in exchange for a compiled binary,
+  that provides similar core constructs. See "Why Disp will be a Compiled Language" for
+  more information.
+
 What is a Warpspeed Feature vs Disp?
 ************************************
 
