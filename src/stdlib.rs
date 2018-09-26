@@ -1,4 +1,6 @@
 use super::{
+    DispError,
+    exec_file,
 };
 use warpspeed::VM;
 
@@ -8,5 +10,6 @@ const LIB_FILE: &'static str = "lib.ds";
 
 
 // load the standard library
-pub fn load_stdlib(vm: &mut VM) {
+pub fn load_stdlib(vm: &mut VM) -> Result<(), DispError> {
+    exec_file(vm, LIB_FILE)
 }

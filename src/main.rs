@@ -9,17 +9,19 @@ mod error;
 mod parser;
 mod codegen;
 mod loader;
+mod stdlib;
 mod vm;
 
 use ast::{Token, HashableToken};
 use error::DispError;
 use std::{
     env,
+    io::{self, Write},
     sync::Arc,
     time::Duration,
     thread::sleep,
 };
-use std::io::{self, Write};
+use stdlib::{load_stdlib};
 use codegen::{compile};
 use parser::{full_parse};
 use loader::{exec_file};
@@ -39,7 +41,7 @@ fn main() {
 }
 
 fn repl() -> Result<(), DispError> {
-    let mut vm = build_vm();
+    let mut vm = build_vm()?;
     loop {
         let inp = read()?;
         let func = Arc::new(compile(&mut vm, &inp)?);
@@ -53,7 +55,7 @@ fn repl() -> Result<(), DispError> {
 }
 
 fn execute(path: &str) -> Result<(), DispError>{
-    let mut vm = build_vm();
+    let mut vm = build_vm()?;
     exec_file(&mut vm, path)?;
     vm.shutdown_on_idle();
     Ok(())

@@ -1,6 +1,12 @@
-use std::sync::Arc;
-use warpspeed::{VM, Type};
 mod functions;
+
+use std::{
+    sync::Arc,
+    time::Duration,
+    thread::sleep,
+};
+
+use warpspeed::{VM, Type};
 use self::functions::{
     add,
     count,
@@ -10,10 +16,14 @@ use self::functions::{
     println,
     read_line,
 };
+use super::{
+    DispError,
+    load_stdlib
+};
 
 /// build a specialized VM for disp, containing
 /// some builtins
-pub fn build_vm() -> VM {
+pub fn build_vm() -> Result<VM, DispError> {
     let mut vm = VM::new();
     match Arc::get_mut(&mut vm.heap) {
         Some(heap) => {
@@ -60,7 +70,9 @@ pub fn build_vm() -> VM {
                 int,
             );
         },
-        None => { panic!("unable to warmup vm");}
+        None => { panic!("unable to get mutable handle to vm heap during initialization."); }
     }
-    return vm;
+    load_stdlib(&mut vm)?;
+    sleep(Duration::from_millis(1000));
+    Ok(vm)
 }
