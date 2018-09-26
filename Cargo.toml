@@ -8,6 +8,7 @@ pest = "^1.0"
 pest_derive = "^1.0"
 getopts = "0.2"
 warpspeed = { path = "./warpspeed" }
+llvm-sys = "60"
 
 [features]
 debug = []

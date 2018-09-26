@@ -3,12 +3,14 @@ extern crate warpspeed;
 extern crate pest;
 #[macro_use]
 extern crate pest_derive;
+extern crate llvm_sys;
 
 mod ast;
 mod error;
 mod parser;
 mod codegen;
 mod loader;
+mod llvm_builder;
 mod stdlib;
 mod vm;
 
@@ -25,11 +27,13 @@ use stdlib::{load_stdlib};
 use codegen::{compile};
 use parser::{full_parse};
 use loader::{exec_file};
+use llvm_builder::build_function;
 use warpspeed::{Type};
 use vm::build_vm;
 
 
 fn main() {
+    build_function();
     let args: Vec<String> = env::args().collect();
     let result = match args.len() {
         2 => execute(&args[1]),
