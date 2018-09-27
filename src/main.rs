@@ -4,6 +4,7 @@ extern crate pest;
 #[macro_use]
 extern crate pest_derive;
 extern crate llvm_sys;
+extern crate libc;
 
 mod ast;
 mod error;
@@ -27,21 +28,26 @@ use stdlib::{load_stdlib};
 use codegen::{compile};
 use parser::{full_parse};
 use loader::{exec_file};
-use llvm_builder::build_function;
+use llvm_builder::{
+    LLVMBuilder
+};
 use warpspeed::{Type};
 use vm::build_vm;
 
 
 fn main() {
-    build_function();
-    let args: Vec<String> = env::args().collect();
-    let result = match args.len() {
-        2 => execute(&args[1]),
-        _ => repl()
-    };
-    if let Err(ref message) = result {
-        panic!("{}", message);
-    }
+    let builder = LLVMBuilder::new();
+    builder.build_function();
+    builder.run();
+    builder.cleanup();
+    // let args: Vec<String> = env::args().collect();
+    // let result = match args.len() {
+    //     2 => execute(&args[1]),
+    //     _ => repl()
+    // };
+    // if let Err(ref message) = result {
+    //     panic!("{}", message);
+    // }
 }
 
 fn repl() -> Result<(), DispError> {
