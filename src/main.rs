@@ -13,6 +13,7 @@ mod codegen;
 mod loader;
 mod native_functions;
 mod llvm_builder;
+mod llvm_codegen;
 mod stdlib;
 mod vm;
 
@@ -29,7 +30,7 @@ use stdlib::{load_stdlib};
 use codegen::{compile};
 use parser::{full_parse};
 use loader::{exec_file};
-pub use llvm_builder::{
+use llvm_builder::{
     LLVMBuilder
 };
 use warpspeed::{Type};
