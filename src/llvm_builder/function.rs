@@ -5,7 +5,7 @@ use llvm_sys::{
 };
 use super::{to_ptr};
 
-extern fn puts() {
+extern "C" fn putsyusuke() {
     println!("foo");
     println!("bar");
 }
@@ -14,7 +14,7 @@ extern fn puts() {
 pub fn add_externs(module: LLVMModuleRef) {
     unsafe {
         let mut args = vec![];
-        LLVMAddFunction(module, to_ptr("puts"), LLVMFunctionType(
+        LLVMAddFunction(module, to_ptr("putsyusuke"), LLVMFunctionType(
             LLVMVoidType(), args.as_mut_ptr(), 0, 0
         ));
     }
