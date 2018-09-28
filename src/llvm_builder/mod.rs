@@ -56,10 +56,12 @@ impl LLVMBuilder {
             let function = core::LLVMAddFunction(self.module, to_ptr("main"), function_type);
             let basic_block = core::LLVMAppendBasicBlockInContext(self.context,  function, to_ptr("entry"));
             // call puts
-            let puts_function = LLVMGetNamedFunction(self.module, to_ptr("puts"));
-            let mut args = vec![];
+            let prints_function = LLVMGetNamedFunction(self.module, to_ptr("print"));
+            let mut args = vec![
+                LLVMConstInt(LLVMInt64Type(), 10 as u64, 0)
+            ];
             core::LLVMPositionBuilderAtEnd(self.builder, basic_block);
-            LLVMBuildCall(self.builder, puts_function, args.as_mut_ptr(), 0, to_ptr(""));
+            LLVMBuildCall(self.builder, prints_function, args.as_mut_ptr(), args.len() as u32, to_ptr(""));
             LLVMBuildRetVoid(self.builder);
         }
     }

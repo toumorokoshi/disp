@@ -8,9 +8,9 @@ use super::{to_ptr};
 /// Add external declarations to a module.
 pub fn add_externs(module: LLVMModuleRef) {
     unsafe {
-        let mut args = vec![];
-        LLVMAddFunction(module, to_ptr("puts"), LLVMFunctionType(
-            LLVMVoidType(), args.as_mut_ptr(), 0, 0
+        let mut args = vec![LLVMInt64Type()];
+        LLVMAddFunction(module, to_ptr("print"), LLVMFunctionType(
+            LLVMInt64Type(), args.as_mut_ptr(), args.len() as u32, 0
         ));
     }
 }

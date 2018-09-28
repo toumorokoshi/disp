@@ -6,6 +6,6 @@
 // it resolves the name that's specified by the method
 // signature.
 #[no_mangle]
-pub extern "C" fn puts() {
-    println!("disp_puts");
+pub extern "C" fn print(value: i64) {
+    println!("{}", value);
 }
