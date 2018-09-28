@@ -6,23 +6,20 @@ use llvm_sys::{
     execution_engine,
     support::*,
     target,
-    prelude::{
-        LLVMBuilderRef,
-        LLVMContextRef,
-        LLVMModuleRef,
-    }
+    prelude::*,
 };
 use std::{
+    collections::HashMap,
     mem,
     ptr,
 };
-use self::utils::to_ptr;
+pub use self::utils::to_ptr;
 use self::function::{add_externs};
 
 pub struct LLVMBuilder {
-    context: LLVMContextRef,
-    module: LLVMModuleRef,
-    builder: LLVMBuilderRef,
+    pub context: LLVMContextRef,
+    pub module: LLVMModuleRef,
+    pub builder: LLVMBuilderRef,
 }
 
 impl LLVMBuilder {
@@ -38,7 +35,7 @@ impl LLVMBuilder {
             return LLVMBuilder {
                 context: context,
                 module: module,
-                builder: builder
+                builder: builder,
             };
         }
     }

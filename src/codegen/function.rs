@@ -73,7 +73,7 @@ pub fn function_production(context: &mut Context, args: &[Token]) -> CodegenResu
     Ok(Object{
         typ: function_prototype(),
         register: 0,
-        function_index: Some(context.block.function_prototypes.len() - 1)
+        // function_index: Some(context.block.function_prototypes.len() - 1)
     })
 }
 
