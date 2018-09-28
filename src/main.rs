@@ -11,6 +11,7 @@ mod error;
 mod parser;
 mod codegen;
 mod loader;
+mod native_functions;
 mod llvm_builder;
 mod stdlib;
 mod vm;
@@ -28,11 +29,14 @@ use stdlib::{load_stdlib};
 use codegen::{compile};
 use parser::{full_parse};
 use loader::{exec_file};
-use llvm_builder::{
+pub use llvm_builder::{
     LLVMBuilder
 };
 use warpspeed::{Type};
 use vm::build_vm;
+// Exporting all functions publicy, so they will
+// be discovered by llvm.
+pub use self::native_functions::*;
 
 
 fn main() {

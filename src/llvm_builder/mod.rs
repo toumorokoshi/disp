@@ -17,7 +17,7 @@ use std::{
     ptr,
 };
 use self::utils::to_ptr;
-use self::function::add_externs;
+use self::function::{add_externs};
 
 pub struct LLVMBuilder {
     context: LLVMContextRef,
