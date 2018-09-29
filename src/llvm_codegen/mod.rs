@@ -1,37 +1,20 @@
-mod error;
 mod core;
+mod error;
 mod function;
-mod types;
+pub mod native_functions;
 mod scope;
-use llvm_sys:: {
-    core::*
-};
-use super::{
-    DispError,
-    llvm_builder::{
-        LLVMBuilder,
-        to_ptr,
-    },
-    Token,
-};
-use self::core:: {
-    Compiler,
-    Context,
-    Function,
-    Object
-};
-use self::error::{
-    CodegenError,
-    CodegenResult,
-};
-use self::function::{
-    FunctionPrototype,
-    get_or_compile_function,
-};
-use self::scope::{
-    Scope,
-};
+mod types;
+mod utils;
+pub use self::core::{Compiler, Context, Function, Object};
+use self::error::{CodegenError, CodegenResult};
+use self::function::{get_or_compile_function, FunctionPrototype};
+pub use self::native_functions::*;
+use self::scope::Scope;
 use self::types::Type;
+use self::utils::to_ptr;
+use super::{DispError, Token};
+use llvm_sys::{core::*, execution_engine::*, target::*};
+use std::mem;
 
 pub type LLVMFunction = extern "C" fn();
 
@@ -41,23 +24,51 @@ pub type LLVMFunction = extern "C" fn();
 ///   by others
 /// * imperative components, which will be put into the
 ///   main function and available to be executed.
-pub fn compile_module(compiler: &mut Compiler, module_name: &str, token: &Token) -> CodegenResult<()> {
+pub fn compile_module(
+    compiler: &mut Compiler,
+    module_name: &str,
+    token: &Token,
+) -> CodegenResult<LLVMFunction> {
     unsafe {
-       let module = LLVMModuleCreateWithNameInContext(to_ptr(module_name), compiler.llvm_context);
-       let context
+        let module = LLVMModuleCreateWithNameInContext(to_ptr(module_name), compiler.llvm_context);
+        let builder = LLVMCreateBuilderInContext(compiler.llvm_context);
+        let mut context = Context::new(compiler, module, builder);
+        add_native_functions(&mut context);
+        let mut args = vec![];
+        let function_type =
+            LLVMFunctionType(LLVMVoidType(), args.as_mut_ptr(), args.len() as u32, 0);
+        let main_function = LLVMAddFunction(module, to_ptr("main"), function_type);
+        let basic_block = LLVMAppendBasicBlockInContext(
+            context.compiler.llvm_context,
+            main_function,
+            to_ptr("entry"),
+        );
+        LLVMPositionBuilderAtEnd(context.builder, basic_block);
+        gen_token(&mut context, token);
+        // this builds the function in question for now.
+        LLVMDumpModule(module);
+        let mut ee = mem::uninitialized();
+        let mut out = mem::zeroed();
+        LLVMLinkInMCJIT();
+        LLVM_InitializeNativeTarget();
+        LLVM_InitializeNativeAsmPrinter();
+        LLVMCreateExecutionEngineForModule(&mut ee, module, &mut out);
+        let addr = LLVMGetFunctionAddress(ee, to_ptr("main"));
+        let f: LLVMFunction = mem::transmute(addr);
+        Ok(f)
     }
-}
-
-pub fn compile(context: &mut Context, token: &Token) -> CodegenResult<Object> {
-    Ok(gen_token(context, token)?)
 }
 
 fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> {
     unsafe {
         Ok(match token {
-            &Token::None => Object::new(LLVMConstPointerNull(LLVMVoidType())),
-            &Token::Expression(ref tl)  => gen_expr(context, tl)?,
-            _ => Object::new(LLVMConstPointerNull(LLVMVoidType())),
+            &Token::None => Object::none(),
+            &Token::Integer(i) => Object::new(
+                LLVMConstInt(Type::Int.to_llvm_type(), i as u64, 0),
+                Type::Int,
+            ),
+            &Token::Expression(ref tl) => gen_expr(context, tl)?,
+            _ => Object::none(),
         })
     }
 }
@@ -73,9 +84,10 @@ fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
             //         run_expr(context, s, args)
             //     }
             // },
-            _ => {
-                Err(CodegenError::new(&format!("first token must be a symbol for expression, found {}", func_token)))
-            }
+            _ => Err(CodegenError::new(&format!(
+                "first token must be a symbol for expression, found {}",
+                func_token
+            ))),
         }
     } else {
         Err(CodegenError::new("no method found"))
@@ -92,16 +104,20 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                 vm_args.push(vm_a.value);
                 vm_args_types.push(vm_a.object_type);
             }
-            let function = get_or_compile_function(context, &name, &vm_arg_types)?;
+            let function = get_or_compile_function(context, func_name, &vm_args_types)?;
             unsafe {
-                LLVMBuildCall(context.builder, function,
-                              vm_args.as_mut_ptr(), vm_args.len() as u32,
-                              to_ptr(""));
+                let value = LLVMBuildCall(
+                    context.builder,
+                    function.function,
+                    vm_args.as_mut_ptr(),
+                    vm_args.len() as u32,
+                    to_ptr("calltmp"),
+                );
+                Ok(Object::new(value, function.return_type))
             }
         }
     }
 }
-
 
 fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
     let mut result = Ok(Object::none());

@@ -1,20 +1,11 @@
+use super::super::Token;
+use super::{CodegenError, FunctionPrototype};
 /// thoughts here:
 /// - Object probably needs be disp-specific to allow
 ///   disp-specific functionality, or the ghvm builder
 ///   needs to provide more rules about type construction.
-
 use std::collections::HashMap;
-use super::super::{Token};
-use super::{
-    CodegenError,
-    FunctionPrototype,
-};
-use warpspeed::{
-    BuildObject,
-    FunctionBuilder,
-    Type,
-    VM
-};
+use warpspeed::{BuildObject, FunctionBuilder, Type, VM};
 
 pub type Production = fn(context: &mut Context, args: &[Token]) -> CodegenResult;
 pub type CodegenResult = Result<Object, CodegenError>;
@@ -40,19 +31,18 @@ impl Block {
         return block;
     }
 
-    pub fn get_local(&self, key: &String) -> Option<usize>{
+    pub fn get_local(&self, key: &String) -> Option<usize> {
         match self.locals.get(key) {
             Some(v) => Some(v.clone()),
-            None => None
+            None => None,
         }
     }
 }
 
-
 pub struct Context<'a> {
     pub block: Block,
     pub builder: FunctionBuilder,
-    pub vm: &'a mut VM
+    pub vm: &'a mut VM,
 }
 
 impl<'a> Context<'a> {
@@ -60,8 +50,8 @@ impl<'a> Context<'a> {
         return Context {
             block: Block::new(),
             builder: FunctionBuilder::new(),
-            vm: vm
-        }
+            vm: vm,
+        };
     }
 }
 
@@ -75,10 +65,10 @@ pub struct Object {
 
 impl Object {
     pub fn new(typ: Type, register: usize) -> Object {
-        Object{
+        Object {
             typ: typ,
             register: register,
-            function_index: None
+            function_index: None,
         }
     }
 
@@ -90,14 +80,14 @@ impl Object {
         return Object {
             typ: build_object.typ,
             register: build_object.register,
-            function_index: None
+            function_index: None,
         };
     }
 
     pub fn to_build_object(&self) -> BuildObject {
         return BuildObject {
             typ: self.typ.clone(),
-            register: self.register
+            register: self.register,
         };
     }
 }

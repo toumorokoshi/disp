@@ -1,12 +1,6 @@
-use llvm_sys::{
-    core::*,
-    prelude::*
-};
-use super::{
-    Scope,
-    LLVMBuilder,
-    Type
-};
+use super::{Scope, Type};
+use llvm_sys::{core::*, prelude::*, support::*};
+use std::ptr;
 
 /// Objects are to represent values,
 /// variables, and functions.
@@ -17,13 +11,14 @@ pub struct Object {
 
 impl Object {
     pub fn new(value: LLVMValueRef, object_type: Type) -> Object {
-        Object{value: value, object_type: object_type}
+        Object {
+            value: value,
+            object_type: object_type,
+        }
     }
 
     pub fn none() -> Object {
-        unsafe {
-            Object::new(LLVMConstNull(LLVMVoidType()), Type::None)
-        }
+        unsafe { Object::new(LLVMConstNull(LLVMVoidType()), Type::None) }
     }
 }
 
@@ -39,18 +34,25 @@ pub struct Function {
 /// The context object contains all relevant
 /// information for the Codegen to successfully build
 /// llvm code.
-pub struct Context {
-    pub compiler: Compiler,
-    pub scope: Scope,
-    pub builder: LLVMBuilder
+pub struct Context<'a> {
+    pub compiler: &'a mut Compiler,
+    pub scope: &'a mut Scope,
+    pub module: LLVMModuleRef,
+    pub builder: LLVMBuilderRef,
 }
 
-impl Context {
-    pub fn new(compiler: Compiler) -> Context {
+impl<'a> Context<'a> {
+    pub fn new(
+        compiler: &'a mut Compiler,
+        scope: &'a mut Scope,
+        module: LLVMModuleRef,
+        builder: LLVMBuilderRef,
+    ) -> Context {
         Context {
             compiler: compiler,
-            scope: Scope::new(None),
-            builder: LLVMBuilder::new(),
+            scope: scope,
+            builder: builder,
+            module: module,
         }
     }
 }
@@ -59,5 +61,19 @@ impl Context {
 /// that contains context for the whole
 /// disp application being created.
 pub struct Compiler {
-    pub llvm_context: LLVMContextRef
+    pub llvm_context: LLVMContextRef,
+}
+
+impl Compiler {
+    pub fn new() -> Compiler {
+        unsafe {
+            let context = LLVMContextCreate();
+            // This is required to ensure that exported
+            // functions area available to the context.
+            LLVMLoadLibraryPermanently(ptr::null());
+            Compiler {
+                llvm_context: context,
+            }
+        }
+    }
 }

@@ -1,15 +1,7 @@
-use std::sync::Arc;
 use super::{
-    CodegenResult,
-    Context,
-    function_prototype,
-    gen_token,
-    Object,
-    Op,
-    Token,
-    Type,
-    VMFunction,
+    function_prototype, gen_token, CodegenResult, Context, Object, Op, Token, Type, VMFunction,
 };
+use std::sync::Arc;
 
 /// represents the function prototype, that can then be
 /// used to construct functions
@@ -23,21 +15,26 @@ impl FunctionPrototype {
     /// build a function with the specified types as arguments
     fn build(&self, context: &mut Context, passed_types: Vec<Type>) -> Result<VMFunction, String> {
         if passed_types.len() != self.arguments.len() {
-            return Err(String::from("number of arguments passed to function is mismatched"));
+            return Err(String::from(
+                "number of arguments passed to function is mismatched",
+            ));
         }
         let mut inner_context = Context::new(&mut context.vm);
         // insert arguments as values.
         // declare all args as passed values.
         for i in 0..passed_types.len() {
-            inner_context.builder.get_insert_local_var(&passed_types[i], &self.arguments[i]);
+            inner_context
+                .builder
+                .get_insert_local_var(&passed_types[i], &self.arguments[i]);
         }
         // then, we generate the body.
         let result_object = gen_token(&mut inner_context, &Token::List(self.body.clone()))?;
-        inner_context.builder.add_return(&result_object.to_build_object());
+        inner_context
+            .builder
+            .add_return(&result_object.to_build_object());
         Ok(inner_context.builder.build())
     }
 }
-
 
 /// A function production is run when a function definition is encountered.
 /// This does nothing at this point, aside from declare and store a
@@ -52,33 +49,49 @@ pub fn function_production(context: &mut Context, args: &[Token]) -> CodegenResu
                 match token {
                     Token::Symbol(ref name) => {
                         arguments_builder.push(*name.clone());
-                    },
-                    t => { return Err(format!("all arguments in an argument declaration should be a symbol. found {}", t));}
+                    }
+                    t => {
+                        return Err(format!(
+                            "all arguments in an argument declaration should be a symbol. found {}",
+                            t
+                        ));
+                    }
                 }
             }
             arguments_builder
-        },
-        _ => {return Err(String::from("arguments declarations for function should be a list"));}
+        }
+        _ => {
+            return Err(String::from(
+                "arguments declarations for function should be a list",
+            ));
+        }
     };
     let body = match args[1] {
         Token::List(ref _body) => _body.clone(),
-        _ => {return Err(String::from("body of argument should be a list of tokens"));}
+        _ => {
+            return Err(String::from("body of argument should be a list of tokens"));
+        }
     };
-    context.block.function_prototypes.push(FunctionPrototype{
+    context.block.function_prototypes.push(FunctionPrototype {
         arguments: arguments,
-        body: body
+        body: body,
     });
-     // TODO: this should be a function prototype, but we'll use
-     // an empty function signature for now...
-    Ok(Object{
+    // TODO: this should be a function prototype, but we'll use
+    // an empty function signature for now...
+    Ok(Object {
         typ: function_prototype(),
         register: 0,
-        // function_index: Some(context.block.function_prototypes.len() - 1)
+        function_index: None, // function_index: Some(context.block.function_prototypes.len() - 1)
     })
 }
 
 /// call a function
-pub fn call_function(context: &mut Context, name: &String, args: Vec<usize>, arg_types: Vec<Type>) -> CodegenResult {
+pub fn call_function(
+    context: &mut Context,
+    name: &String,
+    args: Vec<usize>,
+    arg_types: Vec<Type>,
+) -> CodegenResult {
     match context.block.get_local(name) {
         None => Err(format!("no such function declaration {} found", name)),
         Some(prototype_index) => {
@@ -94,19 +107,27 @@ pub fn call_function(context: &mut Context, name: &String, args: Vec<usize>, arg
                         println!("DEBUG: function {} ops:", heap.function_vm.len());
                         function.print_ops();
                     }
-                    heap.add_vm_func(name.clone(), arg_types.clone(), return_type.clone(), function)
-                },
-                None => { panic!("unable to warmup vm");}
+                    heap.add_vm_func(
+                        name.clone(),
+                        arg_types.clone(),
+                        return_type.clone(),
+                        function,
+                    )
+                }
+                None => {
+                    panic!("unable to warmup vm");
+                }
             };
-            let function_register = context.builder.allocate_local(
-                &Type::Function(Box::new(arg_types.clone()), Box::new(return_type.clone()))
-            );
-            context.builder.ops.push(Op::FunctionVMLoad{
+            let function_register = context.builder.allocate_local(&Type::Function(
+                Box::new(arg_types.clone()),
+                Box::new(return_type.clone()),
+            ));
+            context.builder.ops.push(Op::FunctionVMLoad {
                 func_index: func_index,
                 target: function_register.register,
             });
             let result = context.builder.allocate_local(&return_type);
-            context.builder.ops.push(Op::FunctionVMCall{
+            context.builder.ops.push(Op::FunctionVMCall {
                 function: function_register.register,
                 args: args,
                 target: result.register,

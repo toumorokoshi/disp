@@ -1,7 +1,4 @@
-use llvm_sys::{
-    core::*,
-    prelude::*,
-};
+use llvm_sys::{core::*, prelude::*};
 
 /// The type enum is used to define types for Disp's
 /// type checker.
@@ -9,6 +6,12 @@ use llvm_sys::{
 pub enum Type {
     Int,
     None,
+}
+
+impl Into<LLVMTypeRef> for Type {
+    fn into(self) -> LLVMTypeRef {
+        self.to_llvm_type()
+    }
 }
 
 impl Type {
