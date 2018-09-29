@@ -93,6 +93,11 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
                 vm_args_types.push(vm_a.object_type);
             }
             let function = get_or_compile_function(context, &name, &vm_arg_types)?;
+            unsafe {
+                LLVMBuildCall(context.builder, function,
+                              vm_args.as_mut_ptr(), vm_args.len() as u32,
+                              to_ptr(""));
+            }
         }
     }
 }
