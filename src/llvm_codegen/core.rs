@@ -4,6 +4,7 @@ use std::ptr;
 
 /// Objects are to represent values,
 /// variables, and functions.
+#[derive(Clone, Debug)]
 pub struct Object {
     pub value: LLVMValueRef,
     pub object_type: Type,

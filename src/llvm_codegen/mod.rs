@@ -2,6 +2,7 @@ mod core;
 mod error;
 mod function;
 pub mod native_functions;
+mod productions;
 mod scope;
 mod types;
 mod utils;
@@ -9,6 +10,7 @@ pub use self::core::{Compiler, Context, Function, Object};
 use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 pub use self::native_functions::*;
+use self::productions::let_production;
 use self::scope::Scope;
 use self::types::Type;
 use self::utils::to_ptr;
@@ -52,14 +54,14 @@ pub fn compile_module<'a>(
         // LLVM functions always require a return instruction of some sort.
         LLVMBuildRetVoid(context.builder);
         // this builds the function in question for now.
-        LLVMDumpModule(module);
+        if cfg!(feature = "debug") {
+            LLVMDumpModule(module);
+        }
         let mut ee = mem::uninitialized();
         let mut out = mem::zeroed();
         LLVMLinkInMCJIT();
         LLVM_InitializeNativeTarget();
-        if cfg!(feature = "debug") {
-            LLVM_InitializeNativeAsmPrinter();
-        }
+        LLVM_InitializeNativeAsmPrinter();
         LLVMCreateExecutionEngineForModule(&mut ee, module, &mut out);
         let addr = LLVMGetFunctionAddress(ee, to_ptr("main"));
         let f: LLVMFunction = mem::transmute(addr);
@@ -72,6 +74,18 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
     unsafe {
         Ok(match token {
             &Token::None => Object::none(),
+            &Token::Symbol(ref s) => {
+                let value = match context.scope.locals.get(&(*s.clone())) {
+                    Some(s) => Some(s.clone()),
+                    None => None,
+                };
+                match value {
+                    Some(value) => value,
+                    None => {
+                        return Err(CodegenError::new(&format!("unable to find variable {}", s)));
+                    }
+                }
+            }
             &Token::Integer(i) => Object::new(
                 LLVMConstInt(Type::Int.to_llvm_type(), i as u64, 0),
                 Type::Int,
@@ -110,8 +124,8 @@ fn compile_expr<'a, 'b>(
     args: &'a [Token],
 ) -> CodegenResult<Object> {
     match func_name {
+        "let" => let_production(context, args),
         symbol => {
-            println!("compiling call to {}", symbol);
             let mut vm_args = Vec::with_capacity(args.len());
             let mut vm_args_types = Vec::with_capacity(args.len());
             for a in args {

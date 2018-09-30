@@ -1,10 +1,10 @@
-use super::{Function, FunctionPrototype, Token, Type};
+use super::{Function, FunctionPrototype, Object, Token, Type};
 use llvm_sys::prelude::*;
 use std::collections::HashMap;
 
 /// Scope objects handle references to functions by value.
 pub struct Scope<'a> {
-    pub locals: HashMap<String, LLVMValueRef>,
+    pub locals: HashMap<String, Object>,
     /// a declaration of functions, including
     /// polymorphism for type definitions.
     pub functions: HashMap<String, HashMap<Vec<Type>, Function>>,

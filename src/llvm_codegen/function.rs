@@ -1,4 +1,6 @@
-use super::{gen_list, to_ptr, CodegenError, CodegenResult, Context, Function, Scope, Token, Type};
+use super::{
+    gen_list, to_ptr, CodegenError, CodegenResult, Context, Function, Object, Scope, Token, Type,
+};
 use llvm_sys::core::*;
 
 /// Function prototypes are not-yet compiled
@@ -23,7 +25,6 @@ pub fn get_or_compile_function<'a, 'b>(
     arg_types: &'a Vec<Type>,
 ) -> CodegenResult<Function> {
     if let Some(func) = context.scope.get_function(name, arg_types) {
-        println!("found func for {}", name);
         return Ok(func.clone());
     }
     if let Some(prototype) = context.scope.get_prototype(name) {
@@ -71,7 +72,7 @@ pub fn compile_function<'a, 'b>(
         for i in 0..prototype.argument_symbols.len() {
             inner_context.scope.locals.insert(
                 prototype.argument_symbols[i].clone(),
-                LLVMGetParam(function, i as u32),
+                Object::new(LLVMGetParam(function, i as u32), arg_types[i].clone()),
             );
         }
         gen_list(&mut inner_context, &prototype.body)?;
