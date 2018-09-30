@@ -12,7 +12,12 @@ pub fn add_native_functions(context: &mut Context) {
         let function = LLVMAddFunction(
             context.module,
             to_ptr("print"),
-            LLVMFunctionType(LLVMInt64Type(), args.as_mut_ptr(), args.len() as u32, 0),
+            LLVMFunctionType(
+                Type::None.to_llvm_type(),
+                args.as_mut_ptr(),
+                args.len() as u32,
+                0,
+            ),
         );
         context.scope.add_function(
             "print",
@@ -26,7 +31,12 @@ pub fn add_native_functions(context: &mut Context) {
         let function = LLVMAddFunction(
             context.module,
             to_ptr("println"),
-            LLVMFunctionType(LLVMInt64Type(), args.as_mut_ptr(), args.len() as u32, 0),
+            LLVMFunctionType(
+                Type::None.to_llvm_type(),
+                args.as_mut_ptr(),
+                args.len() as u32,
+                0,
+            ),
         );
         context.scope.add_function(
             "print",

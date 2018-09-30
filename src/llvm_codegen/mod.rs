@@ -49,6 +49,8 @@ pub fn compile_module<'a>(
             let ctx = &mut context;
             gen_token(ctx, token)?;
         }
+        // LLVM functions always require a return instruction of some sort.
+        LLVMBuildRetVoid(context.builder);
         // this builds the function in question for now.
         LLVMDumpModule(module);
         let mut ee = mem::uninitialized();
@@ -64,6 +66,7 @@ pub fn compile_module<'a>(
 }
 
 fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenResult<Object> {
+    println!("{:?}", token);
     unsafe {
         Ok(match token {
             &Token::None => Object::none(),
@@ -71,6 +74,7 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
                 LLVMConstInt(Type::Int.to_llvm_type(), i as u64, 0),
                 Type::Int,
             ),
+            &Token::List(ref tl) => gen_list(context, tl)?,
             &Token::Expression(ref tl) => gen_expr(context, tl)?,
             _ => Object::none(),
         })
