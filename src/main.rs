@@ -1,4 +1,5 @@
 #![feature(plugin)]
+#![feature(duration_float)]
 extern crate pest;
 extern crate warpspeed;
 #[macro_use]

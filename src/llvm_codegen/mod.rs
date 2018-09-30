@@ -57,7 +57,9 @@ pub fn compile_module<'a>(
         let mut out = mem::zeroed();
         LLVMLinkInMCJIT();
         LLVM_InitializeNativeTarget();
-        LLVM_InitializeNativeAsmPrinter();
+        if cfg!(feature = "debug") {
+            LLVM_InitializeNativeAsmPrinter();
+        }
         LLVMCreateExecutionEngineForModule(&mut ee, module, &mut out);
         let addr = LLVMGetFunctionAddress(ee, to_ptr("main"));
         let f: LLVMFunction = mem::transmute(addr);
