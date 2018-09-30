@@ -24,15 +24,16 @@ pub type LLVMFunction = extern "C" fn();
 ///   by others
 /// * imperative components, which will be put into the
 ///   main function and available to be executed.
-pub fn compile_module(
-    compiler: &mut Compiler,
-    module_name: &str,
-    token: &Token,
+pub fn compile_module<'a>(
+    compiler: &'a mut Compiler,
+    module_name: &'a str,
+    token: &'a Token,
 ) -> CodegenResult<LLVMFunction> {
     unsafe {
         let module = LLVMModuleCreateWithNameInContext(to_ptr(module_name), compiler.llvm_context);
         let builder = LLVMCreateBuilderInContext(compiler.llvm_context);
-        let mut context = Context::new(compiler, module, builder);
+        let mut scope = Scope::new(None);
+        let mut context = Context::new(compiler, &mut scope, module, builder);
         add_native_functions(&mut context);
         let mut args = vec![];
         let function_type =
@@ -44,7 +45,10 @@ pub fn compile_module(
             to_ptr("entry"),
         );
         LLVMPositionBuilderAtEnd(context.builder, basic_block);
-        gen_token(&mut context, token);
+        {
+            let ctx = &mut context;
+            gen_token(ctx, token)?;
+        }
         // this builds the function in question for now.
         LLVMDumpModule(module);
         let mut ee = mem::uninitialized();
@@ -59,7 +63,10 @@ pub fn compile_module(
     }
 }
 
-fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> {
+fn gen_token<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    token: &'a Token,
+) -> CodegenResult<Object> {
     unsafe {
         Ok(match token {
             &Token::None => Object::none(),
@@ -73,7 +80,10 @@ fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> {
     }
 }
 
-fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
+fn gen_expr<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    args: &'a [Token],
+) -> CodegenResult<Object> {
     if let Some((func_token, args)) = args.split_first() {
         match func_token {
             &Token::Symbol(ref s) => compile_expr(context, s, args),
@@ -94,7 +104,11 @@ fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
     }
 }
 
-fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> CodegenResult<Object> {
+fn compile_expr<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    func_name: &'a str,
+    args: &'a [Token],
+) -> CodegenResult<Object> {
     match func_name {
         symbol => {
             let mut vm_args = Vec::with_capacity(args.len());
@@ -119,10 +133,14 @@ fn compile_expr(context: &mut Context, func_name: &str, args: &[Token]) -> Codeg
     }
 }
 
-fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
+fn gen_list<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    args: &'a [Token],
+) -> CodegenResult<Object> {
     let mut result = Ok(Object::none());
     for t in args {
-        result = Ok(gen_token(context, t)?);
+        let result_to_add = gen_token(context, t)?;
+        result = Ok(result_to_add);
     }
     return result;
 }
