@@ -17,12 +17,13 @@ pub struct FunctionPrototype {
 ///    if so, compile a function with that prototype, and return that.
 /// If these cases are exhausted, an error is returned, since there is no
 /// way such a function could be compiled with existing information.
-pub fn get_or_compile_function<'a, 'b, 'c>(
-    context: &'a mut Context<'b, 'c>,
+pub fn get_or_compile_function<'a, 'b>(
+    context: &'a mut Context<'b>,
     name: &'a str,
     arg_types: &'a Vec<Type>,
 ) -> CodegenResult<Function> {
     if let Some(func) = context.scope.get_function(name, arg_types) {
+        println!("found func for {}", name);
         return Ok(func.clone());
     }
     if let Some(prototype) = context.scope.get_prototype(name) {
@@ -36,8 +37,8 @@ pub fn get_or_compile_function<'a, 'b, 'c>(
     )))
 }
 
-pub fn compile_function<'a, 'b, 'c>(
-    context: &'a mut Context<'b, 'c>,
+pub fn compile_function<'a, 'b>(
+    context: &'a mut Context<'b>,
     prototype: FunctionPrototype,
     name: &'a str,
     arg_types: &'a Vec<Type>,

@@ -34,20 +34,20 @@ pub struct Function {
 /// The context object contains all relevant
 /// information for the Codegen to successfully build
 /// llvm code.
-pub struct Context<'a, 'b> {
+pub struct Context<'a> {
     pub compiler: &'a mut Compiler,
-    pub scope: &'a mut Scope<'b>,
+    pub scope: &'a mut Scope<'a>,
     pub module: LLVMModuleRef,
     pub builder: LLVMBuilderRef,
 }
 
-impl<'a, 'b> Context<'a, 'b> {
+impl<'a> Context<'a> {
     pub fn new(
         compiler: &'a mut Compiler,
-        scope: &'a mut Scope<'b>,
+        scope: &'a mut Scope<'a>,
         module: LLVMModuleRef,
         builder: LLVMBuilderRef,
-    ) -> Context<'a, 'b> {
+    ) -> Context<'a> {
         Context {
             compiler: compiler,
             scope: scope,

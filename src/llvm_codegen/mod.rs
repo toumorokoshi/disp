@@ -63,10 +63,7 @@ pub fn compile_module<'a>(
     }
 }
 
-fn gen_token<'a, 'b, 'c>(
-    context: &'a mut Context<'b, 'c>,
-    token: &'a Token,
-) -> CodegenResult<Object> {
+fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenResult<Object> {
     unsafe {
         Ok(match token {
             &Token::None => Object::none(),
@@ -80,10 +77,7 @@ fn gen_token<'a, 'b, 'c>(
     }
 }
 
-fn gen_expr<'a, 'b, 'c>(
-    context: &'a mut Context<'b, 'c>,
-    args: &'a [Token],
-) -> CodegenResult<Object> {
+fn gen_expr<'a, 'b>(context: &'a mut Context<'b>, args: &'a [Token]) -> CodegenResult<Object> {
     if let Some((func_token, args)) = args.split_first() {
         match func_token {
             &Token::Symbol(ref s) => compile_expr(context, s, args),
@@ -104,13 +98,14 @@ fn gen_expr<'a, 'b, 'c>(
     }
 }
 
-fn compile_expr<'a, 'b, 'c>(
-    context: &'a mut Context<'b, 'c>,
+fn compile_expr<'a, 'b>(
+    context: &'a mut Context<'b>,
     func_name: &'a str,
     args: &'a [Token],
 ) -> CodegenResult<Object> {
     match func_name {
         symbol => {
+            println!("compiling call to {}", symbol);
             let mut vm_args = Vec::with_capacity(args.len());
             let mut vm_args_types = Vec::with_capacity(args.len());
             for a in args {
@@ -118,7 +113,7 @@ fn compile_expr<'a, 'b, 'c>(
                 vm_args.push(vm_a.value);
                 vm_args_types.push(vm_a.object_type);
             }
-            let function = get_or_compile_function(context, func_name, &vm_args_types)?;
+            let function = get_or_compile_function(context, symbol, &vm_args_types)?;
             unsafe {
                 let value = LLVMBuildCall(
                     context.builder,
@@ -133,10 +128,7 @@ fn compile_expr<'a, 'b, 'c>(
     }
 }
 
-fn gen_list<'a, 'b, 'c>(
-    context: &'a mut Context<'b, 'c>,
-    args: &'a [Token],
-) -> CodegenResult<Object> {
+fn gen_list<'a, 'b>(context: &'a mut Context<'b>, args: &'a [Token]) -> CodegenResult<Object> {
     let mut result = Ok(Object::none());
     for t in args {
         let result_to_add = gen_token(context, t)?;
