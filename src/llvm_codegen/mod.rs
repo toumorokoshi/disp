@@ -77,6 +77,10 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
                 LLVMConstInt(Type::Bool.into(), (if b { 1 } else { 0 }) as u64, 0),
                 Type::Bool,
             ),
+            &Token::String(ref s) => Object::new(
+                LLVMBuildGlobalString(context.builder, to_ptr(s), to_ptr("string")),
+                Type::String(s.len()),
+            ),
             &Token::Symbol(ref s) => {
                 let value = match context.scope.locals.get(&(*s.clone())) {
                     Some(s) => {

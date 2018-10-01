@@ -7,6 +7,7 @@ pub enum Type {
     Bool,
     Int,
     None,
+    String(usize),
 }
 
 impl Into<LLVMTypeRef> for Type {
@@ -24,6 +25,7 @@ impl Type {
                 &Type::Bool => LLVMInt1Type(),
                 &Type::Int => LLVMInt64Type(),
                 &Type::None => LLVMVoidType(),
+                &Type::String(count) => LLVMArrayType(LLVMInt8Type(), count as u32),
             }
         }
     }

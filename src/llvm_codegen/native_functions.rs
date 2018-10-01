@@ -2,7 +2,9 @@
 /// Functions within this module must be publicly exported in the main.rs
 /// file, or else LLVM will be unable to discover the externs.
 use super::{to_ptr, Context, Function, Type};
+use libc::c_char;
 use llvm_sys::core::*;
+use std::ffi::CStr;
 
 // add native functions to a module context, to ensure
 // these builtins are available.
@@ -46,7 +48,7 @@ pub fn add_native_functions(context: &mut Context) {
             ),
         );
         context.scope.add_function(
-            "print",
+            "println",
             Function {
                 arg_types: vec![Type::Int],
                 return_type: Type::None,
@@ -62,6 +64,11 @@ pub fn add_native_functions(context: &mut Context) {
 #[no_mangle]
 pub extern "C" fn print(value: i64) {
     print!("{}", value);
+}
+
+#[no_mangle]
+pub extern "C" fn print_string(value: *const c_char) {
+    print!("{:?}", unsafe { CStr::from_ptr(value) });
 }
 
 #[no_mangle]
