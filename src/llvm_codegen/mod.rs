@@ -10,7 +10,9 @@ pub use self::core::{Compiler, Context, Function, Object};
 use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 pub use self::native_functions::*;
-use self::productions::{equals_production, let_production};
+use self::productions::{
+    add_production, equals_production, let_production, not_production, while_production,
+};
 use self::scope::Scope;
 use self::types::Type;
 use self::utils::to_ptr;
@@ -35,18 +37,15 @@ pub fn compile_module<'a>(
         let module = LLVMModuleCreateWithNameInContext(to_ptr(module_name), compiler.llvm_context);
         let builder = LLVMCreateBuilderInContext(compiler.llvm_context);
         let mut scope = Scope::new(None);
-        let mut context = Context::new(compiler, &mut scope, module, builder);
-        add_native_functions(&mut context);
         let mut args = vec![];
         let function_type =
             LLVMFunctionType(LLVMVoidType(), args.as_mut_ptr(), args.len() as u32, 0);
         let main_function = LLVMAddFunction(module, to_ptr("main"), function_type);
-        let basic_block = LLVMAppendBasicBlockInContext(
-            context.compiler.llvm_context,
-            main_function,
-            to_ptr("entry"),
-        );
-        LLVMPositionBuilderAtEnd(context.builder, basic_block);
+        let basic_block =
+            LLVMAppendBasicBlockInContext(compiler.llvm_context, main_function, to_ptr("entry"));
+        LLVMPositionBuilderAtEnd(builder, basic_block);
+        let mut context = Context::new(compiler, &mut scope, module, builder, main_function);
+        add_native_functions(&mut context);
         {
             let ctx = &mut context;
             gen_token(ctx, token)?;
@@ -55,6 +54,7 @@ pub fn compile_module<'a>(
         LLVMBuildRetVoid(context.builder);
         // this builds the function in question for now.
         if cfg!(feature = "debug") {
+            println!("llvm module:");
             LLVMDumpModule(module);
         }
         let mut ee = mem::uninitialized();
@@ -73,9 +73,17 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
     unsafe {
         Ok(match token {
             &Token::None => Object::none(),
+            &Token::Boolean(b) => Object::new(
+                LLVMConstInt(Type::Bool.into(), (if b { 1 } else { 0 }) as u64, 0),
+                Type::Bool,
+            ),
             &Token::Symbol(ref s) => {
                 let value = match context.scope.locals.get(&(*s.clone())) {
-                    Some(s) => Some(s.clone()),
+                    Some(s) => {
+                        let loaded_value =
+                            LLVMBuildLoad(context.builder, s.value, to_ptr("loadtemp"));
+                        Some(Object::new(loaded_value, s.object_type))
+                    }
                     None => None,
                 };
                 match value {
@@ -124,7 +132,10 @@ fn compile_expr<'a, 'b>(
 ) -> CodegenResult<Object> {
     match func_name {
         "eq" => equals_production(context, args),
+        "not" => not_production(context, args),
         "let" => let_production(context, args),
+        "while" => while_production(context, args),
+        "+" => add_production(context, args),
         symbol => {
             let mut vm_args = Vec::with_capacity(args.len());
             let mut vm_args_types = Vec::with_capacity(args.len());

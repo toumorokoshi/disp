@@ -40,6 +40,7 @@ pub struct Context<'a> {
     pub scope: &'a mut Scope<'a>,
     pub module: LLVMModuleRef,
     pub builder: LLVMBuilderRef,
+    pub function: LLVMValueRef,
 }
 
 impl<'a> Context<'a> {
@@ -48,12 +49,14 @@ impl<'a> Context<'a> {
         scope: &'a mut Scope<'a>,
         module: LLVMModuleRef,
         builder: LLVMBuilderRef,
+        function: LLVMValueRef,
     ) -> Context<'a> {
         Context {
             compiler: compiler,
             scope: scope,
             builder: builder,
             module: module,
+            function: function,
         }
     }
 }

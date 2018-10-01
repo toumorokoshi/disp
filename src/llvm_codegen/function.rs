@@ -68,6 +68,7 @@ pub fn compile_function<'a, 'b>(
             compiler: context.compiler,
             module: context.module,
             scope: &mut scope,
+            function: function,
         };
         for i in 0..prototype.argument_symbols.len() {
             inner_context.scope.locals.insert(

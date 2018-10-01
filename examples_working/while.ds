@@ -1,0 +1,5 @@
+let x 0
+while [(print (not (eq x 100000))) (not (eq x 100000))]
+	print 100
+	let x (+ x 1)
+print x

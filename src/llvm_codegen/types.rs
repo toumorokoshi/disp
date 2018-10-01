@@ -2,7 +2,7 @@ use llvm_sys::{core::*, prelude::*};
 
 /// The type enum is used to define types for Disp's
 /// type checker.
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
     Bool,
     Int,
