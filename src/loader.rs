@@ -14,7 +14,7 @@ pub fn exec_file(path: &str) -> Result<(), DispError> {
     if cfg!(feature = "debug") {
         let before = Instant::now();
         f();
-        println!("function duration: {}", before.elapsed().as_float_secs());
+        eprintln!("function duration: {}", before.elapsed().as_float_secs());
     } else {
         f();
     }

@@ -156,6 +156,5 @@ pub fn not_production<'a, 'b>(
     ensure_type!(result_to_negate, Type::Bool);
     let result =
         unsafe { LLVMBuildNot(context.builder, result_to_negate.value, to_ptr("nottemp")) };
-    println!("{:?} vs {:?}", result_to_negate, result);
     Ok(Object::new(result, Type::Bool))
 }

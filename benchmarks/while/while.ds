@@ -1,4 +1,4 @@
-mut x 0
-while (!= x 100000)
-	mut x (+ x 1)
+let x 0
+while (not (eq x 100000))
+	let x (+ x 1)
 print x
