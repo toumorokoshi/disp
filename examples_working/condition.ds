@@ -1,0 +1,3 @@
+print (eq 1 2)
+print (eq 0 2)
+print (eq 0 0)

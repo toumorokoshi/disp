@@ -10,7 +10,7 @@ pub use self::core::{Compiler, Context, Function, Object};
 use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 pub use self::native_functions::*;
-use self::productions::let_production;
+use self::productions::{equals_production, let_production};
 use self::scope::Scope;
 use self::types::Type;
 use self::utils::to_ptr;
@@ -70,7 +70,6 @@ pub fn compile_module<'a>(
 }
 
 fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenResult<Object> {
-    println!("{:?}", token);
     unsafe {
         Ok(match token {
             &Token::None => Object::none(),
@@ -124,7 +123,7 @@ fn compile_expr<'a, 'b>(
     args: &'a [Token],
 ) -> CodegenResult<Object> {
     match func_name {
-        "=" => equals_production(context, args),
+        "eq" => equals_production(context, args),
         "let" => let_production(context, args),
         symbol => {
             let mut vm_args = Vec::with_capacity(args.len());

@@ -4,6 +4,7 @@ use llvm_sys::{core::*, prelude::*};
 /// type checker.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
+    Bool,
     Int,
     None,
 }
@@ -20,6 +21,7 @@ impl Type {
     pub fn to_llvm_type(&self) -> LLVMTypeRef {
         unsafe {
             match self {
+                &Type::Bool => LLVMInt1Type(),
                 &Type::Int => LLVMInt64Type(),
                 &Type::None => LLVMVoidType(),
             }

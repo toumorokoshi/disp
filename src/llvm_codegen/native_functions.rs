@@ -27,7 +27,14 @@ pub fn add_native_functions(context: &mut Context) {
                 function: function,
             },
         );
-
+        context.scope.add_function(
+            "print",
+            Function {
+                arg_types: vec![Type::Bool],
+                return_type: Type::None,
+                function: function,
+            },
+        );
         let function = LLVMAddFunction(
             context.module,
             to_ptr("println"),
