@@ -25,3 +25,14 @@ pub fn let_production<'a, 'b>(
         .insert(*var_name.clone(), target.clone());
     Ok(target)
 }
+
+pub fn equals_production<'a, 'b>(context: &'a mut Context<'b>, args: &[Token]) {
+    if args.len() != 2 {
+        return Err(CodegenError::new(&format!(
+            "equals function should only have two arguments. found {}",
+            args.len()
+        )));
+    };
+    let lhs = gen_token(context, &args[0])?;
+    let rhs = gen_token(context, &args[1])?;
+}

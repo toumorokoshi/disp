@@ -124,6 +124,7 @@ fn compile_expr<'a, 'b>(
     args: &'a [Token],
 ) -> CodegenResult<Object> {
     match func_name {
+        "=" => equals_production(context, args),
         "let" => let_production(context, args),
         symbol => {
             let mut vm_args = Vec::with_capacity(args.len());
