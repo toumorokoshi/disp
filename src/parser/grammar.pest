@@ -26,4 +26,4 @@ true_value = { "true" }
 false_value = { "false" }
 string_with_quotes = _{ "\"" ~ string ~ "\""}
 // string = { (any ~ !"\"")+ }
-string = { ('a'..'z' | 'A'..'Z' | "#" | " " | ":" )+ }
+string = { ('a'..'z' | 'A'..'Z' | '0'..'9' | "#" | " " | ":" )+ }

@@ -58,6 +58,13 @@ pub fn add_native_functions(context: &mut Context) {
         &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
         "length_map",
     );
+    add_function(
+        context,
+        "Int",
+        Type::Int,
+        &vec![Type::String],
+        "string_to_int",
+    );
 }
 
 /// a convenience method to add a function to a
@@ -163,4 +170,10 @@ pub extern "C" fn print_map(map: *mut HashMap<*const c_char, bool>) {
         );
     }
     print!("}}");
+}
+
+#[no_mangle]
+pub extern "C" fn string_to_int(s: *const c_char) -> i64 {
+    let int_as_string = unsafe { CStr::from_ptr(s).to_str().unwrap() };
+    int_as_string.parse::<i64>().unwrap()
 }
