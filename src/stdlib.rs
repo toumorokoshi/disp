@@ -1,5 +1,4 @@
 use super::{exec_file, DispError};
-use warpspeed::VM;
 
 // for now, we can emulate a standard library
 // by just loading a lib file before executing the file in question.

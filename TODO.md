@@ -3,6 +3,7 @@
 * complete migration to LLVM
 * macros
 * stdlib
+* re-add repl
 
 # Post Sabbatical (at some point)
 * event-loop base.
