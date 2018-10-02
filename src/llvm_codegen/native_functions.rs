@@ -4,7 +4,7 @@
 use super::{to_ptr, Context, Function, Type};
 use libc::c_char;
 use llvm_sys::core::*;
-use std::ffi::CStr;
+use std::{ffi::CStr, io};
 
 // add native functions to a module context, to ensure
 // these builtins are available.
@@ -75,6 +75,25 @@ pub fn add_native_functions(context: &mut Context) {
                 function: function,
             },
         );
+        let mut args = vec![];
+        let function = LLVMAddFunction(
+            context.module,
+            to_ptr("read_line"),
+            LLVMFunctionType(
+                Type::String.to_llvm_type(),
+                args.as_mut_ptr(),
+                args.len() as u32,
+                0,
+            ),
+        );
+        context.scope.add_function(
+            "read-line",
+            Function {
+                arg_types: vec![],
+                return_type: Type::String,
+                function: function,
+            },
+        );
     }
 }
 
@@ -94,4 +113,11 @@ pub extern "C" fn print_string(value: *const c_char) {
 #[no_mangle]
 pub extern "C" fn println(value: i64) {
     println!("{}", value);
+}
+
+#[no_mangle]
+pub extern "C" fn read_line() -> *const c_char {
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    to_ptr(&input)
 }
