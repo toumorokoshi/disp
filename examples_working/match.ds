@@ -1,0 +1,4 @@
+let x false
+match x {true: (print "true"), false (print "false")}
+let ten 10
+match ten [1 (print "one")] [2 (print "two")] [3 (print "three")]

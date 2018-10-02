@@ -1,0 +1,2 @@
+!macro if [condition if-body else-body]
+  match condition [true if-body] [false else-body]

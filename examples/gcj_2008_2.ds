@@ -4,7 +4,7 @@ while (not (eq i n))
 	let s (Int (read-line))
 	let possible-engines {}
 	let j 0
-	while (neq j s)
+	while (not (eq j s))
 		let e (read-line)
 		add possible-engines e true
 		let j (+ j 1)

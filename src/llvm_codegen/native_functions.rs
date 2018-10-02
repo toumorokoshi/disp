@@ -53,10 +53,10 @@ pub fn add_native_functions(context: &mut Context) {
     );
     add_function(
         context,
-        "len",
+        "count",
         Type::Int,
         &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
-        "length_map",
+        "count_map",
     );
     add_function(
         context,
@@ -150,7 +150,7 @@ pub extern "C" fn add_to_map(
 }
 
 #[no_mangle]
-pub extern "C" fn length_map(map: *mut HashMap<*const c_char, bool>) -> i64 {
+pub extern "C" fn count_map(map: *mut HashMap<*const c_char, bool>) -> i64 {
     let map_unpacked = unsafe { &*map };
     let len = map_unpacked.len() as i64;
     len

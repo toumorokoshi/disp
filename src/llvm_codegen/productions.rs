@@ -158,3 +158,57 @@ pub fn not_production<'a, 'b>(
         unsafe { LLVMBuildNot(context.builder, result_to_negate.value, to_ptr("nottemp")) };
     Ok(Object::new(result, Type::Bool))
 }
+
+pub fn match_production<'a, 'b>(
+    context: &'a mut Context<'b>,
+    args: &[Token],
+) -> CodegenResult<Object> {
+    if args.len() == 1 {
+        return Err(CodegenError::new(&format!(
+            "match expression should have at least one branch.",
+        )));
+    };
+    let condition = gen_token(context, &args[0])?;
+    unsafe {
+        let post_switch_block = LLVMAppendBasicBlockInContext(
+            context.compiler.llvm_context,
+            context.function,
+            to_ptr("switchcomplete"),
+        );
+        let num_cases = (args.len() - 1) as u32;
+        let switch = LLVMBuildSwitch(
+            context.builder,
+            condition.value,
+            post_switch_block,
+            num_cases,
+        );
+        for i in 1..args.len() {
+            if let Token::List(ref vals) = args[i] {
+                if vals.len() != 2 {
+                    return Err(CodegenError::new(&format!(
+                    "match expression branch should only have two arguments: the value to match and the body to execute. found {:?}", vals
+                )));
+                }
+                let branch_block = LLVMAppendBasicBlockInContext(
+                    context.compiler.llvm_context,
+                    context.function,
+                    to_ptr("case"),
+                );
+                let branch_value = gen_token(context, &vals[0])?;
+                ensure_type!(branch_value, condition.object_type);
+                LLVMAddCase(switch, branch_value.value, branch_block);
+                LLVMPositionBuilderAtEnd(context.builder, branch_block);
+                // TODO: capture this value and make it the return value of the
+                // match statement.
+                gen_token(context, &vals[1])?;
+                LLVMBuildBr(context.builder, post_switch_block);
+            } else {
+                return Err(CodegenError::new(&format!(
+                    "match expression branch should be a list with two values."
+                )));
+            }
+        }
+        LLVMPositionBuilderAtEnd(context.builder, post_switch_block);
+    }
+    Ok(Object::none())
+}
