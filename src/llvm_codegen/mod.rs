@@ -72,11 +72,25 @@ pub fn compile_module<'a>(
 fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenResult<Object> {
     unsafe {
         Ok(match token {
-            &Token::None => Object::none(),
             &Token::Boolean(b) => Object::new(
                 LLVMConstInt(Type::Bool.into(), (if b { 1 } else { 0 }) as u64, 0),
                 Type::Bool,
             ),
+            &Token::Map(ref m) => {
+                let function = LLVMGetNamedFunction(context.module, to_ptr("create_map"));
+                let mut args = vec![];
+                Object::new(
+                    LLVMBuildCall(
+                        context.builder,
+                        function,
+                        args.as_mut_ptr(),
+                        args.len() as u32,
+                        to_ptr("tempmap"),
+                    ),
+                    Type::Map(Box::new(Type::String), Box::new(Type::Int)),
+                )
+            }
+            &Token::None => Object::none(),
             &Token::String(ref s) => Object::new(
                 LLVMBuildGlobalStringPtr(context.builder, to_ptr(s), to_ptr("string")),
                 Type::String,
@@ -86,7 +100,7 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
                     Some(s) => {
                         let loaded_value =
                             LLVMBuildLoad(context.builder, s.value, to_ptr("loadtemp"));
-                        Some(Object::new(loaded_value, s.object_type))
+                        Some(Object::new(loaded_value, s.object_type.clone()))
                     }
                     None => None,
                 };

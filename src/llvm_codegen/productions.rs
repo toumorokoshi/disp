@@ -36,7 +36,7 @@ pub fn let_production<'a, 'b>(
         let result_object = context.scope.locals.entry(*var_name.clone()).or_insert({
             let result_value = LLVMBuildAlloca(
                 context.builder,
-                target.object_type.into(),
+                target.object_type.to_llvm_type(),
                 to_ptr(&var_name),
             );
             Object::new(result_value, target.object_type)

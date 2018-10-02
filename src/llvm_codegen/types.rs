@@ -2,12 +2,13 @@ use llvm_sys::{core::*, prelude::*};
 
 /// The type enum is used to define types for Disp's
 /// type checker.
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
     Bool,
     Int,
     None,
     String,
+    Map(Box<Type>, Box<Type>),
 }
 
 impl Into<LLVMTypeRef> for Type {
@@ -26,6 +27,7 @@ impl Type {
                 &Type::Int => LLVMInt64Type(),
                 &Type::None => LLVMVoidType(),
                 &Type::String => LLVMPointerType(LLVMInt8Type(), 0),
+                &Type::Map(ref k, ref v) => LLVMPointerType(LLVMVoidType(), 0),
             }
         }
     }
