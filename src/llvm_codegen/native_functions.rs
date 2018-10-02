@@ -51,6 +51,13 @@ pub fn add_native_functions(context: &mut Context) {
         ],
         "add_to_map",
     );
+    add_function(
+        context,
+        "len",
+        Type::Int,
+        &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
+        "length_map",
+    );
 }
 
 /// a convenience method to add a function to a
@@ -130,14 +137,21 @@ pub extern "C" fn add_to_map(
     key: *const c_char,
     value: bool,
 ) {
-    let mut map_unpacked = unsafe { Box::from_raw(map) };
+    let map_unpacked = unsafe { &mut *map };
     map_unpacked.insert(key, value);
+    forget(map_unpacked);
+}
+
+#[no_mangle]
+pub extern "C" fn length_map(map: *mut HashMap<*const c_char, bool>) -> i64 {
+    let map_unpacked = unsafe { &*map };
+    let len = map_unpacked.len() as i64;
+    len
 }
 
 #[no_mangle]
 pub extern "C" fn print_map(map: *mut HashMap<*const c_char, bool>) {
-    let map_unpacked = unsafe { Box::from_raw(map) };
-    println!("called print_map");
+    let map_unpacked = unsafe { &*map };
     // the pointer must be returned back into the general pool,
     // by calling into raw.
     print!("{{");
@@ -149,7 +163,4 @@ pub extern "C" fn print_map(map: *mut HashMap<*const c_char, bool>) {
         );
     }
     print!("}}");
-    // forget must be called for things consumed from
-    // raw pointers, otherwise rust will attempt to deallocate
-    forget(map_unpacked);
 }

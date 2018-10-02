@@ -1,3 +1,4 @@
 let x {}
 add x "foo" true
 print x
+print (len x)
