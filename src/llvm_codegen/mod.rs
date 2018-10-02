@@ -78,8 +78,8 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
                 Type::Bool,
             ),
             &Token::String(ref s) => Object::new(
-                LLVMBuildGlobalString(context.builder, to_ptr(s), to_ptr("string")),
-                Type::String(s.len()),
+                LLVMBuildGlobalStringPtr(context.builder, to_ptr(s), to_ptr("string")),
+                Type::String,
             ),
             &Token::Symbol(ref s) => {
                 let value = match context.scope.locals.get(&(*s.clone())) {

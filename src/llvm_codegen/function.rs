@@ -33,8 +33,8 @@ pub fn get_or_compile_function<'a, 'b>(
         return Ok(function);
     }
     Err(CodegenError::new(&format!(
-        "unable to find function with name {}",
-        name
+        "unable to find function with name {} accepting args {:?}",
+        name, arg_types
     )))
 }
 

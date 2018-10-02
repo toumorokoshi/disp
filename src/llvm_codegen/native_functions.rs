@@ -37,6 +37,26 @@ pub fn add_native_functions(context: &mut Context) {
                 function: function,
             },
         );
+        let mut args = vec![Type::String.to_llvm_type()];
+        let function = LLVMAddFunction(
+            context.module,
+            to_ptr("print_string"),
+            LLVMFunctionType(
+                Type::None.to_llvm_type(),
+                args.as_mut_ptr(),
+                args.len() as u32,
+                0,
+            ),
+        );
+        context.scope.add_function(
+            "print",
+            Function {
+                arg_types: vec![Type::String],
+                return_type: Type::None,
+                function: function,
+            },
+        );
+        let mut args = vec![LLVMInt64Type()];
         let function = LLVMAddFunction(
             context.module,
             to_ptr("println"),
@@ -68,7 +88,7 @@ pub extern "C" fn print(value: i64) {
 
 #[no_mangle]
 pub extern "C" fn print_string(value: *const c_char) {
-    print!("{:?}", unsafe { CStr::from_ptr(value) });
+    print!("{}", unsafe { CStr::from_ptr(value).to_str().unwrap() });
 }
 
 #[no_mangle]
