@@ -1,19 +1,17 @@
+use super::Token;
 /// contains all the parsing structures of ghvm
-use pest::{
-    Parser,
-    iterators::Pair,
-};
-use super::{Token};
+use pest::{iterators::Pair, Parser};
 use std::collections::HashMap;
-
 
 #[derive(Parser)]
 #[grammar = "parser/grammar.pest"]
 struct DispParser;
 
+mod preprocessor;
+#[cfg(test)]
+mod test_grammar;
 #[cfg(test)]
 mod tests;
-mod preprocessor;
 
 use self::preprocessor::preprocess;
 
@@ -44,13 +42,9 @@ fn unpack(pair: Pair<Rule>) -> Token {
             // remove leading bang
             let string = pair.as_str().chars().skip(1).collect();
             Token::BangSymbol(Box::new(string))
-        },
-        _i @ Rule::integer => {
-            Token::Integer(pair.as_str().parse::<i64>().unwrap())
-        },
-        _s @ Rule::symbol => {
-            Token::Symbol(Box::new(String::from(pair.as_str())))
-        },
+        }
+        _i @ Rule::integer => Token::Integer(pair.as_str().parse::<i64>().unwrap()),
+        _s @ Rule::symbol => Token::Symbol(Box::new(String::from(pair.as_str()))),
         _n @ Rule::none => Token::None,
         _e @ Rule::expression => {
             let mut tokens = vec![];
@@ -58,20 +52,18 @@ fn unpack(pair: Pair<Rule>) -> Token {
                 tokens.push(unpack(p));
             }
             Token::Expression(tokens)
-        },
+        }
         _l @ Rule::list => {
             let mut tokens = vec![];
             for p in pair.into_inner() {
                 tokens.push(unpack(p));
             }
             Token::List(tokens)
-        },
-        _m @ Rule::map => {
-            Token::Map(Box::new(HashMap::new()))
-        },
+        }
+        _m @ Rule::map => Token::Map(Box::new(HashMap::new())),
         _t @ Rule::true_value => Token::Boolean(true),
         _f @ Rule::false_value => Token::Boolean(false),
         _s @ Rule::string => Token::String(Box::new(String::from(pair.as_str()))),
-        _ => { Token::None }
+        _ => Token::None,
     }
 }

@@ -1,0 +1,35 @@
+token = _{ symbol | expression_with_parens | list }
+symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=" | "-")+ }
+expression = {
+  (token ~ delimiter?)+
+}
+expression_with_parens = _{
+  "(" ~ delimiter? ~ expression ~ ")"
+}
+
+list = {
+  // there are two forms: the newline based form,
+  // and the regular list form.
+  // newline based form.
+  PEEK_ALL ~ PUSH(indentation) ~ lines ~ DROP |
+  "[" ~ delimiter? ~ (token ~ delimiter?)+ ~ "]"
+}
+lines = {
+  (expression | token) ~ "\n"
+}
+
+delimiter = _{ (" ")+ }
+indentation = _{ "\t"+ }
+
+// the top of the parser. This is required to
+// ensure that pest interprets the input as
+// the start of a list.
+head = {
+  list_of_lines
+}
+
+list_of_lines = _{
+  line+
+}
+
+line = _{ (expression | token) ~ "\n" }
