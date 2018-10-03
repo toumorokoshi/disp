@@ -1,35 +1,31 @@
-token = _{ symbol | expression_with_parens | list }
-symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=" | "-")+ }
-expression = {
-  (token ~ delimiter?)+
+head = _{ list_of_lines ~ EOI }
+list_of_lines = {
+  expression_no_parens ~ ("\n" ~ PEEK_ALL ~ expression_no_parens)*
 }
-expression_with_parens = _{
-  "(" ~ delimiter? ~ expression ~ ")"
+expression_no_parens = {
+  (token ~ delimiter?)+ ~ ("\n" ~ indented_list)?
 }
-
-list = {
-  // there are two forms: the newline based form,
-  // and the regular list form.
-  // newline based form.
-  PEEK_ALL ~ PUSH(indentation) ~ lines ~ DROP |
-  "[" ~ delimiter? ~ (token ~ delimiter?)+ ~ "]"
-}
-lines = {
-  (expression | token) ~ "\n"
-}
-
+indented_list = _{ PEEK_ALL ~ PUSH(indentation) ~ list_of_lines ~ DROP }
 delimiter = _{ (" ")+ }
-indentation = _{ "\t"+ }
-
-// the top of the parser. This is required to
-// ensure that pest interprets the input as
-// the start of a list.
-head = {
-  list_of_lines
+indentation = _{ ("\t")+ }
+token = _{
+  none | expression | integer | list | map |
+  // ordering is important! symbol must come after
+  // any literals in the parser, or symbol will match first.
+  // e.j. "true" will be a symbol if the rule is after symbol.
+  string_with_quotes | bang_symbol |
+  true_value | false_value | symbol
 }
+none = { "None" }
+expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
+integer = { ('0'..'9')+ }
+list = {"[" ~ delimiter? ~ token_list? ~ delimiter? ~ "]"}
+map = { "{" ~ delimiter? ~ "}" }
+string_with_quotes = _{ "\"" ~ string ~ "\""}
+bang_symbol = { "!" ~ symbol }
+true_value = { "true" }
+false_value = { "false" }
+symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=" | "-")+ }
 
-list_of_lines = _{
-  line+
-}
-
-line = _{ (expression | token) ~ "\n" }
+string = { ('a'..'z' | 'A'..'Z' | '0'..'9' | "#" | " " | ":" )+ }
+token_list = _{ (token ~ delimiter?)+ }

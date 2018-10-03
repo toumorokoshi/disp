@@ -6,8 +6,8 @@ authors = ["Yusuke Tsutsumi <yusuke@tsutsumi.io>"]
 [dependencies]
 getopts = "0.2"
 libc = ""
-pest = "^1.0"
-pest_derive = "^1.0"
+pest = "^2.0"
+pest_derive = "^2.0"
 llvm-sys = "60"
 
 [features]

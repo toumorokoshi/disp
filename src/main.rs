@@ -19,7 +19,7 @@ use error::DispError;
 // be discovered by llvm.
 pub use llvm_codegen::{compile_module, native_functions::*, Compiler};
 use loader::exec_file;
-use parser::full_parse;
+use parser::parse;
 use std::{
     env,
     io::{self, Write},
@@ -77,7 +77,7 @@ fn read() -> Result<Token, DispError> {
 
 /// Parse the body in question, and wrap in a print statement
 fn parse_with_print(body: &str) -> Token {
-    let input = full_parse(&body);
+    let input = parse(&body);
     Token::Expression(vec![
         Token::Symbol(Box::new(String::from("println"))),
         input,

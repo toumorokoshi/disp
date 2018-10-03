@@ -4,27 +4,18 @@ use pest::{iterators::Pair, Parser};
 use std::collections::HashMap;
 
 #[derive(Parser)]
-#[grammar = "parser/grammar.pest"]
+#[grammar = "parser/grammar_indented.pest"]
 struct DispParser;
 
-mod preprocessor;
-#[cfg(test)]
-mod test_grammar;
 #[cfg(test)]
 mod tests;
 
-use self::preprocessor::preprocess;
-
-pub fn full_parse(body: &str) -> Token {
-    let processed_body = preprocess(body);
-    if cfg!(feature = "debug") {
-        println!("DEBUG processed result: {}", &processed_body);
-    }
-    parse(&processed_body)
+pub fn parse(body: &str) -> Token {
+    parse_rule(Rule::head, body)
 }
 
-fn parse(body: &str) -> Token {
-    let mut pairs = DispParser::parse(Rule::token, &body).unwrap_or_else(|e| panic!("{}", e));
+fn parse_rule(rule: Rule, body: &str) -> Token {
+    let mut pairs = DispParser::parse(rule, &body).unwrap_or_else(|e| panic!("{}", e));
     if let Some(pair) = pairs.next() {
         if cfg!(feature = "debug") {
             println!("DEBUG pest parser result: {:?}", pair.clone());
@@ -43,15 +34,28 @@ fn unpack(pair: Pair<Rule>) -> Token {
             let string = pair.as_str().chars().skip(1).collect();
             Token::BangSymbol(Box::new(string))
         }
-        _i @ Rule::integer => Token::Integer(pair.as_str().parse::<i64>().unwrap()),
-        _s @ Rule::symbol => Token::Symbol(Box::new(String::from(pair.as_str()))),
-        _n @ Rule::none => Token::None,
+        _e @ Rule::expression_no_parens => {
+            let mut tokens = vec![];
+            for p in pair.into_inner() {
+                tokens.push(unpack(p));
+            }
+            Token::Expression(tokens)
+        }
         _e @ Rule::expression => {
             let mut tokens = vec![];
             for p in pair.into_inner() {
                 tokens.push(unpack(p));
             }
             Token::Expression(tokens)
+        }
+        _f @ Rule::false_value => Token::Boolean(false),
+        _e @ Rule::integer => Token::Integer(pair.as_str().parse::<i64>().unwrap()),
+        _l @ Rule::list_of_lines => {
+            let mut tokens = vec![];
+            for p in pair.into_inner() {
+                tokens.push(unpack(p));
+            }
+            Token::List(tokens)
         }
         _l @ Rule::list => {
             let mut tokens = vec![];
@@ -61,9 +65,9 @@ fn unpack(pair: Pair<Rule>) -> Token {
             Token::List(tokens)
         }
         _m @ Rule::map => Token::Map(Box::new(HashMap::new())),
-        _t @ Rule::true_value => Token::Boolean(true),
-        _f @ Rule::false_value => Token::Boolean(false),
         _s @ Rule::string => Token::String(Box::new(String::from(pair.as_str()))),
+        _s @ Rule::symbol => Token::Symbol(Box::new(String::from(pair.as_str()))),
+        _t @ Rule::true_value => Token::Boolean(true),
         _ => Token::None,
     }
 }
