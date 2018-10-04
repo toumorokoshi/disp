@@ -152,8 +152,6 @@ fn test_parser_multiline_map() {
 \tfalse: 1,
 }"
         ),
-        Token::List(vec![Token::Expression(vec![Token::Map(Box::new(
-            HashMap::new()
-        ))]),]),
+        Token::List(vec![Token::Expression(vec![Token::Map(Box::new(m))]),]),
     );
 }

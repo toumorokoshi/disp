@@ -17,7 +17,16 @@ pub enum Token {
 
 impl Token {
     pub fn to_hashable(&self) -> Result<HashableToken, DispError> {
-        Err(DispError::new("foo"))
+        match self {
+            &Token::Symbol(ref s) => Ok(HashableToken::Symbol(s.clone())),
+            &Token::Integer(i) => Ok(HashableToken::Integer(i)),
+            &Token::Boolean(b) => Ok(HashableToken::Boolean(b)),
+            &Token::None => Ok(HashableToken::None),
+            t => Err(DispError::new(&format!(
+                "unable to convert token {} to hashable",
+                t
+            ))),
+        }
     }
 }
 
@@ -67,7 +76,7 @@ impl fmt::Display for Token {
             &Token::Map(ref d) => {
                 try!(write!(f, "{{"));
                 for (key, value) in d.iter() {
-                    try!(write!(f, "{}: {}", key, value));
+                    try!(write!(f, "{}: {},", key, value));
                 }
                 write!(f, "}}")
             }
