@@ -1,6 +1,6 @@
 head = _{ list_of_lines ~ EOI }
 list_of_lines = {
-  expression_no_parens ~ ("\n" ~ PEEK_ALL ~ expression_no_parens)*
+  expression_no_parens ~ ("\n" ~ PEEK_ALL ~ expression_no_parens?)*
 }
 expression_no_parens = {
   (token ~ delimiter_no_newline?)+ ~ ("\n" ~ indented_list)?

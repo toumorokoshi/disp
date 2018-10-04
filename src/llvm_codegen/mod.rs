@@ -80,14 +80,15 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
             &Token::Map(ref m) => {
                 let function = LLVMGetNamedFunction(context.module, to_ptr("create_map"));
                 let mut args = vec![];
+                let value = LLVMBuildCall(
+                    context.builder,
+                    function,
+                    args.as_mut_ptr(),
+                    args.len() as u32,
+                    to_ptr("tempmap"),
+                );
                 Object::new(
-                    LLVMBuildCall(
-                        context.builder,
-                        function,
-                        args.as_mut_ptr(),
-                        args.len() as u32,
-                        to_ptr("tempmap"),
-                    ),
+                    value,
                     Type::Map(Box::new(Type::String), Box::new(Type::Int)),
                 )
             }

@@ -163,9 +163,10 @@ pub fn match_production<'a, 'b>(
     context: &'a mut Context<'b>,
     args: &[Token],
 ) -> CodegenResult<Object> {
-    if args.len() == 1 {
+    if args.len() != 2 {
         return Err(CodegenError::new(&format!(
-            "match expression should have at least one branch.",
+            "match expression should have two arguments: a value to match, and a map to match against. found {:?}",
+            args
         )));
     };
     let condition = gen_token(context, &args[0])?;
@@ -175,38 +176,43 @@ pub fn match_production<'a, 'b>(
             context.function,
             to_ptr("switchcomplete"),
         );
-        let num_cases = (args.len() - 1) as u32;
-        let switch = LLVMBuildSwitch(
-            context.builder,
-            condition.value,
-            post_switch_block,
-            num_cases,
-        );
-        for i in 1..args.len() {
-            if let Token::List(ref vals) = args[i] {
-                if vals.len() != 2 {
-                    return Err(CodegenError::new(&format!(
-                    "match expression branch should only have two arguments: the value to match and the body to execute. found {:?}", vals
-                )));
-                }
+        if let Token::Map(ref map) = &args[1] {
+            let mut key_values = vec![];
+            // we construct all keys first, to ensure
+            // that they exist before the match statement is
+            // executed.
+            // TODO: reject keys that are not constants
+            for key in map.keys() {
+                let key_value = gen_token(context, &key.as_token())?;
+                ensure_type!(key_value, condition.object_type);
+                key_values.push(key_value);
+            }
+            let num_cases = (map.len() - 1) as u32;
+            let switch = LLVMBuildSwitch(
+                context.builder,
+                condition.value,
+                post_switch_block,
+                num_cases,
+            );
+            for (index, (_key, value)) in map.iter().enumerate() {
                 let branch_block = LLVMAppendBasicBlockInContext(
                     context.compiler.llvm_context,
                     context.function,
                     to_ptr("case"),
                 );
-                let branch_value = gen_token(context, &vals[0])?;
-                ensure_type!(branch_value, condition.object_type);
-                LLVMAddCase(switch, branch_value.value, branch_block);
+                let branch_key = &key_values[index];
+                LLVMAddCase(switch, branch_key.value, branch_block);
                 LLVMPositionBuilderAtEnd(context.builder, branch_block);
                 // TODO: capture this value and make it the return value of the
                 // match statement.
-                gen_token(context, &vals[1])?;
+                gen_token(context, value)?;
                 LLVMBuildBr(context.builder, post_switch_block);
-            } else {
-                return Err(CodegenError::new(&format!(
-                    "match expression branch should be a list with two values."
-                )));
             }
+        } else {
+            return Err(CodegenError::new(&format!(
+                "match expression should be map. found {}",
+                &args[1]
+            )));
         }
         LLVMPositionBuilderAtEnd(context.builder, post_switch_block);
     }
