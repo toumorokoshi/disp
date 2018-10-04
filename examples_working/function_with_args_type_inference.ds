@@ -2,8 +2,8 @@
 # at compile time. As such, there is no need to specify specific types in
 # signatures: if the functions used within the parent function support the
 # functions in question, the function will work appropriately.
-mut add (fn [l r] [(+ l r)])
-mut p (fn [arg] [(print arg)])
+let add (fn [l r] [(+ l r)])
+let p (fn [arg] [(print arg)])
 p "foo"
 p 10
 # mut add-and-print (fn [l r] [(mut x (add l r)) (p x)])

@@ -144,13 +144,17 @@ fn gen_expr<'a, 'b>(context: &'a mut Context<'b>, args: &'a [Token]) -> CodegenR
             //         run_expr(context, s, args)
             //     }
             // },
+            &Token::Comment(ref c) => Ok(Object::none()),
             _ => Err(CodegenError::new(&format!(
                 "first token must be a symbol for expression, found {}",
                 func_token
             ))),
         }
     } else {
-        Err(CodegenError::new("no method found"))
+        Err(CodegenError::new(&format!(
+            "no method found found {:?}",
+            args
+        )))
     }
 }
 

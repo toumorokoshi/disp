@@ -3,8 +3,11 @@ list_of_lines = {
   expression_no_parens ~ ("\n" ~ PEEK_ALL ~ expression_no_parens?)*
 }
 expression_no_parens = {
-  (token ~ delimiter_no_newline?)+ ~ ("\n" ~ indented_list)?
+  (comment | (token ~ delimiter_no_newline?)+) ~ ("\n" ~ indented_list)?
 }
+// TODO: add comments to syntax tree ,needed to preserve comments during
+// transforms.
+comment = { "#" ~ comment_body }
 indented_list = _{ PEEK_ALL ~ PUSH(indentation) ~ list_of_lines ~ DROP }
 delimiter = _{ (delimiter_no_newline | "\n" | "\t")+ }
 delimiter_no_newline = _{ (" ")+ }
@@ -28,5 +31,7 @@ true_value = { "true" }
 false_value = { "false" }
 symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=" | "-")+ }
 
-string = { ('a'..'z' | 'A'..'Z' | '0'..'9' | "#" | " " | ":" )+ }
+string = { char+ }
+char = _{ ('a'..'z' | 'A'..'Z' | '0'..'9' | "#" | " " | ":" | "," | "." | "-" | "(" | ")" | "["|"]" | "_" )+ }
+comment_body = _{ (char | "\"")+ }
 token_list = _{ (token ~ delimiter?)+ }

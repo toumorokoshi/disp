@@ -34,6 +34,7 @@ fn unpack(pair: Pair<Rule>) -> Token {
             let string = pair.as_str().chars().skip(1).collect();
             Token::BangSymbol(Box::new(string))
         }
+        _c @ Rule::comment => Token::Comment(Box::new(String::from(pair.as_str()))),
         _e @ Rule::expression_no_parens => {
             let mut tokens = vec![];
             for p in pair.into_inner() {

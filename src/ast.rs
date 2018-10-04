@@ -6,6 +6,7 @@ use std::fmt;
 pub enum Token {
     BangSymbol(Box<String>),
     Boolean(bool),
+    Comment(Box<String>),
     Expression(Vec<Token>),
     Integer(i64),
     List(Vec<Token>),
@@ -69,6 +70,7 @@ impl fmt::Display for Token {
                 write!(f, ")")
             }
             &Token::BangSymbol(ref s) => write!(f, "{}!", s),
+            &Token::Comment(ref s) => write!(f, "# {}", s),
             &Token::Symbol(ref s) => write!(f, "{}", s),
             &Token::String(ref s) => write!(f, "{}", s),
             &Token::Integer(i) => write!(f, "{}", i),
