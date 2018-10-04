@@ -1,4 +1,6 @@
-use super::{gen_token, to_ptr, CodegenError, CodegenResult, Context, Object, Token, Type};
+use super::{
+    gen_token, to_ptr, CodegenError, CodegenResult, Context, FunctionPrototype, Object, Token, Type,
+};
 use llvm_sys::{core::*, *};
 
 macro_rules! ensure_type {
@@ -33,17 +35,26 @@ pub fn let_production<'a, 'b>(
         }
     };
     let target = gen_token(context, &args[1])?;
-    unsafe {
-        let result_object = context.scope.locals.entry(*var_name.clone()).or_insert({
-            let result_value = LLVMBuildAlloca(
-                context.builder,
-                target.object_type.to_llvm_type(),
-                to_ptr(&var_name),
-            );
-            Object::new(result_value, target.object_type)
-        });
-        LLVMBuildStore(context.builder, target.value, result_object.value);
-        Ok(result_object.clone())
+    match target.function_prototype {
+        Some(ref function) => {
+            context
+                .scope
+                .function_prototypes
+                .insert(*var_name.clone(), function.clone());
+            Ok(target.clone())
+        }
+        None => unsafe {
+            let result_object = context.scope.locals.entry(*var_name.clone()).or_insert({
+                let result_value = LLVMBuildAlloca(
+                    context.builder,
+                    target.object_type.to_llvm_type(),
+                    to_ptr(&var_name),
+                );
+                Object::new(result_value, target.object_type)
+            });
+            LLVMBuildStore(context.builder, target.value, result_object.value);
+            Ok(result_object.clone())
+        },
     }
 }
 
@@ -101,6 +112,7 @@ pub fn while_production<'a, 'b>(
         // go immediately to the block
         LLVMBuildBr(context.builder, condition_block);
         LLVMPositionBuilderAtEnd(context.builder, condition_block);
+        context.block = condition_block;
         let condition_result = gen_token(context, &args[0])?;
         LLVMBuildCondBr(
             context.builder,
@@ -216,6 +228,52 @@ pub fn match_production<'a, 'b>(
             )));
         }
         LLVMPositionBuilderAtEnd(context.builder, post_switch_block);
+        context.block = post_switch_block;
     }
     Ok(Object::none())
+}
+
+pub fn fn_production<'a, 'b>(
+    context: &'a mut Context<'b>,
+    args: &[Token],
+) -> CodegenResult<Object> {
+    if args.len() != 2 {
+        return Err(CodegenError::new(&format!(
+            "fn expression should only have two arguments: one for variable names and one for the body. found {}: {:?}",
+            args.len(), args
+        )));
+    };
+    let argument_symbols = if let Token::List(ref l) = &args[0] {
+        let mut names = vec![];
+        for variable_token in l {
+            if let Token::Symbol(ref s) = variable_token {
+                names.push(*s.clone());
+            } else {
+                return Err(CodegenError::new(&format!(
+                    "argument name must be a symbol. found {}",
+                    variable_token
+                )));
+            }
+        }
+        names
+    } else {
+        return Err(CodegenError::new(&format!(
+            "second argument to fn should be a list. found {}",
+            &args[0]
+        )));
+    };
+    let body = match &args[1] {
+        Token::List(ref l) => l.clone(),
+        t => {
+            return Err(CodegenError::new(&format!(
+                "body for function must be a list of tokens. found {}",
+                t
+            )));
+        }
+    };
+    let prototype = FunctionPrototype {
+        argument_symbols: argument_symbols,
+        body: body,
+    };
+    Ok(Object::function_prototype(prototype))
 }

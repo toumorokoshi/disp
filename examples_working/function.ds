@@ -1,5 +1,2 @@
-# the way to declare
-# a function.
-mut p (fn [] [(println 1)])
-# const print_something (fn [] [(print x)])
+let p (fn [] [(println 1)])
 p

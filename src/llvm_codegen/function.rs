@@ -7,8 +7,8 @@ use llvm_sys::core::*;
 /// functions. These can be compiled into bytecode.
 #[derive(Clone, Debug)]
 pub struct FunctionPrototype {
-    argument_symbols: Vec<String>,
-    body: Vec<Token>,
+    pub argument_symbols: Vec<String>,
+    pub body: Vec<Token>,
 }
 
 /// retrieve a function object, in a few ways:
@@ -69,6 +69,7 @@ pub fn compile_function<'a, 'b>(
             module: context.module,
             scope: &mut scope,
             function: function,
+            block: function_block,
         };
         for i in 0..prototype.argument_symbols.len() {
             inner_context.scope.locals.insert(
@@ -77,8 +78,10 @@ pub fn compile_function<'a, 'b>(
             );
         }
         gen_list(&mut inner_context, &prototype.body)?;
+        LLVMBuildRetVoid(context.builder);
         // TODO: set return type on function block.
         // TODO: reposition builder back to original position?
+        LLVMPositionBuilderAtEnd(context.builder, context.block);
         Ok(Function {
             arg_types: arg_types.clone(),
             return_type: Type::None,

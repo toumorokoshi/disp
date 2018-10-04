@@ -13,8 +13,8 @@ use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 pub use self::native_functions::*;
 use self::productions::{
-    add_production, equals_production, let_production, match_production, not_production,
-    while_production,
+    add_production, equals_production, fn_production, let_production, match_production,
+    not_production, while_production,
 };
 use self::scope::Scope;
 use self::types::Type;
@@ -47,7 +47,14 @@ pub fn compile_module<'a>(
         let basic_block =
             LLVMAppendBasicBlockInContext(compiler.llvm_context, main_function, to_ptr("entry"));
         LLVMPositionBuilderAtEnd(builder, basic_block);
-        let mut context = Context::new(compiler, &mut scope, module, builder, main_function);
+        let mut context = Context::new(
+            compiler,
+            &mut scope,
+            module,
+            builder,
+            main_function,
+            basic_block,
+        );
         add_native_functions(&mut context);
         {
             let ctx = &mut context;
@@ -153,12 +160,13 @@ fn compile_expr<'a, 'b>(
     args: &'a [Token],
 ) -> CodegenResult<Object> {
     match func_name {
+        "+" => add_production(context, args),
         "eq" => equals_production(context, args),
+        "fn" => fn_production(context, args),
+        "let" => let_production(context, args),
         "match" => match_production(context, args),
         "not" => not_production(context, args),
-        "let" => let_production(context, args),
         "while" => while_production(context, args),
-        "+" => add_production(context, args),
         symbol => {
             let mut vm_args = Vec::with_capacity(args.len());
             let mut vm_args_types = Vec::with_capacity(args.len());

@@ -1,4 +1,4 @@
-use super::{Scope, Type};
+use super::{FunctionPrototype, Scope, Type};
 use llvm_sys::{core::*, prelude::*, support::*};
 use std::ptr;
 
@@ -8,6 +8,7 @@ use std::ptr;
 pub struct Object {
     pub value: LLVMValueRef,
     pub object_type: Type,
+    pub function_prototype: Option<FunctionPrototype>,
 }
 
 impl Object {
@@ -15,6 +16,15 @@ impl Object {
         Object {
             value: value,
             object_type: object_type,
+            function_prototype: None,
+        }
+    }
+
+    pub fn function_prototype(function_prototype: FunctionPrototype) -> Object {
+        Object {
+            value: ptr::null_mut(),
+            object_type: Type::FunctionPrototype,
+            function_prototype: Some(function_prototype),
         }
     }
 
@@ -41,6 +51,11 @@ pub struct Context<'a> {
     pub module: LLVMModuleRef,
     pub builder: LLVMBuilderRef,
     pub function: LLVMValueRef,
+    /// this should be the current block that
+    /// the builder is building against. This allows
+    /// one to get back to it when switching context,
+    /// for example building a child function.
+    pub block: LLVMBasicBlockRef,
 }
 
 impl<'a> Context<'a> {
@@ -50,6 +65,7 @@ impl<'a> Context<'a> {
         module: LLVMModuleRef,
         builder: LLVMBuilderRef,
         function: LLVMValueRef,
+        block: LLVMBasicBlockRef,
     ) -> Context<'a> {
         Context {
             compiler: compiler,
@@ -57,6 +73,7 @@ impl<'a> Context<'a> {
             builder: builder,
             module: module,
             function: function,
+            block: block,
         }
     }
 }

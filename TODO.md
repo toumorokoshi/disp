@@ -1,9 +1,8 @@
 # Sabbatical To Do
-* migrate all parsing of grammar to pest
-* complete migration to LLVM
 * macros
 * stdlib
 * re-add repl
+* ensure functions work
 
 # Post Sabbatical (at some point)
 * event-loop base.

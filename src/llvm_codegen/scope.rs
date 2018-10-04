@@ -36,19 +36,29 @@ impl<'a> Scope<'a> {
     }
 
     pub fn get_function(&self, name: &str, arg_types: &Vec<Type>) -> Option<Function> {
-        match self.functions.get(name) {
+        let maybe_function = match self.functions.get(name) {
             Some(functions_by_type_signature) => match functions_by_type_signature.get(arg_types) {
                 Some(func) => Some(func.clone()),
                 None => None,
             },
             None => None,
+        };
+        match maybe_function {
+            Some(function) => Some(function),
+            None => match self.parent {
+                Some(scope) => scope.get_function(name, arg_types),
+                None => None,
+            },
         }
     }
 
     pub fn get_prototype(&self, name: &str) -> Option<FunctionPrototype> {
         match self.function_prototypes.get(name) {
             Some(prototype) => Some(prototype.clone()),
-            None => None,
+            None => match self.parent {
+                Some(scope) => scope.get_prototype(name),
+                None => None,
+            },
         }
     }
 }
