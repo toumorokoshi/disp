@@ -64,7 +64,17 @@ fn unpack(pair: Pair<Rule>) -> Token {
             }
             Token::List(tokens)
         }
-        _m @ Rule::map => Token::Map(Box::new(HashMap::new())),
+        _m @ Rule::map => {
+            let mut map = HashMap::new();
+            let mut pairs = pair.into_inner();
+            let mut maybe_key = pairs.next();
+            while let Some(key) = maybe_key {
+                let value = pairs.next().expect("value not found corresponding to key");
+                map.insert(unpack(key).to_hashable().unwrap(), unpack(value));
+                maybe_key = pairs.next();
+            }
+            Token::Map(Box::new(map))
+        }
         _s @ Rule::string => Token::String(Box::new(String::from(pair.as_str()))),
         _s @ Rule::symbol => Token::Symbol(Box::new(String::from(pair.as_str()))),
         _t @ Rule::true_value => Token::Boolean(true),
