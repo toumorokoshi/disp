@@ -72,9 +72,16 @@ pub fn compile_function<'a, 'b>(
             block: function_block,
         };
         for i in 0..prototype.argument_symbols.len() {
+            let param = LLVMGetParam(function, i as u32);
+            let result_value = LLVMBuildAlloca(
+                context.builder,
+                arg_types[i].to_llvm_type(),
+                to_ptr(&prototype.argument_symbols[i]),
+            );
+            LLVMBuildStore(context.builder, param, result_value);
             inner_context.scope.locals.insert(
                 prototype.argument_symbols[i].clone(),
-                Object::new(LLVMGetParam(function, i as u32), arg_types[i].clone()),
+                Object::new(result_value, arg_types[i].clone()),
             );
         }
         gen_list(&mut inner_context, &prototype.body)?;

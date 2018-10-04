@@ -1,2 +1,2 @@
-mut add (fn [l r] [(+ l r)])
-println (add 1 10)
+let add (fn [l r] [(println (+ l r))])
+add 1 2
