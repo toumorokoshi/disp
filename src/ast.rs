@@ -1,7 +1,8 @@
-use std::fmt;
+use super::{DispError, DispResult};
 use std::collections::HashMap;
+use std::fmt;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub enum Token {
     BangSymbol(Box<String>),
     Boolean(bool),
@@ -14,12 +15,18 @@ pub enum Token {
     String(Box<String>),
 }
 
+impl Token {
+    pub fn to_hashable(&self) -> Result<HashableToken, DispError> {
+        Err(DispError::new("foo"))
+    }
+}
+
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub enum HashableToken {
     Symbol(Box<String>),
     Integer(i64),
     Boolean(bool),
-    None
+    None,
 }
 
 impl HashableToken {
@@ -44,14 +51,14 @@ impl fmt::Display for Token {
                     try!(write!(f, "{} ", t));
                 }
                 write!(f, "]")
-            },
+            }
             &Token::Expression(ref tl) => {
                 try!(write!(f, "("));
                 for t in tl {
                     try!(write!(f, "{} ", t));
                 }
                 write!(f, ")")
-            },
+            }
             &Token::BangSymbol(ref s) => write!(f, "{}!", s),
             &Token::Symbol(ref s) => write!(f, "{}", s),
             &Token::String(ref s) => write!(f, "{}", s),
@@ -81,7 +88,7 @@ impl fmt::Display for HashableToken {
             &HashableToken::Symbol(ref s) => write!(f, "{}", s),
             &HashableToken::Integer(i) => write!(f, "{}", i),
             &HashableToken::Boolean(b) => write!(f, "{}", b),
-            &HashableToken::None => write!(f, "None")
+            &HashableToken::None => write!(f, "None"),
         }
     }
 }

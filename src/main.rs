@@ -13,8 +13,8 @@ mod loader;
 mod parser;
 mod stdlib;
 
-use ast::{HashableToken, Token};
-use error::DispError;
+use ast::Token;
+use error::{DispError, DispResult, GenericError};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
 pub use llvm_codegen::{compile_module, native_functions::*, Compiler};
@@ -59,14 +59,14 @@ fn main() {
 //     }
 // }
 
-fn execute(path: &str) -> Result<(), DispError> {
+fn execute(path: &str) -> Result<(), GenericError> {
     // let mut vm = build_vm()?;
     exec_file(path)?;
     // vm.shutdown_on_idle();
     Ok(())
 }
 
-fn read() -> Result<Token, DispError> {
+fn read() -> Result<Token, GenericError> {
     std::io::stdout().write(b">>> ")?;
     std::io::stdout().flush()?;
     let mut input = String::new();

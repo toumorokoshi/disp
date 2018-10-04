@@ -1,10 +1,10 @@
-use super::{compile_module, parse, Compiler, DispError};
+use super::{compile_module, parse, Compiler, GenericError};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 use std::{fs::File, io::Read, sync::Arc};
 
 // load and execute a file into the vm.
-pub fn exec_file(path: &str) -> Result<(), DispError> {
+pub fn exec_file(path: &str) -> Result<(), GenericError> {
     let mut file = File::open(path)?;
     let mut input = String::new();
     file.read_to_string(&mut input)?;

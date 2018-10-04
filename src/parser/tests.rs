@@ -40,7 +40,7 @@ fn test_parser_list() {
 }
 
 #[test]
-fn test_parser_map() {
+fn test_parser_empty_map() {
     assert_eq!(
         parse_rule(Rule::token, "{}"),
         Token::Map(Box::new(HashMap::new()))
@@ -121,5 +121,39 @@ fn test_parser_indented_list() {
             ]),
             Token::Expression(vec![Token::Symbol(Box::new(String::from("bar"))),]),
         ]),
+    );
+}
+
+#[test]
+fn test_parser_map() {
+    assert_eq!(
+        parse("{true: 1, false: 1,}"),
+        Token::List(vec![Token::Expression(vec![Token::Map(Box::new(
+            HashMap::new()
+        ))]),]),
+    );
+}
+
+#[test]
+fn test_parser_multiline_map() {
+    let mut m = HashMap::new();
+    m.insert(
+        Token::Boolean(true).to_hashable().unwrap(),
+        Token::Integer(1),
+    );
+    m.insert(
+        Token::Boolean(false).to_hashable().unwrap(),
+        Token::Integer(2),
+    );
+    assert_eq!(
+        parse(
+            "{
+\ttrue: 1,
+\tfalse: 1,
+}"
+        ),
+        Token::List(vec![Token::Expression(vec![Token::Map(Box::new(
+            HashMap::new()
+        ))]),]),
     );
 }

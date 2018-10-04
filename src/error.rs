@@ -1,3 +1,34 @@
-use std::error::Error as Error;
+use std::{error::Error, fmt};
 
-pub type DispError = Box<Error>;
+pub type GenericError = Box<Error>;
+
+#[derive(Debug)]
+pub struct DispError {
+    details: String,
+}
+
+pub type DispResult<T> = Result<T, DispError>;
+
+impl DispError {
+    pub fn new(details: &str) -> DispError {
+        DispError {
+            details: details.to_string(),
+        }
+    }
+}
+
+impl Error for DispError {
+    fn description(&self) -> &str {
+        &self.details
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        None
+    }
+}
+
+impl fmt::Display for DispError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", &self.details)
+    }
+}

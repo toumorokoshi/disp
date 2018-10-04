@@ -1,0 +1,21 @@
+let svc (get val myservice)
+{
+  "server": {
+    "host": (get svc "host")
+    "port": (get svc "port")
+  },
+  "database": {
+    "hosts": (get svc "mongo.hosts"),
+    "replicaset": (get svc "mongo.replica_set"),
+    "max_pool_size": (get svc "max_pool_size"),
+  },
+  "zon": {
+    "tests": {
+      "access_log": {
+        "config": {
+          "environment": (get val "logging_services_config.env_name")
+        }
+      }
+    }
+  }
+}

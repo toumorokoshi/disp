@@ -3,10 +3,11 @@ list_of_lines = {
   expression_no_parens ~ ("\n" ~ PEEK_ALL ~ expression_no_parens)*
 }
 expression_no_parens = {
-  (token ~ delimiter?)+ ~ ("\n" ~ indented_list)?
+  (token ~ delimiter_no_newline?)+ ~ ("\n" ~ indented_list)?
 }
 indented_list = _{ PEEK_ALL ~ PUSH(indentation) ~ list_of_lines ~ DROP }
-delimiter = _{ (" ")+ }
+delimiter = _{ (delimiter_no_newline | "\n" | "\t")+ }
+delimiter_no_newline = _{ (" ")+ }
 indentation = _{ ("\t")+ }
 token = _{
   none | expression | integer | list | map |
@@ -20,7 +21,7 @@ none = { "None" }
 expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
 integer = { ('0'..'9')+ }
 list = {"[" ~ delimiter? ~ token_list? ~ delimiter? ~ "]"}
-map = { "{" ~ delimiter? ~ "}" }
+map = { "{" ~ delimiter? ~ (token ~ delimiter? ~ ":" ~ delimiter? ~ token ~ delimiter? ~ "," ~ delimiter?)* ~ "}" }
 string_with_quotes = _{ "\"" ~ string ~ "\""}
 bang_symbol = { "!" ~ symbol }
 true_value = { "true" }
