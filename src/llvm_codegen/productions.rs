@@ -18,8 +18,9 @@ pub fn let_production<'a, 'b>(
 ) -> CodegenResult<Object> {
     if args.len() != 2 {
         return Err(CodegenError::new(&format!(
-            "let function should only have two arguments. found {}",
-            args.len()
+            "let function should only have two arguments. found {}: {:?}",
+            args.len(),
+            args
         )));
     };
     let var_name = match &args[0] {

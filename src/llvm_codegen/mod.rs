@@ -4,6 +4,8 @@ mod function;
 pub mod native_functions;
 mod productions;
 mod scope;
+#[cfg(test)]
+mod test_native_functions;
 mod types;
 mod utils;
 pub use self::core::{Compiler, Context, Function, Object};
@@ -16,7 +18,7 @@ use self::productions::{
 };
 use self::scope::Scope;
 use self::types::Type;
-use self::utils::to_ptr;
+use self::utils::{to_ptr, to_string};
 use super::{DispError, Token};
 use llvm_sys::{core::*, execution_engine::*, target::*};
 use std::mem;

@@ -1,7 +1,7 @@
 /// Native functions that are available as functions within disp.
 /// Functions within this module must be publicly exported in the main.rs
 /// file, or else LLVM will be unable to discover the externs.
-use super::{to_ptr, Context, Function, Type};
+use super::{to_ptr, to_string, Context, Function, Type};
 use libc::c_char;
 use llvm_sys::core::*;
 use std::{collections::HashMap, ffi::CStr, io, mem::forget};
@@ -25,13 +25,7 @@ pub fn add_native_functions(context: &mut Context) {
         &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
         "print_map",
     );
-    add_function(
-        context,
-        "println",
-        Type::None,
-        &vec![Type::Int],
-        "print_string",
-    );
+    add_function(context, "println", Type::None, &vec![Type::Int], "println");
     add_function(context, "read-line", Type::String, &vec![], "read_line");
     add_function(
         context,
@@ -129,45 +123,38 @@ pub extern "C" fn println(value: i64) {
 pub extern "C" fn read_line() -> *const c_char {
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
+    input.pop(); // remove newline
     to_ptr(&input)
 }
 
 #[no_mangle]
-pub extern "C" fn create_map() -> *mut HashMap<*const c_char, bool> {
+pub extern "C" fn create_map() -> *mut HashMap<String, bool> {
     let map = Box::new(HashMap::new());
     Box::into_raw(map)
 }
 
 #[no_mangle]
-pub extern "C" fn add_to_map(
-    map: *mut HashMap<*const c_char, bool>,
-    key: *const c_char,
-    value: bool,
-) {
+pub extern "C" fn add_to_map(map: *mut HashMap<String, bool>, key: *const c_char, value: bool) {
     let map_unpacked = unsafe { &mut *map };
-    map_unpacked.insert(key, value);
+    map_unpacked.insert(to_string(key), value);
     forget(map_unpacked);
 }
 
 #[no_mangle]
-pub extern "C" fn count_map(map: *mut HashMap<*const c_char, bool>) -> i64 {
+pub extern "C" fn count_map(map: *mut HashMap<String, bool>) -> i64 {
     let map_unpacked = unsafe { &*map };
     let len = map_unpacked.len() as i64;
     len
 }
 
 #[no_mangle]
-pub extern "C" fn print_map(map: *mut HashMap<*const c_char, bool>) {
+pub extern "C" fn print_map(map: *mut HashMap<String, bool>) {
     let map_unpacked = unsafe { &*map };
     // the pointer must be returned back into the general pool,
     // by calling into raw.
     print!("{{");
     for (k, v) in &*map_unpacked {
-        print!(
-            "{:?}: {}, ",
-            unsafe { CStr::from_ptr(*k).to_str().unwrap() },
-            v
-        );
+        print!("{}: {}, ", k, v);
     }
     print!("}}");
 }
@@ -175,5 +162,8 @@ pub extern "C" fn print_map(map: *mut HashMap<*const c_char, bool>) {
 #[no_mangle]
 pub extern "C" fn string_to_int(s: *const c_char) -> i64 {
     let int_as_string = unsafe { CStr::from_ptr(s).to_str().unwrap() };
-    int_as_string.parse::<i64>().unwrap()
+    match int_as_string.parse::<i64>() {
+        Ok(i) => i,
+        Err(_) => panic!(format!("string {} is not an integer", int_as_string)),
+    }
 }

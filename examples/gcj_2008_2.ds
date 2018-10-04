@@ -15,10 +15,13 @@ while (not (eq i n))
 	while (not (eq j q))
 		let e (read-line)
 		add seen-engines e true
-		if (eq (count seen-engines) (count possible-engines))
-			let seen-engines {}
-			add seen-engines e true
-			let switches (+ switches 1)
+		match (eq (count seen-engines) (count possible-engines)) {
+			true: [
+				(let seen-engines {})
+				(add seen-engines e true)
+				(let switches (+ switches 1))
+			],
+		}
 		let j (+ j 1)
 	let i (+ i 1)
 	print "Case #"
