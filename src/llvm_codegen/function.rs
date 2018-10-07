@@ -19,8 +19,8 @@ pub struct FunctionPrototype {
 ///    if so, compile a function with that prototype, and return that.
 /// If these cases are exhausted, an error is returned, since there is no
 /// way such a function could be compiled with existing information.
-pub fn get_or_compile_function<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn get_or_compile_function<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     name: &'a str,
     arg_types: &'a Vec<Type>,
 ) -> CodegenResult<Function> {
@@ -38,11 +38,11 @@ pub fn get_or_compile_function<'a, 'b>(
     )))
 }
 
-pub fn compile_function<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn compile_function<'a, 'b: 'a>(
+    context: &mut Context<'a, 'b>,
     prototype: FunctionPrototype,
-    name: &'a str,
-    arg_types: &'a Vec<Type>,
+    name: &str,
+    arg_types: &Vec<Type>,
 ) -> CodegenResult<Function> {
     let name_with_types = format!("{}-{:?}", name, arg_types);
     let mut args = Vec::with_capacity(arg_types.len());
@@ -60,17 +60,17 @@ pub fn compile_function<'a, 'b>(
         );
         let function = LLVMAddFunction(context.module, to_ptr(&name_with_types), function_type);
         let function_block =
-            LLVMAppendBasicBlockInContext(context.compiler.llvm_context, function, to_ptr("entry"));
+            LLVMAppendBasicBlockInContext(context.llvm_context, function, to_ptr("entry"));
         LLVMPositionBuilderAtEnd(context.builder, function_block);
-        let mut scope = Scope::new(Some(&context.scope));
-        let mut inner_context = Context {
-            builder: context.builder,
-            compiler: context.compiler,
-            module: context.module,
-            scope: &mut scope,
-            function: function,
-            block: function_block,
-        };
+        let mut inner_scope = Scope::new(Some(context.scope));
+        let mut inner_context = Context::new(
+            context.llvm_context,
+            context.module,
+            &mut inner_scope,
+            context.builder,
+            context.function,
+            context.block,
+        );
         for i in 0..prototype.argument_symbols.len() {
             let param = LLVMGetParam(function, i as u32);
             let result_value = LLVMBuildAlloca(

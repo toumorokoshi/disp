@@ -1,6 +1,7 @@
 use std::{error::Error, fmt};
 
 pub type GenericError = Box<Error>;
+pub type GenericResult<T> = Result<T, GenericError>;
 
 #[derive(Debug)]
 pub struct DispError {

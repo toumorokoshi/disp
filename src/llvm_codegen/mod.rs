@@ -20,8 +20,9 @@ use self::scope::Scope;
 use self::types::Type;
 use self::utils::{to_ptr, to_string};
 use super::{DispError, Token};
+use libc::c_char;
 use llvm_sys::{core::*, execution_engine::*, target::*};
-use std::mem;
+use std::{ffi::CStr, mem};
 
 pub type LLVMFunction = extern "C" fn();
 
@@ -32,30 +33,29 @@ pub type LLVMFunction = extern "C" fn();
 /// * imperative components, which will be put into the
 ///   main function and available to be executed.
 pub fn compile_module<'a>(
-    compiler: &'a mut Compiler,
-    module_name: &'a str,
-    token: &'a Token,
-) -> CodegenResult<LLVMFunction> {
+    compiler: &mut Compiler<'a>,
+    // TODO: split modules up into multiple LLVM modules.
+    module_name: &str,
+    token: &Token,
+) -> CodegenResult<()> {
     unsafe {
-        let module = LLVMModuleCreateWithNameInContext(to_ptr(module_name), compiler.llvm_context);
-        let builder = LLVMCreateBuilderInContext(compiler.llvm_context);
-        let mut scope = Scope::new(None);
         let mut args = vec![];
         let function_type =
             LLVMFunctionType(LLVMVoidType(), args.as_mut_ptr(), args.len() as u32, 0);
-        let main_function = LLVMAddFunction(module, to_ptr("main"), function_type);
+        let main_function =
+            LLVMAddFunction(compiler.llvm_module, to_ptr(module_name), function_type);
         let basic_block =
             LLVMAppendBasicBlockInContext(compiler.llvm_context, main_function, to_ptr("entry"));
-        LLVMPositionBuilderAtEnd(builder, basic_block);
+        LLVMPositionBuilderAtEnd(compiler.llvm_builder, basic_block);
+        add_native_functions(compiler);
         let mut context = Context::new(
-            compiler,
-            &mut scope,
-            module,
-            builder,
+            compiler.llvm_context,
+            compiler.llvm_module,
+            &mut compiler.scope,
+            compiler.llvm_builder,
             main_function,
             basic_block,
         );
-        add_native_functions(&mut context);
         {
             let ctx = &mut context;
             gen_token(ctx, token)?;
@@ -65,21 +65,35 @@ pub fn compile_module<'a>(
         // this builds the function in question for now.
         if cfg!(feature = "debug") {
             println!("llvm module:");
-            LLVMDumpModule(module);
+            LLVMDumpModule(context.module);
         }
-        let mut ee = mem::uninitialized();
-        let mut out = mem::zeroed();
-        LLVMLinkInMCJIT();
-        LLVM_InitializeNativeTarget();
-        LLVM_InitializeNativeAsmPrinter();
-        LLVMCreateExecutionEngineForModule(&mut ee, module, &mut out);
-        let addr = LLVMGetFunctionAddress(ee, to_ptr("main"));
-        let f: LLVMFunction = mem::transmute(addr);
-        Ok(f)
+        Ok(())
     }
 }
 
-fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenResult<Object> {
+pub fn get_function(compiler: &mut Compiler, func_name: &str) -> CodegenResult<LLVMFunction> {
+    let f = unsafe {
+        let mut ee = mem::uninitialized();
+        LLVMLinkInMCJIT();
+        LLVM_InitializeNativeTarget();
+        LLVM_InitializeNativeAsmPrinter();
+        let mut debug_output: *mut c_char = mem::zeroed();
+        if LLVMCreateExecutionEngineForModule(&mut ee, compiler.llvm_module, &mut debug_output) != 0
+        {
+            println!("something went wrong with module initialization.");
+            println!("{:?}", CStr::from_ptr(debug_output));
+        }
+        let addr = LLVMGetFunctionAddress(ee, to_ptr(func_name));
+        let f: LLVMFunction = mem::transmute(addr);
+        f
+    };
+    Ok(f)
+}
+
+fn gen_token<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    token: &'a Token,
+) -> CodegenResult<Object> {
     unsafe {
         Ok(match token {
             &Token::Boolean(b) => Object::new(
@@ -133,7 +147,10 @@ fn gen_token<'a, 'b>(context: &'a mut Context<'b>, token: &'a Token) -> CodegenR
     }
 }
 
-fn gen_expr<'a, 'b>(context: &'a mut Context<'b>, args: &'a [Token]) -> CodegenResult<Object> {
+fn gen_expr<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    args: &'a [Token],
+) -> CodegenResult<Object> {
     if let Some((func_token, args)) = args.split_first() {
         match func_token {
             &Token::Symbol(ref s) => compile_expr(context, s, args),
@@ -158,8 +175,8 @@ fn gen_expr<'a, 'b>(context: &'a mut Context<'b>, args: &'a [Token]) -> CodegenR
     }
 }
 
-fn compile_expr<'a, 'b>(
-    context: &'a mut Context<'b>,
+fn compile_expr<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     func_name: &'a str,
     args: &'a [Token],
 ) -> CodegenResult<Object> {
@@ -194,7 +211,10 @@ fn compile_expr<'a, 'b>(
     }
 }
 
-fn gen_list<'a, 'b>(context: &'a mut Context<'b>, args: &'a [Token]) -> CodegenResult<Object> {
+fn gen_list<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    args: &'a [Token],
+) -> CodegenResult<Object> {
     let mut result = Ok(Object::none());
     for t in args {
         let result_to_add = gen_token(context, t)?;

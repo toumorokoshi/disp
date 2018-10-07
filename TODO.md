@@ -2,10 +2,11 @@
 * macros
 * stdlib
 * re-add repl
-* ensure functions work
 
 # Post Sabbatical (at some point)
 * event-loop base.
+* ffi
+* structs
 
 
 * introduce sets into disp.

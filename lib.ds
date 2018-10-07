@@ -1,1 +1,1 @@
-mut subtract (fn [l r] [(- l r)])
+let print-addition (fn [l r] [(print (+ l r))])

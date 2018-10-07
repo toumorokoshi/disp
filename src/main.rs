@@ -14,19 +14,17 @@ mod parser;
 mod stdlib;
 
 use ast::Token;
-use error::{DispError, DispResult, GenericError};
+use error::{DispError, DispResult, GenericError, GenericResult};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
-pub use llvm_codegen::{compile_module, native_functions::*, Compiler};
-use loader::exec_file;
+pub use llvm_codegen::{compile_module, get_function, native_functions::*, Compiler, LLVMFunction};
+use loader::{exec_file, load_file};
 use parser::parse;
 use std::{
     env,
     io::{self, Write},
-    sync::Arc,
-    thread::sleep,
-    time::Duration,
 };
+use stdlib::load_stdlib;
 // use stdlib::load_stdlib;
 
 fn main() {
@@ -60,9 +58,13 @@ fn main() {
 // }
 
 fn execute(path: &str) -> Result<(), GenericError> {
-    // let mut vm = build_vm()?;
-    exec_file(path)?;
-    // vm.shutdown_on_idle();
+    let mut compiler = Compiler::new();
+    {
+        load_stdlib(&mut compiler)?;
+    }
+    {
+        exec_file(&mut compiler, path)?;
+    }
     Ok(())
 }
 

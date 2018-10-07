@@ -14,8 +14,8 @@ macro_rules! ensure_type {
     };
 }
 
-pub fn let_production<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn let_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     args: &[Token],
 ) -> CodegenResult<Object> {
     if args.len() != 2 {
@@ -58,8 +58,8 @@ pub fn let_production<'a, 'b>(
     }
 }
 
-pub fn equals_production<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn equals_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     args: &[Token],
 ) -> CodegenResult<Object> {
     if args.len() != 2 {
@@ -82,8 +82,8 @@ pub fn equals_production<'a, 'b>(
     Ok(Object::new(result, Type::Bool))
 }
 
-pub fn while_production<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn while_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     args: &[Token],
 ) -> CodegenResult<Object> {
     if args.len() != 2 {
@@ -95,17 +95,14 @@ pub fn while_production<'a, 'b>(
     unsafe {
         // insert a basic block loop, to jump back to.
         let condition_block = LLVMAppendBasicBlockInContext(
-            context.compiler.llvm_context,
+            context.llvm_context,
             context.function,
             to_ptr("loop_condition"),
         );
-        let loop_block = LLVMAppendBasicBlockInContext(
-            context.compiler.llvm_context,
-            context.function,
-            to_ptr("loop"),
-        );
+        let loop_block =
+            LLVMAppendBasicBlockInContext(context.llvm_context, context.function, to_ptr("loop"));
         let after_loop_block = LLVMAppendBasicBlockInContext(
-            context.compiler.llvm_context,
+            context.llvm_context,
             context.function,
             to_ptr("after_loop"),
         );
@@ -129,8 +126,8 @@ pub fn while_production<'a, 'b>(
     }
 }
 
-pub fn add_production<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn add_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     args: &[Token],
 ) -> CodegenResult<Object> {
     if args.len() != 2 {
@@ -155,8 +152,8 @@ pub fn add_production<'a, 'b>(
     Ok(Object::new(result, Type::Int))
 }
 
-pub fn not_production<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn not_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     args: &[Token],
 ) -> CodegenResult<Object> {
     if args.len() != 1 {
@@ -172,8 +169,8 @@ pub fn not_production<'a, 'b>(
     Ok(Object::new(result, Type::Bool))
 }
 
-pub fn match_production<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn match_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     args: &[Token],
 ) -> CodegenResult<Object> {
     if args.len() != 2 {
@@ -185,7 +182,7 @@ pub fn match_production<'a, 'b>(
     let condition = gen_token(context, &args[0])?;
     unsafe {
         let post_switch_block = LLVMAppendBasicBlockInContext(
-            context.compiler.llvm_context,
+            context.llvm_context,
             context.function,
             to_ptr("switchcomplete"),
         );
@@ -209,7 +206,7 @@ pub fn match_production<'a, 'b>(
             );
             for (index, (_key, value)) in map.iter().enumerate() {
                 let branch_block = LLVMAppendBasicBlockInContext(
-                    context.compiler.llvm_context,
+                    context.llvm_context,
                     context.function,
                     to_ptr("case"),
                 );
@@ -233,8 +230,8 @@ pub fn match_production<'a, 'b>(
     Ok(Object::none())
 }
 
-pub fn fn_production<'a, 'b>(
-    context: &'a mut Context<'b>,
+pub fn fn_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
     args: &[Token],
 ) -> CodegenResult<Object> {
     if args.len() != 2 {

@@ -1,4 +1,4 @@
-use super::{FunctionPrototype, Scope, Type};
+use super::{add_native_functions, to_ptr, FunctionPrototype, Scope, Type};
 use llvm_sys::{core::*, prelude::*, support::*};
 use std::ptr;
 
@@ -44,11 +44,9 @@ pub struct Function {
 
 /// The context object contains all relevant
 /// information for the Codegen to successfully build
-/// llvm code.
-pub struct Context<'a> {
-    pub compiler: &'a mut Compiler,
-    pub scope: &'a mut Scope<'a>,
-    pub module: LLVMModuleRef,
+/// llvm ode.
+pub struct Context<'a, 'b: 'a> {
+    pub scope: &'a mut Scope<'b>,
     pub builder: LLVMBuilderRef,
     pub function: LLVMValueRef,
     /// this should be the current block that
@@ -56,22 +54,24 @@ pub struct Context<'a> {
     /// one to get back to it when switching context,
     /// for example building a child function.
     pub block: LLVMBasicBlockRef,
+    pub module: LLVMModuleRef,
+    pub llvm_context: LLVMContextRef,
 }
 
-impl<'a> Context<'a> {
+impl<'a, 'b> Context<'a, 'b> {
     pub fn new(
-        compiler: &'a mut Compiler,
-        scope: &'a mut Scope<'a>,
+        llvm_context: LLVMContextRef,
         module: LLVMModuleRef,
+        scope: &'a mut Scope<'b>,
         builder: LLVMBuilderRef,
         function: LLVMValueRef,
         block: LLVMBasicBlockRef,
-    ) -> Context<'a> {
+    ) -> Context<'a, 'b> {
         Context {
-            compiler: compiler,
+            llvm_context: llvm_context,
+            module: module,
             scope: scope,
             builder: builder,
-            module: module,
             function: function,
             block: block,
         }
@@ -81,20 +81,30 @@ impl<'a> Context<'a> {
 // the dispcompiler object is a global
 /// that contains context for the whole
 /// disp application being created.
-pub struct Compiler {
+pub struct Compiler<'a> {
     pub llvm_context: LLVMContextRef,
+    pub llvm_module: LLVMModuleRef,
+    pub llvm_builder: LLVMBuilderRef,
+    pub scope: Scope<'a>,
 }
 
-impl Compiler {
-    pub fn new() -> Compiler {
+impl<'a> Compiler<'a> {
+    pub fn new() -> Compiler<'a> {
         unsafe {
             let context = LLVMContextCreate();
             // This is required to ensure that exported
             // functions area available to the context.
             LLVMLoadLibraryPermanently(ptr::null());
-            Compiler {
+            let module = LLVMModuleCreateWithNameInContext(to_ptr("main"), context);
+            let builder = LLVMCreateBuilderInContext(context);
+            let mut compiler = Compiler {
                 llvm_context: context,
-            }
+                llvm_module: module,
+                llvm_builder: builder,
+                scope: Scope::new(None),
+            };
+            // add_native_functions(&mut compiler);
+            compiler
         }
     }
 }
