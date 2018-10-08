@@ -1,6 +1,7 @@
 mod core;
 mod error;
 mod function;
+mod macros;
 pub mod native_functions;
 mod productions;
 mod scope;
@@ -11,6 +12,7 @@ mod utils;
 pub use self::core::{Compiler, Context, Function, Object};
 use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
+use self::macros::{build_macro, expand_macro, Macro};
 pub use self::native_functions::*;
 use self::productions::{
     add_production, equals_production, fn_production, let_production, match_production,
@@ -154,13 +156,13 @@ fn gen_expr<'a, 'b, 'c>(
     if let Some((func_token, args)) = args.split_first() {
         match func_token {
             &Token::Symbol(ref s) => compile_expr(context, s, args),
-            // &Token::BangSymbol(ref s) => {
-            //     if **s == String::from("!macro") {
-            //         build_macro(context, args)
-            //     } else {
-            //         run_expr(context, s, args)
-            //     }
-            // },
+            &Token::BangSymbol(ref s) => {
+                if **s == String::from("macro") {
+                    build_macro(context, args)
+                } else {
+                    Err(CodegenError::new("TBD"))
+                }
+            }
             &Token::Comment(ref c) => Ok(Object::none()),
             _ => Err(CodegenError::new(&format!(
                 "first token must be a symbol for expression, found {}",
@@ -188,26 +190,38 @@ fn compile_expr<'a, 'b, 'c>(
         "match" => match_production(context, args),
         "not" => not_production(context, args),
         "while" => while_production(context, args),
-        symbol => {
-            let mut vm_args = Vec::with_capacity(args.len());
-            let mut vm_args_types = Vec::with_capacity(args.len());
-            for a in args {
-                let vm_a = gen_token(context, a)?;
-                vm_args.push(vm_a.value);
-                vm_args_types.push(vm_a.object_type);
+        symbol => match context.scope.get_macro(symbol) {
+            Some(disp_macro) => {
+                let token = expand_macro(context, &disp_macro, args)?;
+                gen_token(context, &token)
             }
-            let function = get_or_compile_function(context, symbol, &vm_args_types)?;
-            unsafe {
-                let value = LLVMBuildCall(
-                    context.builder,
-                    function.function,
-                    vm_args.as_mut_ptr(),
-                    vm_args.len() as u32,
-                    to_ptr("calltmp"),
-                );
-                Ok(Object::new(value, function.return_type))
-            }
-        }
+            None => call_function(context, symbol, args),
+        },
+    }
+}
+
+fn call_function<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    func_name: &'a str,
+    args: &'a [Token],
+) -> CodegenResult<Object> {
+    let mut vm_args = Vec::with_capacity(args.len());
+    let mut vm_args_types = Vec::with_capacity(args.len());
+    for a in args {
+        let vm_a = gen_token(context, a)?;
+        vm_args.push(vm_a.value);
+        vm_args_types.push(vm_a.object_type);
+    }
+    let function = get_or_compile_function(context, func_name, &vm_args_types)?;
+    unsafe {
+        let value = LLVMBuildCall(
+            context.builder,
+            function.function,
+            vm_args.as_mut_ptr(),
+            vm_args.len() as u32,
+            to_ptr("calltmp"),
+        );
+        Ok(Object::new(value, function.return_type))
     }
 }
 

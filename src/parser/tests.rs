@@ -21,7 +21,7 @@ fn test_parser_symbol() {
 #[test]
 fn test_parser_bangsymbol() {
     assert_eq!(
-        parse_rule(Rule::token, "!foobar"),
+        parse_rule(Rule::token, "foobar!"),
         Token::BangSymbol(Box::new(String::from("foobar")))
     );
 }

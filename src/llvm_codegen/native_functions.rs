@@ -26,6 +26,13 @@ pub fn add_native_functions(compiler: &mut Compiler) {
         "print_map",
     );
     add_function(compiler, "println", Type::None, &vec![Type::Int], "println");
+    add_function(
+        compiler,
+        "println",
+        Type::None,
+        &vec![Type::String],
+        "println_string",
+    );
     add_function(compiler, "read-line", Type::String, &vec![], "read_line");
     add_function(
         compiler,
@@ -117,6 +124,11 @@ pub extern "C" fn print_string(value: *const c_char) {
 #[no_mangle]
 pub extern "C" fn println(value: i64) {
     println!("{}", value);
+}
+
+#[no_mangle]
+pub extern "C" fn println_string(value: *const c_char) {
+    println!("{}", unsafe { CStr::from_ptr(value).to_str().unwrap() });
 }
 
 #[no_mangle]

@@ -1,7 +1,9 @@
 # Sabbatical To Do
 * macros
-* stdlib
-* re-add repl
+* repl
+* function return values
+* compile time execution
+* document work
 
 # Post Sabbatical (at some point)
 * event-loop base.

@@ -17,7 +17,7 @@ token = _{
   // ordering is important! symbol must come after
   // any literals in the parser, or symbol will match first.
   // e.j. "true" will be a symbol if the rule is after symbol.
-  string_with_quotes | bang_symbol |
+  string_with_quotes | bang_symbol_with_bang |
   true_value | false_value | symbol
 }
 none = { "None" }
@@ -26,12 +26,13 @@ integer = { ('0'..'9')+ }
 list = {"[" ~ delimiter? ~ token_list? ~ delimiter? ~ "]"}
 map = { "{" ~ delimiter? ~ (token ~ delimiter? ~ ":" ~ delimiter? ~ token ~ delimiter? ~ "," ~ delimiter?)* ~ "}" }
 string_with_quotes = _{ "\"" ~ string ~ "\""}
-bang_symbol = { "!" ~ symbol }
+bang_symbol = { symbol }
+bang_symbol_with_bang = _{ bang_symbol ~ "!"}
 true_value = { "true" }
 false_value = { "false" }
 symbol = { ('a'..'z' | 'A'..'Z' | "+" | "=" | "-")+ }
 
 string = { char+ }
-char = _{ ('a'..'z' | 'A'..'Z' | '0'..'9' | "#" | " " | ":" | "," | "." | "-" | "(" | ")" | "["|"]" | "_" )+ }
+char = _{ ('a'..'z' | 'A'..'Z' | '0'..'9' | "#" | " " | ":" | "," | "." | "-" | "(" | ")" | "["|"]" | "_" | "!" | "{"|"}")+ }
 comment_body = _{ (char | "\"")+ }
 token_list = _{ (token ~ delimiter?)+ }

@@ -29,11 +29,7 @@ fn parse_rule(rule: Rule, body: &str) -> Token {
 /// Convert a token from the parser to a Disp token
 fn unpack(pair: Pair<Rule>) -> Token {
     match pair.clone().as_rule() {
-        _s @ Rule::bang_symbol => {
-            // remove leading bang
-            let string = pair.as_str().chars().skip(1).collect();
-            Token::BangSymbol(Box::new(string))
-        }
+        _s @ Rule::bang_symbol => Token::BangSymbol(Box::new(String::from(pair.as_str()))),
         _c @ Rule::comment => Token::Comment(Box::new(String::from(pair.as_str()))),
         _e @ Rule::expression_no_parens => {
             let mut tokens = vec![];

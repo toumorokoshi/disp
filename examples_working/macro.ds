@@ -1,2 +1,10 @@
-!macro if [condition if-body else-body]
-  match condition [true if-body] [false else-body]
+macro! unless [cond body]
+	match cond {
+    false: body,
+  }
+
+
+if true
+	println "macro from stdlib works!"
+unless false
+	println "macro from scope works!"

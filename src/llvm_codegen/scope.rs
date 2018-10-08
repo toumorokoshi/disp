@@ -1,10 +1,11 @@
-use super::{Function, FunctionPrototype, Object, Token, Type};
+use super::{Function, FunctionPrototype, Macro, Object, Token, Type};
 use llvm_sys::prelude::*;
 use std::collections::HashMap;
 
 /// Scope objects handle references to functions by value.
 pub struct Scope<'a> {
     pub locals: HashMap<String, Object>,
+    pub macros: HashMap<String, Macro>,
     /// a declaration of functions, including
     /// polymorphism for type definitions.
     pub functions: HashMap<String, HashMap<Vec<Type>, Function>>,
@@ -17,6 +18,7 @@ impl<'a> Scope<'a> {
     pub fn new(parent: Option<&'a Scope<'a>>) -> Scope<'a> {
         Scope {
             locals: HashMap::new(),
+            macros: HashMap::new(),
             functions: HashMap::new(),
             function_prototypes: HashMap::new(),
             parent: parent,
@@ -33,6 +35,13 @@ impl<'a> Scope<'a> {
         let mut map = HashMap::new();
         map.insert(function.arg_types.clone(), function);
         self.functions.insert(name.to_string(), map);
+    }
+
+    pub fn get_macro(&self, name: &str) -> Option<Macro> {
+        match self.macros.get(name) {
+            Some(m) => Some(m.clone()),
+            None => None,
+        }
     }
 
     pub fn get_function(&self, name: &str, arg_types: &Vec<Type>) -> Option<Function> {
