@@ -6,8 +6,9 @@ let add (fn [l r] [(+ l r)])
 let p (fn [arg] [(print arg)])
 p "foo"
 p 10
-# mut add-and-print (fn [l r] [(mut x (add l r)) (p x)])
+# p (add 1 10)
+let add-and-print (fn [l r] [(let x (add l r)) (p x)])
 # these relationships are preserved recursively. So this will
 # fail for any arguments that are not integers.
-# add-and-print 11 12
+add-and-print 11 12
 # add_and_print 11 "foo"

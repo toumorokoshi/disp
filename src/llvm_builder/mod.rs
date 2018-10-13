@@ -160,6 +160,9 @@ impl Builder {
                         objects[*target] =
                             LLVMBuildNot(self.builder, objects[*source], to_ptr("not"));
                     }
+                    LLVMInstruction::BuildRet { source } => {
+                        LLVMBuildRet(self.builder, objects[*source]);
+                    }
                     LLVMInstruction::BuildRetVoid => {
                         LLVMBuildRetVoid(self.builder);
                     }
@@ -309,6 +312,9 @@ pub enum LLVMInstruction {
     BuildNot {
         source: usize,
         target: usize,
+    },
+    BuildRet {
+        source: usize,
     },
     BuildRetVoid,
     ConstBool {

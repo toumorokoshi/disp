@@ -52,7 +52,7 @@ pub fn compile_function<'a, 'b: 'a>(
     for a in arg_types {
         args.push(a.to_llvm_type());
     }
-    let mut function = Function::new(name_with_types, arg_types.to_owned(), Type::None);
+    let function = Function::new(name_with_types, arg_types.to_owned(), Type::None);
     let mut inner_scope = Scope::new(Some(context.scope));
     let mut inner_context = Context::new(&mut inner_scope, function, 0);
     for i in 0..prototype.argument_symbols.len() {
@@ -75,7 +75,14 @@ pub fn compile_function<'a, 'b: 'a>(
             .locals
             .insert(prototype.argument_symbols[i].clone(), param.clone());
     }
-    gen_list(&mut inner_context, &prototype.body)?;
-    inner_context.add_instruction(LLVMInstruction::BuildRetVoid);
+    let result = gen_list(&mut inner_context, &prototype.body)?;
+    if result.object_type != Type::None {
+        inner_context.add_instruction(LLVMInstruction::BuildRet {
+            source: result.index,
+        });
+        inner_context.function.return_type = result.object_type;
+    } else {
+        inner_context.add_instruction(LLVMInstruction::BuildRetVoid);
+    }
     Ok(inner_context.function)
 }
