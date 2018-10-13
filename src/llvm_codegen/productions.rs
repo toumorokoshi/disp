@@ -1,7 +1,8 @@
 use super::{
-    gen_token, to_ptr, CodegenError, CodegenResult, Context, FunctionPrototype, Object, Token, Type,
+    gen_token, to_ptr, CodegenError, CodegenResult, Context, FunctionPrototype, LLVMInstruction,
+    Object, Token, Type,
 };
-use llvm_sys::{core::*, *};
+use llvm_sys::LLVMOpcode;
 
 macro_rules! ensure_type {
     ($x:ident, $y:expr) => {
@@ -43,18 +44,28 @@ pub fn let_production<'a, 'b, 'c>(
                 .insert(*var_name.clone(), function.clone());
             Ok(target.clone())
         }
-        None => unsafe {
+        None => {
             let result_object = context.scope.locals.entry(*var_name.clone()).or_insert({
-                let result_value = LLVMBuildAlloca(
-                    context.builder,
-                    target.object_type.to_llvm_type(),
-                    to_ptr(&var_name),
-                );
-                Object::new(result_value, target.object_type)
+                let object = context.function.objects;
+                context.function.objects += 1;
+                context
+                    .function
+                    .instructions
+                    .push(LLVMInstruction::BuildAlloca {
+                        llvm_type: target.object_type.to_llvm_type(),
+                        target: object,
+                    });
+                Object::new(object, target.object_type.clone())
             });
-            LLVMBuildStore(context.builder, target.value, result_object.value);
+            context
+                .function
+                .instructions
+                .push(LLVMInstruction::BuildStore {
+                    source: target.index,
+                    target: result_object.index,
+                });
             Ok(result_object.clone())
-        },
+        }
     }
 }
 
@@ -70,16 +81,16 @@ pub fn equals_production<'a, 'b, 'c>(
     };
     let lhs = gen_token(context, &args[0])?;
     let rhs = gen_token(context, &args[1])?;
-    let result = unsafe {
-        LLVMBuildICmp(
-            context.builder,
-            LLVMIntPredicate::LLVMIntEQ,
-            lhs.value,
-            rhs.value,
-            to_ptr("eqtemp"),
-        )
-    };
-    Ok(Object::new(result, Type::Bool))
+    let target = context.allocate(Type::Bool);
+    context
+        .function
+        .instructions
+        .push(LLVMInstruction::BuildICmp {
+            lhs: lhs.index,
+            rhs: rhs.index,
+            target: target.index,
+        });
+    Ok(target)
 }
 
 pub fn while_production<'a, 'b, 'c>(
@@ -92,38 +103,34 @@ pub fn while_production<'a, 'b, 'c>(
             args.len()
         )));
     };
-    unsafe {
-        // insert a basic block loop, to jump back to.
-        let condition_block = LLVMAppendBasicBlockInContext(
-            context.llvm_context,
-            context.function,
-            to_ptr("loop_condition"),
-        );
-        let loop_block =
-            LLVMAppendBasicBlockInContext(context.llvm_context, context.function, to_ptr("loop"));
-        let after_loop_block = LLVMAppendBasicBlockInContext(
-            context.llvm_context,
-            context.function,
-            to_ptr("after_loop"),
-        );
-        // go immediately to the block
-        LLVMBuildBr(context.builder, condition_block);
-        LLVMPositionBuilderAtEnd(context.builder, condition_block);
-        context.block = condition_block;
-        let condition_result = gen_token(context, &args[0])?;
-        LLVMBuildCondBr(
-            context.builder,
-            condition_result.value,
-            loop_block,
-            after_loop_block,
-        );
-        LLVMPositionBuilderAtEnd(context.builder, loop_block);
-        let result = gen_token(context, &args[1])?;
-        // loop back to conditional
-        LLVMBuildBr(context.builder, condition_block);
-        LLVMPositionBuilderAtEnd(context.builder, after_loop_block);
-        Ok(result)
-    }
+    // insert a basic block loop, to jump back to.
+    let condition_block = context.add_basic_block("loop_condition".to_owned());
+    let loop_block = context.add_basic_block("loop".to_owned());
+    let after_loop_block = context.add_basic_block("after_loop".to_owned());
+    // go immediately to the block
+    context.add_instruction(LLVMInstruction::BuildBr {
+        block: condition_block,
+    });
+    context.add_instruction(LLVMInstruction::PositionBuilderAtEnd {
+        block: condition_block,
+    });
+    context.block = condition_block;
+    let condition_result = gen_token(context, &args[0])?;
+    context.add_instruction(LLVMInstruction::BuildCondBr {
+        value: condition_result.index,
+        true_block: loop_block,
+        false_block: after_loop_block,
+    });
+    context.add_instruction(LLVMInstruction::PositionBuilderAtEnd { block: loop_block });
+    let result = gen_token(context, &args[1])?;
+    // loop back to conditional
+    context.add_instruction(LLVMInstruction::BuildBr {
+        block: condition_block,
+    });
+    context.add_instruction(LLVMInstruction::PositionBuilderAtEnd {
+        block: after_loop_block,
+    });
+    Ok(result)
 }
 
 pub fn add_production<'a, 'b, 'c>(
@@ -140,16 +147,14 @@ pub fn add_production<'a, 'b, 'c>(
     ensure_type!(lhs, Type::Int);
     let rhs = gen_token(context, &args[1])?;
     ensure_type!(rhs, Type::Int);
-    let result = unsafe {
-        LLVMBuildBinOp(
-            context.builder,
-            LLVMOpcode::LLVMAdd,
-            lhs.value,
-            rhs.value,
-            to_ptr("addtemp"),
-        )
-    };
-    Ok(Object::new(result, Type::Int))
+    let result = context.allocate(Type::Int);
+    context.add_instruction(LLVMInstruction::BuildBinOp {
+        opcode: LLVMOpcode::LLVMAdd,
+        lhs: lhs.index,
+        rhs: rhs.index,
+        target: result.index,
+    });
+    Ok(result)
 }
 
 pub fn not_production<'a, 'b, 'c>(
@@ -164,9 +169,12 @@ pub fn not_production<'a, 'b, 'c>(
     };
     let result_to_negate = gen_token(context, &args[0])?;
     ensure_type!(result_to_negate, Type::Bool);
-    let result =
-        unsafe { LLVMBuildNot(context.builder, result_to_negate.value, to_ptr("nottemp")) };
-    Ok(Object::new(result, Type::Bool))
+    let result = context.allocate(Type::Bool);
+    context.add_instruction(LLVMInstruction::BuildNot {
+        source: result_to_negate.index,
+        target: result.index,
+    });
+    Ok(result)
 }
 
 pub fn match_production<'a, 'b, 'c>(
@@ -181,11 +189,7 @@ pub fn match_production<'a, 'b, 'c>(
     };
     let condition = gen_token(context, &args[0])?;
     unsafe {
-        let post_switch_block = LLVMAppendBasicBlockInContext(
-            context.llvm_context,
-            context.function,
-            to_ptr("switchcomplete"),
-        );
+        let post_switch_block = context.add_basic_block("switchcomplete".to_owned());
         if let Token::Map(ref map) = &args[1] {
             let mut key_values = vec![];
             // we construct all keys first, to ensure
@@ -198,25 +202,28 @@ pub fn match_production<'a, 'b, 'c>(
                 key_values.push(key_value);
             }
             let num_cases = (map.len() - 1) as u32;
-            let switch = LLVMBuildSwitch(
-                context.builder,
-                condition.value,
-                post_switch_block,
-                num_cases,
-            );
+            let switch = context.allocate_without_type();
+            context.add_instruction(LLVMInstruction::BuildSwitch {
+                value: condition.index,
+                post_switch_block: post_switch_block,
+                num_cases: num_cases,
+                target: switch,
+            });
             for (index, (_key, value)) in map.iter().enumerate() {
-                let branch_block = LLVMAppendBasicBlockInContext(
-                    context.llvm_context,
-                    context.function,
-                    to_ptr("case"),
-                );
+                let block = context.add_basic_block("case".to_owned());
                 let branch_key = &key_values[index];
-                LLVMAddCase(switch, branch_key.value, branch_block);
-                LLVMPositionBuilderAtEnd(context.builder, branch_block);
+                context.add_instruction(LLVMInstruction::AddCase {
+                    switch,
+                    value: branch_key.index,
+                    block,
+                });
+                context.add_instruction(LLVMInstruction::PositionBuilderAtEnd { block });
                 // TODO: capture this value and make it the return value of the
                 // match statement.
                 gen_token(context, value)?;
-                LLVMBuildBr(context.builder, post_switch_block);
+                context.add_instruction(LLVMInstruction::BuildBr {
+                    block: post_switch_block,
+                });
             }
         } else {
             return Err(CodegenError::new(&format!(
@@ -224,7 +231,9 @@ pub fn match_production<'a, 'b, 'c>(
                 &args[1]
             )));
         }
-        LLVMPositionBuilderAtEnd(context.builder, post_switch_block);
+        context.add_instruction(LLVMInstruction::PositionBuilderAtEnd {
+            block: post_switch_block,
+        });
         context.block = post_switch_block;
     }
     Ok(Object::none())

@@ -8,6 +8,7 @@ extern crate llvm_sys;
 
 mod ast;
 mod error;
+mod llvm_builder;
 mod llvm_codegen;
 mod loader;
 mod parser;
@@ -17,7 +18,11 @@ use ast::Token;
 use error::{DispError, DispResult, GenericError, GenericResult};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
-pub use llvm_codegen::{compile_module, get_function, native_functions::*, Compiler, LLVMFunction};
+use llvm_builder::{Builder, LLVMInstruction};
+pub use llvm_codegen::{
+    compile_module, native_functions::*, Compiler, Function, FunctionType, LLVMFunction,
+    NativeFunction, Scope,
+};
 use loader::{exec_file, load_file};
 use parser::parse;
 use std::{

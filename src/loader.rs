@@ -1,15 +1,17 @@
-use super::{compile_module, get_function, parse, Compiler, GenericResult, LLVMFunction};
+use super::{compile_module, parse, Builder, Compiler, GenericResult, LLVMFunction};
 use std::time::Instant;
 use std::{fs::File, io::Read};
 
 // load and execute a file into the vm.
 pub fn exec_file<'a>(compiler: &mut Compiler<'a>, path: &str) -> GenericResult<()> {
     load_file(compiler, path, "main")?;
-    let f = get_function(compiler, "main")?;
+    let mut builder = Builder::new();
+    builder.build(&compiler.scope);
+    let f = builder.get_function("main-main")?;
     if cfg!(feature = "debug") {
         let before = Instant::now();
         f();
-        eprintln!("function duration: {}", before.elapsed().as_float_secs());
+        println!("function duration: {}", before.elapsed().as_float_secs());
     } else {
         f();
     }

@@ -9,7 +9,7 @@ mod scope;
 mod test_native_functions;
 mod types;
 mod utils;
-pub use self::core::{Compiler, Context, Function, Object};
+pub use self::core::{Compiler, Context, Function, FunctionType, NativeFunction, Object};
 use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 use self::macros::{build_macro, expand_macro, Macro};
@@ -18,13 +18,10 @@ use self::productions::{
     add_production, equals_production, fn_production, let_production, match_production,
     not_production, while_production,
 };
-use self::scope::Scope;
+pub use self::scope::Scope;
 use self::types::Type;
 use self::utils::{to_ptr, to_string};
-use super::{DispError, Token};
-use libc::c_char;
-use llvm_sys::{core::*, execution_engine::*, target::*};
-use std::{ffi::CStr, mem};
+use super::{DispError, LLVMInstruction, Token};
 
 pub type LLVMFunction = extern "C" fn();
 
@@ -40,113 +37,104 @@ pub fn compile_module<'a>(
     module_name: &str,
     token: &Token,
 ) -> CodegenResult<()> {
-    unsafe {
-        let mut args = vec![];
-        let function_type =
-            LLVMFunctionType(LLVMVoidType(), args.as_mut_ptr(), args.len() as u32, 0);
-        let main_function =
-            LLVMAddFunction(compiler.llvm_module, to_ptr(module_name), function_type);
-        let basic_block =
-            LLVMAppendBasicBlockInContext(compiler.llvm_context, main_function, to_ptr("entry"));
-        LLVMPositionBuilderAtEnd(compiler.llvm_builder, basic_block);
-        add_native_functions(compiler);
-        let mut context = Context::new(
-            compiler.llvm_context,
-            compiler.llvm_module,
-            &mut compiler.scope,
-            compiler.llvm_builder,
-            main_function,
-            basic_block,
-        );
+    let name = format!("{}-{}", module_name, "main");
+    let function = {
+        let mut function = Function::new(name.clone(), vec![], Type::None);
+        let mut context = Context::new(&mut compiler.scope, function.clone(), 0);
         {
             let ctx = &mut context;
             gen_token(ctx, token)?;
         }
         // LLVM functions always require a return instruction of some sort.
-        LLVMBuildRetVoid(context.builder);
-        // this builds the function in question for now.
-        if cfg!(feature = "debug") {
-            println!("llvm module:");
-            LLVMDumpModule(context.module);
-        }
-        Ok(())
-    }
-}
-
-pub fn get_function(compiler: &mut Compiler, func_name: &str) -> CodegenResult<LLVMFunction> {
-    let f = unsafe {
-        let mut ee = mem::uninitialized();
-        LLVMLinkInMCJIT();
-        LLVM_InitializeNativeTarget();
-        LLVM_InitializeNativeAsmPrinter();
-        let mut debug_output: *mut c_char = mem::zeroed();
-        if LLVMCreateExecutionEngineForModule(&mut ee, compiler.llvm_module, &mut debug_output) != 0
-        {
-            println!("something went wrong with module initialization.");
-            println!("{:?}", CStr::from_ptr(debug_output));
-        }
-        let addr = LLVMGetFunctionAddress(ee, to_ptr(func_name));
-        let f: LLVMFunction = mem::transmute(addr);
-        f
+        context
+            .function
+            .instructions
+            .push(LLVMInstruction::BuildRetVoid);
+        context.function
     };
-    Ok(f)
+    compiler
+        .scope
+        .add_function(&name, FunctionType::Disp(function));
+    Ok(())
 }
 
 fn gen_token<'a, 'b, 'c>(
     context: &'a mut Context<'b, 'c>,
     token: &'a Token,
 ) -> CodegenResult<Object> {
-    unsafe {
-        Ok(match token {
-            &Token::Boolean(b) => Object::new(
-                LLVMConstInt(Type::Bool.into(), (if b { 1 } else { 0 }) as u64, 0),
-                Type::Bool,
-            ),
-            &Token::Map(ref m) => {
-                let function = LLVMGetNamedFunction(context.module, to_ptr("create_map"));
-                let mut args = vec![];
-                let value = LLVMBuildCall(
-                    context.builder,
-                    function,
-                    args.as_mut_ptr(),
-                    args.len() as u32,
-                    to_ptr("tempmap"),
-                );
-                Object::new(
-                    value,
-                    Type::Map(Box::new(Type::String), Box::new(Type::Int)),
-                )
-            }
-            &Token::None => Object::none(),
-            &Token::String(ref s) => Object::new(
-                LLVMBuildGlobalStringPtr(context.builder, to_ptr(s), to_ptr("string")),
-                Type::String,
-            ),
-            &Token::Symbol(ref s) => {
-                let value = match context.scope.locals.get(&(*s.clone())) {
-                    Some(s) => {
-                        let loaded_value =
-                            LLVMBuildLoad(context.builder, s.value, to_ptr("loadtemp"));
-                        Some(Object::new(loaded_value, s.object_type.clone()))
-                    }
-                    None => None,
-                };
-                match value {
-                    Some(value) => value,
-                    None => {
-                        return Err(CodegenError::new(&format!("unable to find variable {}", s)));
-                    }
+    Ok(match token {
+        &Token::Boolean(b) => {
+            let object = context.allocate(Type::Bool);
+            context
+                .function
+                .instructions
+                .push(LLVMInstruction::ConstBool {
+                    value: b,
+                    target: object.index,
+                });
+            object
+        }
+        &Token::Map(ref m) => {
+            let object = context.allocate(Type::Map(Box::new(Type::String), Box::new(Type::Int)));
+            context
+                .function
+                .instructions
+                .push(LLVMInstruction::BuildCall {
+                    name: String::from("create_map"),
+                    args: vec![],
+                    target: object.index,
+                });
+            object
+        }
+        &Token::None => Object::none(),
+        &Token::String(ref s) => {
+            let object = context.allocate(Type::String);
+            context
+                .function
+                .instructions
+                .push(LLVMInstruction::BuildGlobalString {
+                    value: *s.clone(),
+                    target: object.index,
+                });
+            object
+        }
+        &Token::Symbol(ref s) => {
+            let value = match context.scope.get_local(&(*s.clone())) {
+                Some(s) => {
+                    let object = context.allocate(s.object_type.clone());
+                    context
+                        .function
+                        .instructions
+                        .push(LLVMInstruction::BuildLoad {
+                            source: s.index,
+                            target: object.index,
+                        });
+                    Some(object)
+                }
+                None => None,
+            };
+            match value {
+                Some(value) => value,
+                None => {
+                    return Err(CodegenError::new(&format!("unable to find variable {}", s)));
                 }
             }
-            &Token::Integer(i) => Object::new(
-                LLVMConstInt(Type::Int.to_llvm_type(), i as u64, 0),
-                Type::Int,
-            ),
-            &Token::List(ref tl) => gen_list(context, tl)?,
-            &Token::Expression(ref tl) => gen_expr(context, tl)?,
-            _ => Object::none(),
-        })
-    }
+        }
+        &Token::Integer(i) => {
+            let object = context.allocate(Type::Int);
+            context
+                .function
+                .instructions
+                .push(LLVMInstruction::ConstInt {
+                    value: i,
+                    target: object.index,
+                });
+            object
+        }
+        &Token::List(ref tl) => gen_list(context, tl)?,
+        &Token::Expression(ref tl) => gen_expr(context, tl)?,
+        _ => Object::none(),
+    })
 }
 
 fn gen_expr<'a, 'b, 'c>(
@@ -209,20 +197,20 @@ fn call_function<'a, 'b, 'c>(
     let mut vm_args_types = Vec::with_capacity(args.len());
     for a in args {
         let vm_a = gen_token(context, a)?;
-        vm_args.push(vm_a.value);
+        vm_args.push(vm_a.index);
         vm_args_types.push(vm_a.object_type);
     }
     let function = get_or_compile_function(context, func_name, &vm_args_types)?;
-    unsafe {
-        let value = LLVMBuildCall(
-            context.builder,
-            function.function,
-            vm_args.as_mut_ptr(),
-            vm_args.len() as u32,
-            to_ptr("calltmp"),
-        );
-        Ok(Object::new(value, function.return_type))
-    }
+    let object = context.allocate(function.return_type());
+    context
+        .function
+        .instructions
+        .push(LLVMInstruction::BuildCall {
+            name: function.name().to_owned(),
+            args: vm_args,
+            target: object.index,
+        });
+    Ok(object)
 }
 
 fn gen_list<'a, 'b, 'c>(

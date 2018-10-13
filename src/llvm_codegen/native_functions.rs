@@ -1,7 +1,7 @@
 /// Native functions that are available as functions within disp.
 /// Functions within this module must be publicly exported in the main.rs
 /// file, or else LLVM will be unable to discover the externs.
-use super::{to_ptr, to_string, Compiler, Function, Type};
+use super::{to_ptr, to_string, Compiler, Function, FunctionType, NativeFunction, Type};
 use libc::c_char;
 use llvm_sys::core::*;
 use std::{collections::HashMap, ffi::CStr, io, mem::forget};
@@ -10,7 +10,13 @@ use std::{collections::HashMap, ffi::CStr, io, mem::forget};
 // these builtins are available.
 pub fn add_native_functions(compiler: &mut Compiler) {
     add_function(compiler, "print", Type::None, &vec![Type::Int], "print");
-    add_function(compiler, "print", Type::None, &vec![Type::Bool], "print");
+    add_function(
+        compiler,
+        "print",
+        Type::None,
+        &vec![Type::Bool],
+        "print_bool",
+    );
     add_function(
         compiler,
         "print",
@@ -72,7 +78,7 @@ pub fn add_native_functions(compiler: &mut Compiler) {
 /// context
 fn add_function(
     compiler: &mut Compiler,
-    disp_name: &str,
+    name: &str,
     return_type: Type,
     arg_types: &[Type],
     ffi_name: &str,
@@ -81,31 +87,16 @@ fn add_function(
     for arg in arg_types {
         llvm_args.push(arg.to_llvm_type());
     }
-    let llvm_function = unsafe {
-        let function = LLVMGetNamedFunction(compiler.llvm_module, to_ptr(ffi_name));
-        if !function.is_null() {
-            function
-        } else {
-            LLVMAddFunction(
-                compiler.llvm_module,
-                to_ptr(ffi_name),
-                LLVMFunctionType(
-                    return_type.to_llvm_type(),
-                    llvm_args.as_mut_ptr(),
-                    llvm_args.len() as u32,
-                    0,
-                ),
-            )
-        }
-    };
-    compiler.scope.add_function(
-        disp_name,
-        Function {
-            arg_types: arg_types.to_owned(),
-            return_type: return_type,
-            function: llvm_function,
-        },
-    );
+    if let None = compiler.scope.get_function(name, arg_types) {
+        compiler.scope.add_function(
+            name,
+            FunctionType::Native(NativeFunction {
+                name: ffi_name.to_owned(),
+                arg_types: arg_types.to_owned(),
+                return_type: return_type,
+            }),
+        );
+    }
 }
 
 // no_mangle is required, to ensure that
@@ -113,6 +104,11 @@ fn add_function(
 // signature.
 #[no_mangle]
 pub extern "C" fn print(value: i64) {
+    print!("{}", value);
+}
+
+#[no_mangle]
+pub extern "C" fn print_bool(value: bool) {
     print!("{}", value);
 }
 
