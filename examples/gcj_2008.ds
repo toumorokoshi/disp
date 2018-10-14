@@ -1,26 +1,26 @@
-mut n (Int (read-line))
-mut i 0
-while (neq i n)
-	mut s (Int (read-line))
-	mut possible-engines {}
-	mut j 0
-	while (neq j s)
-		mut e (read-line)
+let n (Int (read-line))
+let i 0
+while (not (eq i n))
+	let s (Int (read-line))
+	let possible-engines {}
+	let j 0
+	while (not (eq j s))
+		let e (read-line)
 		add possible-engines e true
-		mut j (+ j 1)
-	mut q (Int (read-line))
-	mut j 0
-	mut switches 0
-	mut seen-engines {}
-	while (neq j q)
-		mut e (read-line)
+		let j (+ j 1)
+	let q (Int (read-line))
+	let j 0
+	let switches 0
+	let seen-engines {}
+	while (not (eq j q))
+		let e (read-line)
 		add seen-engines e true
 		if (eq (count seen-engines) (count possible-engines))
-			mut seen-engines {}
+			let seen-engines {}
 			add seen-engines e true
-			mut switches (+ switches 1)
-		mut j (+ j 1)
-	mut i (+ i 1)
+			let switches (+ switches 1)
+		let j (+ j 1)
+	let i (+ i 1)
 	print "Case #"
 	print i
 	print ": "

@@ -6,7 +6,16 @@
 Disp
 ====
 
-Disp is a lisp-like, interpreted programming language, with the goal of high performance, powerful primitives, and easy to validate and modify code programmatically.
+Disp is a programming language designed with the goals of:
+
+* high performance by default: choices are built in that ensure mechanical sympathy.
+* managing large codebases easily: reducing cost for refactors, managing code across multiple code repositories.
+
+The specific features of Disp include:
+
+* homoiconic syntax: code is represented using standard data structures
+* macro support: function that can do compile-time syntax evaluation
+* compile-time execution: functions can execute on runtime, or compile time
 
 .. warning::
 
