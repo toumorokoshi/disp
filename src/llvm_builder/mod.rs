@@ -39,6 +39,7 @@ impl Builder {
         let mut built_functions = HashSet::new();
         for function_by_types in scope.functions.values() {
             for function in function_by_types.values() {
+                println!("found {}", function.name());
                 if !built_functions.contains(function.name()) {
                     match function {
                         FunctionType::Disp(f) => unsafe {
@@ -54,6 +55,7 @@ impl Builder {
                             );
                             let llvm_function =
                                 LLVMAddFunction(self.module, to_ptr(&f.name), function_type);
+                            println!("adding function {}", &f.name);
                             functions_to_build.push((llvm_function, f.clone()));
                         },
                         FunctionType::Native(f) => self.build_native_function(&f),
@@ -199,6 +201,7 @@ impl Builder {
                         objects[*target] = LLVMConstInt(LLVMInt64Type(), *value as u64, 0);
                     }
                     LLVMInstruction::BuildCall { name, args, target } => {
+                        println!("calling {}", name);
                         let function = LLVMGetNamedFunction(self.module, to_ptr(&name));
                         let mut llvm_args = vec![];
                         for a in args {
