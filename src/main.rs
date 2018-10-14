@@ -20,8 +20,8 @@ use error::{DispError, DispResult, GenericError, GenericResult};
 // be discovered by llvm.
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
-    compile_module, native_functions::*, Compiler, Function, FunctionType, LLVMFunction,
-    NativeFunction, Scope,
+    compile_module, native_functions::*, Compiler, CompilerData, Function, FunctionType,
+    LLVMFunction, NativeFunction, Scope,
 };
 use loader::{exec_file, load_file};
 use parser::parse;

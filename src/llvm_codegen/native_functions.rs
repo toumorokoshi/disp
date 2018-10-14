@@ -1,7 +1,10 @@
 /// Native functions that are available as functions within disp.
 /// Functions within this module must be publicly exported in the main.rs
 /// file, or else LLVM will be unable to discover the externs.
-use super::{to_ptr, to_string, Compiler, Function, FunctionType, NativeFunction, Type};
+use super::{
+    add_function, get_function, to_ptr, to_string, Compiler, Function, FunctionType,
+    NativeFunction, Type,
+};
 use libc::c_char;
 use llvm_sys::core::*;
 use std::{collections::HashMap, ffi::CStr, io, mem::forget};
@@ -9,45 +12,45 @@ use std::{collections::HashMap, ffi::CStr, io, mem::forget};
 // add native functions to a module context, to ensure
 // these builtins are available.
 pub fn add_native_functions(compiler: &mut Compiler) {
-    add_function(compiler, "print", Type::None, &vec![Type::Int], "print");
-    add_function(
+    add_function_to_compiler(compiler, "print", Type::None, &vec![Type::Int], "print");
+    add_function_to_compiler(
         compiler,
         "print",
         Type::None,
         &vec![Type::Bool],
         "print_bool",
     );
-    add_function(
+    add_function_to_compiler(
         compiler,
         "print",
         Type::None,
         &vec![Type::String],
         "print_string",
     );
-    add_function(
+    add_function_to_compiler(
         compiler,
         "print",
         Type::None,
         &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
         "print_map",
     );
-    add_function(compiler, "println", Type::None, &vec![Type::Int], "println");
-    add_function(
+    add_function_to_compiler(compiler, "println", Type::None, &vec![Type::Int], "println");
+    add_function_to_compiler(
         compiler,
         "println",
         Type::None,
         &vec![Type::String],
         "println_string",
     );
-    add_function(compiler, "read-line", Type::String, &vec![], "read_line");
-    add_function(
+    add_function_to_compiler(compiler, "read-line", Type::String, &vec![], "read_line");
+    add_function_to_compiler(
         compiler,
         "map",
         Type::Map(Box::new(Type::String), Box::new(Type::Int)),
         &vec![],
         "create_map",
     );
-    add_function(
+    add_function_to_compiler(
         compiler,
         "add",
         Type::None,
@@ -58,14 +61,14 @@ pub fn add_native_functions(compiler: &mut Compiler) {
         ],
         "add_to_map",
     );
-    add_function(
+    add_function_to_compiler(
         compiler,
         "count",
         Type::Int,
         &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
         "count_map",
     );
-    add_function(
+    add_function_to_compiler(
         compiler,
         "Int",
         Type::Int,
@@ -76,7 +79,7 @@ pub fn add_native_functions(compiler: &mut Compiler) {
 
 /// a convenience method to add a function to a
 /// context
-fn add_function(
+fn add_function_to_compiler(
     compiler: &mut Compiler,
     name: &str,
     return_type: Type,
@@ -88,7 +91,9 @@ fn add_function(
         llvm_args.push(arg.to_llvm_type());
     }
     if let None = compiler.scope.get_function(name, arg_types) {
-        compiler.scope.add_function(
+        add_function(
+            &mut compiler.data,
+            &mut compiler.scope,
             name,
             FunctionType::Native(NativeFunction {
                 name: ffi_name.to_owned(),

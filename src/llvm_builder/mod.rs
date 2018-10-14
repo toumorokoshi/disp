@@ -1,4 +1,6 @@
-use super::{DispError, DispResult, Function, FunctionType, LLVMFunction, NativeFunction, Scope};
+use super::{
+    CompilerData, DispError, DispResult, Function, FunctionType, LLVMFunction, NativeFunction,
+};
 /// the builder is responsible for building LLVM code.
 /// this is a separate layer from the codegen portion as it enables
 /// behavior such as:
@@ -34,32 +36,30 @@ impl Builder {
         }
     }
 
-    pub fn build(&mut self, scope: &Scope) {
+    pub fn build(&mut self, compiler: &CompilerData) {
         let mut functions_to_build = vec![];
         let mut built_functions = HashSet::new();
-        for function_by_types in scope.functions.values() {
-            for function in function_by_types.values() {
-                if !built_functions.contains(function.name()) {
-                    match function {
-                        FunctionType::Disp(f) => unsafe {
-                            let mut args = Vec::with_capacity(f.arg_types.len());
-                            for a in &f.arg_types {
-                                args.push(a.to_llvm_type());
-                            }
-                            let function_type = LLVMFunctionType(
-                                f.return_type.to_llvm_type(),
-                                args.as_mut_ptr(),
-                                args.len() as u32,
-                                0,
-                            );
-                            let llvm_function =
-                                LLVMAddFunction(self.module, to_ptr(&f.name), function_type);
-                            functions_to_build.push((llvm_function, f.clone()));
-                        },
-                        FunctionType::Native(f) => self.build_native_function(&f),
-                    }
-                    built_functions.insert(function.name().to_owned());
+        for function in compiler.functions.values() {
+            if !built_functions.contains(function.name()) {
+                match function {
+                    FunctionType::Disp(f) => unsafe {
+                        let mut args = Vec::with_capacity(f.arg_types.len());
+                        for a in &f.arg_types {
+                            args.push(a.to_llvm_type());
+                        }
+                        let function_type = LLVMFunctionType(
+                            f.return_type.to_llvm_type(),
+                            args.as_mut_ptr(),
+                            args.len() as u32,
+                            0,
+                        );
+                        let llvm_function =
+                            LLVMAddFunction(self.module, to_ptr(&f.name), function_type);
+                        functions_to_build.push((llvm_function, f.clone()));
+                    },
+                    FunctionType::Native(f) => self.build_native_function(&f),
                 }
+                built_functions.insert(function.name().to_owned());
             }
         }
         for (llvm_function, function) in &functions_to_build {

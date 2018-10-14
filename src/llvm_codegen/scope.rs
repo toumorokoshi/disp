@@ -1,5 +1,4 @@
-use super::{Function, FunctionPrototype, FunctionType, Macro, Object, Token, Type};
-use llvm_sys::prelude::*;
+use super::{FunctionPrototype, FunctionType, Macro, Object, Type};
 use std::collections::HashMap;
 
 /// Scope objects handle references to functions by value.
@@ -8,7 +7,7 @@ pub struct Scope<'a> {
     pub macros: HashMap<String, Macro>,
     /// a declaration of functions, including
     /// polymorphism for type definitions.
-    pub functions: HashMap<String, HashMap<Vec<Type>, FunctionType>>,
+    pub functions: HashMap<String, HashMap<Vec<Type>, String>>,
     pub function_prototypes: HashMap<String, FunctionPrototype>,
     // this can reference parent scopes.
     pub parent: Option<&'a Scope<'a>>,
@@ -25,15 +24,15 @@ impl<'a> Scope<'a> {
         }
     }
 
-    pub fn add_function(&mut self, name: &str, function: FunctionType) {
+    pub fn add_function(&mut self, name: &str, arg_types: &[Type], llvm_name: String) {
         {
             if let Some(ref mut map) = self.functions.get_mut(name) {
-                map.insert(function.arg_types(), function);
+                map.insert(arg_types.to_owned(), llvm_name);
                 return;
             }
         }
         let mut map = HashMap::new();
-        map.insert(function.arg_types(), function);
+        map.insert(arg_types.to_owned(), llvm_name);
         self.functions.insert(name.to_string(), map);
     }
 
@@ -44,7 +43,7 @@ impl<'a> Scope<'a> {
         }
     }
 
-    pub fn get_function(&self, name: &str, arg_types: &[Type]) -> Option<FunctionType> {
+    pub fn get_function(&self, name: &str, arg_types: &[Type]) -> Option<String> {
         let maybe_function = match self.functions.get(name) {
             Some(functions_by_type_signature) => match functions_by_type_signature.get(arg_types) {
                 Some(func) => Some(func.clone()),

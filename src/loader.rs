@@ -6,7 +6,7 @@ use std::{fs::File, io::Read};
 pub fn exec_file<'a>(compiler: &mut Compiler<'a>, path: &str) -> GenericResult<()> {
     load_file(compiler, path, "main")?;
     let mut builder = Builder::new();
-    builder.build(&compiler.scope);
+    builder.build(&compiler.data);
     let f = builder.get_function("main-main")?;
     if cfg!(feature = "debug") {
         let before = Instant::now();

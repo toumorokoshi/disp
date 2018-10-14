@@ -1,8 +1,7 @@
 use super::{
-    gen_list, to_ptr, CodegenError, CodegenResult, Context, Function, FunctionType,
-    LLVMInstruction, Object, Scope, Token, Type,
+    gen_list, CodegenError, CodegenResult, Context, Function, FunctionType, LLVMInstruction, Scope,
+    Token, Type,
 };
-use llvm_sys::core::*;
 
 /// Function prototypes are not-yet compiled
 /// functions. These can be compiled into bytecode.
@@ -25,14 +24,24 @@ pub fn get_or_compile_function<'a, 'b, 'c>(
     name: &'a str,
     arg_types: &'a Vec<Type>,
 ) -> CodegenResult<FunctionType> {
-    if let Some(func) = context.scope.get_function(name, arg_types) {
-        return Ok(func.clone());
+    if let Some(llvm_name) = context.scope.get_function(name, arg_types) {
+        return match context.compiler.functions.get(&llvm_name) {
+            Some(func) => Ok(func.clone()),
+            None => Err(CodegenError::new(&format!(
+                "function with llvm_name {} not found",
+                llvm_name,
+            ))),
+        };
     }
     if let Some(prototype) = context.scope.get_prototype(name) {
         let function = compile_function(context, prototype, name, arg_types)?;
         context
+            .compiler
+            .functions
+            .insert(function.name.clone(), FunctionType::Disp(function.clone()));
+        context
             .scope
-            .add_function(name, FunctionType::Disp(function.clone()));
+            .add_function(name, &function.arg_types, function.name.clone());
         return Ok(FunctionType::Disp(function));
     }
     Err(CodegenError::new(&format!(
@@ -54,7 +63,7 @@ pub fn compile_function<'a, 'b: 'a>(
     }
     let function = Function::new(name_with_types, arg_types.to_owned(), Type::None);
     let mut inner_scope = Scope::new(Some(context.scope));
-    let mut inner_context = Context::new(&mut inner_scope, function, 0);
+    let mut inner_context = Context::new(&mut inner_scope, &mut context.compiler, function, 0);
     for i in 0..prototype.argument_symbols.len() {
         let param_value = inner_context.allocate_without_type();
         inner_context.add_instruction(LLVMInstruction::GetParam {

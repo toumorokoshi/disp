@@ -1,5 +1,5 @@
-use super::{add_native_functions, to_ptr, FunctionPrototype, LLVMInstruction, Scope, Type};
-use std::ptr;
+use super::{add_native_functions, FunctionPrototype, LLVMInstruction, Scope, Type};
+use std::collections::HashMap;
 
 /// Objects are to represent values,
 /// variables, and functions.
@@ -107,6 +107,7 @@ impl Function {
 /// llvm ode.
 pub struct Context<'a, 'b: 'a> {
     pub scope: &'a mut Scope<'b>,
+    pub compiler: &'a mut CompilerData,
     pub function: Function,
     /// this should be the current block that
     /// the builder is building against. This allows
@@ -117,9 +118,15 @@ pub struct Context<'a, 'b: 'a> {
 }
 
 impl<'a, 'b> Context<'a, 'b> {
-    pub fn new(scope: &'a mut Scope<'b>, function: Function, block: usize) -> Context<'a, 'b> {
+    pub fn new(
+        scope: &'a mut Scope<'b>,
+        compiler: &'a mut CompilerData,
+        function: Function,
+        block: usize,
+    ) -> Context<'a, 'b> {
         Context {
             scope,
+            compiler,
             function,
             block,
         }
@@ -157,14 +164,28 @@ impl<'a, 'b> Context<'a, 'b> {
 /// disp application being created.
 pub struct Compiler<'a> {
     pub scope: Scope<'a>,
+    pub data: CompilerData,
 }
 
 impl<'a> Compiler<'a> {
     pub fn new() -> Compiler<'a> {
         let mut compiler = Compiler {
             scope: Scope::new(None),
+            data: CompilerData::new(),
         };
         add_native_functions(&mut compiler);
         compiler
+    }
+}
+
+pub struct CompilerData {
+    pub functions: HashMap<String, FunctionType>,
+}
+
+impl CompilerData {
+    pub fn new() -> CompilerData {
+        CompilerData {
+            functions: HashMap::new(),
+        }
     }
 }

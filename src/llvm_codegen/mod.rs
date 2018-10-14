@@ -9,7 +9,9 @@ mod scope;
 mod test_native_functions;
 mod types;
 mod utils;
-pub use self::core::{Compiler, Context, Function, FunctionType, NativeFunction, Object};
+pub use self::core::{
+    Compiler, CompilerData, Context, Function, FunctionType, NativeFunction, Object,
+};
 use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 use self::macros::{build_macro, expand_macro, Macro};
@@ -20,7 +22,7 @@ use self::productions::{
 };
 pub use self::scope::Scope;
 use self::types::Type;
-use self::utils::{to_ptr, to_string};
+use self::utils::{add_function, get_function, to_ptr, to_string};
 use super::{DispError, LLVMInstruction, Token};
 
 pub type LLVMFunction = extern "C" fn();
@@ -40,7 +42,8 @@ pub fn compile_module<'a>(
     let name = format!("{}-{}", module_name, "main");
     let function = {
         let mut function = Function::new(name.clone(), vec![], Type::None);
-        let mut context = Context::new(&mut compiler.scope, function.clone(), 0);
+        let mut context =
+            Context::new(&mut compiler.scope, &mut compiler.data, function.clone(), 0);
         {
             let ctx = &mut context;
             gen_token(ctx, token)?;
@@ -52,9 +55,12 @@ pub fn compile_module<'a>(
             .push(LLVMInstruction::BuildRetVoid);
         context.function
     };
-    compiler
-        .scope
-        .add_function(&name, FunctionType::Disp(function));
+    add_function(
+        &mut compiler.data,
+        &mut compiler.scope,
+        &name,
+        FunctionType::Disp(function),
+    );
     Ok(())
 }
 
