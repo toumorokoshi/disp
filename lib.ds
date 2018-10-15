@@ -7,3 +7,8 @@ macro! if [cond body]
 	match cond {
     true: body,
   }
+
+macro! ++ [var]
+	let var (+ var 1)
+
+macro! for [init cond end body] [init (while cond [body end])]

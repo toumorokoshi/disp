@@ -27,7 +27,7 @@ You can see a code example here (solving the qualifier problem a for Google Code
 .. literalinclude:: ../examples/gcj_2008.ds
   :language: lisp
 
-To get a better understanding of where Disp shines, it's recommended to read some disp-cases (use cases that inspired disp's design):
+To get a better understanding of where Disp shines, it's recommended to read up on the features, and some disp-cases (use cases that inspired disp's design).
 
 
 Features
