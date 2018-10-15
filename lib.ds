@@ -12,3 +12,7 @@ macro! ++ [var]
 	let var (+ var 1)
 
 macro! for [init cond end body] [init (while cond [body end])]
+
+macro! for-range [symbol start-int end-int body] [
+	(for (let symbol start-int) (not (eq symbol end-int)) (++ symbol) body)
+]

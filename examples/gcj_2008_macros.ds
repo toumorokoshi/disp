@@ -1,19 +1,19 @@
 let n (Int (read-line))
-for (let i 0) (not (eq i n)) (++ i)
+for-range i 0 n
 	let s (Int (read-line))
 	let possible-engines {}
-	for (let j 0) (not (eq j s)) (++ j)
+	for-range j 0 s
 		let e (read-line)
 		add possible-engines e true
 	let q (Int (read-line))
 	let switches 0
 	let seen-engines {}
-	for (let j 0) (not (eq j q)) (++ j)
+	for-range j 0 q
 		let e (read-line)
 		add seen-engines e true
 		if (eq (count seen-engines) (count possible-engines))
 			let seen-engines {e: true,}
-			increment switches
+			++ switches
 	print "Case #"
 	print (+ i 1)
 	print ": "
