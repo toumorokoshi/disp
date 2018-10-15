@@ -1,0 +1,7 @@
+let fib (fn [i] [
+  match i {
+    1: (return 1),
+    0: (return 0),
+  }
+  return (+ (fib (- i 1)) (fib (- i 2)))
+)

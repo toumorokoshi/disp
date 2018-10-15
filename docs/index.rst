@@ -30,16 +30,6 @@ You can see a code example here (solving the qualifier problem a for Google Code
 To get a better understanding of where Disp shines, it's recommended to read up on the features, and some disp-cases (use cases that inspired disp's design).
 
 
-Features
-********
-
-.. toctree::
-  :maxdepth: 1
-  :glob:
-
-  features/*
-
-
 
 Table of Contents
 *****************
@@ -48,13 +38,25 @@ Table of Contents
    :maxdepth: 2
    :glob:
 
+   installation
+   contributing
+   syntax
    design/discussion
    design/performance
    design/productivity
    design/disp-cases
    one-point-zero
    design/*
-   warpspeed/index
+
+
+Features
+********
+
+.. toctree::
+  :maxdepth: 1
+  :glob:
+
+  features/*
 
 
 Disp-Cases
