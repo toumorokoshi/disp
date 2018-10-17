@@ -47,12 +47,12 @@ impl Builder {
                         for a in &f.arg_types {
                             args.push(a.to_llvm_type());
                         }
-                        let function_type = LLVMFunctionType(
-                            f.return_type.to_llvm_type(),
-                            args.as_mut_ptr(),
-                            args.len() as u32,
-                            0,
-                        );
+                        let return_type = match f.return_type {
+                            Some(ref return_type) => return_type.to_llvm_type(),
+                            None => LLVMVoidType(),
+                        };
+                        let function_type =
+                            LLVMFunctionType(return_type, args.as_mut_ptr(), args.len() as u32, 0);
                         let llvm_function =
                             LLVMAddFunction(self.module, to_ptr(&f.name), function_type);
                         functions_to_build.push((llvm_function, f.clone()));

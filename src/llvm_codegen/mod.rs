@@ -17,13 +17,14 @@ use self::function::{get_or_compile_function, FunctionPrototype};
 use self::macros::{build_macro, expand_macro, Macro};
 pub use self::native_functions::*;
 use self::productions::{
-    add_production, equals_production, fn_production, let_production, match_production,
-    not_production, while_production,
+    equals_production, fn_production, let_production, match_production, not_production,
+    operator_production, return_production, while_production,
 };
 pub use self::scope::Scope;
 use self::types::Type;
 use self::utils::{add_function, get_function, to_ptr, to_string};
 use super::{DispError, LLVMInstruction, Token};
+use llvm_sys::*;
 
 pub type LLVMFunction = extern "C" fn();
 
@@ -41,7 +42,7 @@ pub fn compile_module<'a>(
 ) -> CodegenResult<()> {
     let name = format!("{}-{}", module_name, "main");
     let function = {
-        let mut function = Function::new(name.clone(), vec![], Type::None);
+        let mut function = Function::new(name.clone(), vec![], Some(Type::None));
         let mut context =
             Context::new(&mut compiler.scope, &mut compiler.data, function.clone(), 0);
         {
@@ -177,11 +178,13 @@ fn compile_expr<'a, 'b, 'c>(
     args: &'a [Token],
 ) -> CodegenResult<Object> {
     match func_name {
-        "+" => add_production(context, args),
+        "+" => operator_production(context, args, LLVMOpcode::LLVMAdd),
+        "-" => operator_production(context, args, LLVMOpcode::LLVMSub),
         "eq" => equals_production(context, args),
         "fn" => fn_production(context, args),
         "let" => let_production(context, args),
         "match" => match_production(context, args),
+        "return" => return_production(context, args),
         "not" => not_production(context, args),
         "while" => while_production(context, args),
         symbol => match context.scope.get_macro(symbol) {

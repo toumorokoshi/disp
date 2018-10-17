@@ -37,7 +37,7 @@ impl Object {
 pub struct Function {
     pub name: String,
     pub arg_types: Vec<Type>,
-    pub return_type: Type,
+    pub return_type: Option<Type>,
     // objects store values where instructions should
     // be stored. registers are strongly typed.
     pub objects: usize,
@@ -76,14 +76,17 @@ impl FunctionType {
 
     pub fn return_type(&self) -> Type {
         match self {
-            FunctionType::Disp(f) => f.return_type.clone(),
+            FunctionType::Disp(f) => match f.return_type {
+                Some(ref return_type) => return_type.clone(),
+                None => Type::None,
+            },
             FunctionType::Native(f) => f.return_type.clone(),
         }
     }
 }
 
 impl Function {
-    pub fn new(name: String, arg_types: Vec<Type>, return_type: Type) -> Function {
+    pub fn new(name: String, arg_types: Vec<Type>, return_type: Option<Type>) -> Function {
         Function {
             name,
             arg_types,

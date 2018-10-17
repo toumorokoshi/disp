@@ -1,6 +1,6 @@
 use super::{
-    gen_token, to_ptr, CodegenError, CodegenResult, Context, FunctionPrototype, LLVMInstruction,
-    Object, Token, Type,
+    gen_token, CodegenError, CodegenResult, Context, FunctionPrototype, LLVMInstruction, Object,
+    Token, Type,
 };
 use llvm_sys::LLVMOpcode;
 
@@ -133,13 +133,14 @@ pub fn while_production<'a, 'b, 'c>(
     Ok(result)
 }
 
-pub fn add_production<'a, 'b, 'c>(
+pub fn operator_production<'a, 'b, 'c>(
     context: &'a mut Context<'b, 'c>,
     args: &[Token],
+    op: LLVMOpcode,
 ) -> CodegenResult<Object> {
     if args.len() != 2 {
         return Err(CodegenError::new(&format!(
-            "add expression should only have two arguments. found {}",
+            "binary expression should only have two arguments. found {}",
             args.len()
         )));
     };
@@ -237,6 +238,41 @@ pub fn match_production<'a, 'b, 'c>(
         context.block = post_switch_block;
     }
     Ok(Object::none())
+}
+
+pub fn return_production<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    args: &[Token],
+) -> CodegenResult<Object> {
+    if args.len() != 1 {
+        return Err(CodegenError::new(&format!(
+            "expected one argument for return, found {}: {:?}",
+            args.len(),
+            args
+        )));
+    }
+    let result = gen_token(context, &args[0])?;
+    context.function.return_type = {
+        match context.function.return_type {
+            Some(ref return_type) => {
+                if *return_type != result.object_type {
+                    return Err(CodegenError::new(&format!(
+                        "values returned by a function must match. found {:?}, expected {:?}",
+                        result.object_type, return_type
+                    )));
+                } else {
+                    Some(return_type.clone())
+                }
+            }
+            // if the return type has not yet been set, the result type
+            // will set the type
+            None => Some(result.object_type.clone()),
+        }
+    };
+    context.add_instruction(LLVMInstruction::BuildRet {
+        source: result.index,
+    });
+    Ok(result)
 }
 
 pub fn fn_production<'a, 'b, 'c>(
