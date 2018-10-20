@@ -9,6 +9,7 @@ libc = ""
 pest = "^2.0"
 pest_derive = "^2.0"
 llvm-sys = "60"
+inference = {path = "inference"}
 
 [features]
 debug = []
