@@ -34,11 +34,11 @@ impl AssumptionSet<T> {
         var.clone()
     }
 
-    /// return a substitution set that satisfies the 
+    /// return a substitution set that satisfies the
     /// constraints provided.
-    /// 
+    ///
     /// this method can fail if there are contradicting constraints,
-    /// or if there are an insufficient amount of constraints to make a 
+    /// or if there are an insufficient amount of constraints to make a
     /// concrete decision
     pub solve(&self) -> SubstitutionSet<T> {
         let result_set = SubstitutionSet::new();
