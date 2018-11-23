@@ -2,94 +2,6 @@ use std::collections::HashMap;
 /// An implementation of Heeren's algorithm for type inference.
 use std::rc::Rc;
 
-/// given an assumption set of assumptions, return back a valid substitution set if possible.
-pub fn solve_types<T>(assumptions: &AssumptionSet<T>) -> Result<SubstitutionSet<T>, String> {
-    panic!();
-}
-
-macro_rules! upsert {
-    ($set: ident, $x:ident, $y:expr) => {
-        if let Some(value) = $set.get_mut($x) {
-            value.push($y);
-        } else {
-            $set.insert($x.clone(), vec![$y]);
-        }
-    };
-}
-
-/// AssumptionSets store the assumptions made around
-/// specific type variables.
-pub struct AssumptionSet<T> {
-    pub constraints: Vec<Constraint<T>>,
-    /// all the types that have been instantiated for the assumption set.
-    pub types: Vec<Rc<TypeVar>>,
-}
-
-impl<T> AssumptionSet<T> {
-    pub fn new() -> AssumptionSet<T> {
-        AssumptionSet {
-            constraints: vec![],
-            types: vec![],
-        }
-    }
-
-    // create a new type variable.
-    pub fn create_type_var(&mut self) -> Rc<TypeVar> {
-        let var = Rc::new(self.types.len());
-        self.types.push(var);
-        var.clone()
-    }
-
-    /// return a substitution set that satisfies the
-    /// constraints provided.
-    ///
-    /// this method can fail if there are contradicting constraints,
-    /// or if there are an insufficient amount of constraints to make a
-    /// concrete decision
-    pub fn solve(&self) -> SubstitutionSet<T> {
-        let mut result_set = SubstitutionSet::new();
-        let mut constraint_by_typevar: HashMap<Rc<TypeVar>, Vec<Constraint<T>>> = HashMap::new();
-        // first, we run through all constraints, and reorganize so that
-        // we order constraints by the typevar we are operating on.
-        for ref c in &self.constraints {
-            match c {
-                Constraint::Equality(ref lhs, ref rhs) => {
-                    upsert!(constraint_by_typevar, lhs, *c.clone());
-                    upsert!(constraint_by_typevar, rhs, *c.clone());
-                },
-                Constraint::IsLiteral(ref lhs, ref type) => {
-                    upsert!(constraint_by_typevar, lhs, *c.clone());
-                },
-                Constraint::IsGeneric(ref lhs, ref rhs) => {
-                    upsert!(constraint_by_typevar, lhs, *c.clone());
-                },
-                Constraint::ImplicitInstanceConstraint(ref lhs, ref rhs) => {
-                    upsert!(constraint_by_typevar, lhs, *c.clone());
-                },
-            }
-        }
-        // once it is organized, we star by solving one variable at a time
-        result_set
-    }
-
-    /// solve for one specific type. Solve for others if need be.
-    fn solve_one_type(constraint_by_typevar: &HashMap<Rc<TypeVar>, Vec<Constraint<T>>>,
-                      substitution_set: &mut SubstitutionSet,
-                      target: Rc<TypeVar>) {
-    )
-}
-
-/// stores the final result of the type inference algorithm.
-pub struct SubstitutionSet<T>(HashMap<Rc<TypeVar>, Option<T>>);
-
-impl<T> SubstitutionSet<T> {
-    pub fn new() -> SubstitutionSet<T> {
-        SubstitutionSet(HashMap::new())
-    }
-}
-
-/// A TypeVar collects assumptions around this variable
-pub type TypeVar = usize;
 
 /// Constraints help deduce the actual type of a type variables.
 /// there are a few types.i
@@ -104,4 +16,92 @@ pub enum Constraint<T> {
     ImplicitInstanceConstraint(Rc<TypeVar>, Rc<TypeVar>),
     /// declares that the type of typevar is of the literal.
     IsLiteral(Rc<TypeVar>, T),
+}
+
+
+/// A TypeVar collects assumptions around this variable
+pub type TypeVar = usize;
+
+/// AssumptionSets store the assumptions made around
+/// specific type variables.
+pub struct ConstraintSet<T> {
+    pub constraints: Vec<Constraint<T>>,
+    /// all the types that have been instantiated for the assumption set.
+    pub types: Vec<Rc<TypeVar>>,
+}
+
+/// given an set of assumptions and type variables, return back a substitution set if there
+/// are no conflicting constraints
+pub fn solve_types<T>(constraints: &ConstraintSet<T>) -> Result<SubstitutionSet<T>, String> {
+    // first, we build out a table referencing type variables to a discrete set of constraints.
+    // many type variables can be unified in this step.
+    let mut constraints_by_type: ConstraintsByType<T> = ConstraintsByType::new();
+    // we iterate through all constraints. Specifically for the equality constraint, we map type variables.
+    for c in &constraints.constraints {
+        match c {
+            Constraint::Equality(ref l, ref r) => {
+            },
+            Constraint::IsLiteral(ref var, ref typ) => {
+                let ref constraint_list = constraints_by_type.get_or_create(var);
+            },
+            Constraint::ImplicitInstanceConstraint(ref lef, ref right) => {
+            },
+            Constraint::IsGeneric(ref lef, ref right) => {
+            }
+        }
+    }
+    panic!();
+}
+
+pub type ReferenceIndex = usize;
+
+struct ConstraintsByType<T> {
+    constraint_list: Vec<Vec<Constraint<T>>>,
+    constraint_map: HashMap<TypeVar, usize>
+}
+
+impl<T> ConstraintsByType<T> {
+    pub fn new() -> ConstraintsByType<T> {
+        ConstraintsByType {
+            constraint_list: vec![],
+            constraint_map: HashMap::new()
+        }
+    }
+
+    pub fn get_or_create(&mut self, var: &TypeVar) -> &Vec<Constraint<T>> {
+        let type_index = match self.constraint_map.get(var) {
+            Some(i) => i.clone(),
+            None => {
+                self.constraint_list.push(vec![]);
+                self.constraint_list.len() - 1
+            }
+        };
+        return &self.constraint_list[type_index];
+    }
+}
+
+
+impl<T> ConstraintSet<T> {
+    pub fn new() -> ConstraintSet<T> {
+        ConstraintSet {
+            constraints: vec![],
+            types: vec![],
+        }
+    }
+
+    // create a new type variable.
+    pub fn create_type_var(&mut self) -> Rc<TypeVar> {
+        let var = Rc::new(self.types.len());
+        self.types.push(var.clone());
+        var
+    }
+}
+
+/// stores the final result of the type inference algorithm.
+pub struct SubstitutionSet<T>(HashMap<Rc<TypeVar>, Option<T>>);
+
+impl<T> SubstitutionSet<T> {
+    pub fn new() -> SubstitutionSet<T> {
+        SubstitutionSet(HashMap::new())
+    }
 }
