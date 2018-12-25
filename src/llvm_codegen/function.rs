@@ -63,7 +63,13 @@ pub fn compile_function<'a, 'b: 'a>(
     }
     let function = Function::new(name_with_types, arg_types.to_owned(), None);
     let mut inner_scope = Scope::new(Some(context.scope));
-    let mut inner_context = Context::new(&mut inner_scope, &mut context.compiler, function, 0);
+    let mut inner_context = Context::new(
+        &mut inner_scope,
+        &mut context.compiler,
+        &mut context.type_resolver,
+        function,
+        0,
+    );
     for i in 0..prototype.argument_symbols.len() {
         let param_value = inner_context.allocate_without_type();
         inner_context.add_instruction(LLVMInstruction::GetParam {

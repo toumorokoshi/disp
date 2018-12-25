@@ -1,4 +1,5 @@
 use super::{add_native_functions, FunctionPrototype, LLVMInstruction, Scope, Type};
+use inference::TypeResolver;
 use std::collections::HashMap;
 
 /// Objects are to represent values,
@@ -111,6 +112,7 @@ impl Function {
 pub struct Context<'a, 'b: 'a> {
     pub scope: &'a mut Scope<'b>,
     pub compiler: &'a mut CompilerData,
+    pub type_resolver: &'a mut TypeResolver<Type>,
     pub function: Function,
     /// this should be the current block that
     /// the builder is building against. This allows
@@ -124,12 +126,14 @@ impl<'a, 'b> Context<'a, 'b> {
     pub fn new(
         scope: &'a mut Scope<'b>,
         compiler: &'a mut CompilerData,
+        type_resolver: &'a mut TypeResolver<Type>,
         function: Function,
         block: usize,
     ) -> Context<'a, 'b> {
         Context {
             scope,
             compiler,
+            type_resolver,
             function,
             block,
         }
@@ -168,6 +172,7 @@ impl<'a, 'b> Context<'a, 'b> {
 pub struct Compiler<'a> {
     pub scope: Scope<'a>,
     pub data: CompilerData,
+    pub type_resolver: TypeResolver<Type>,
 }
 
 impl<'a> Compiler<'a> {
@@ -175,6 +180,7 @@ impl<'a> Compiler<'a> {
         let mut compiler = Compiler {
             scope: Scope::new(None),
             data: CompilerData::new(),
+            type_resolver: TypeResolver::new(),
         };
         add_native_functions(&mut compiler);
         compiler

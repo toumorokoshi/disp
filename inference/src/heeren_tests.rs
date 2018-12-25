@@ -1,4 +1,4 @@
-use super::{solve_types, Constraint, ConstraintSet};
+use super::heeren::{solve_types, Constraint, ConstraintSet};
 use std::rc::Rc;
 
 #[derive(Clone, PartialEq, Debug)]

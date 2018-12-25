@@ -43,8 +43,13 @@ pub fn compile_module<'a>(
     let name = format!("{}-{}", module_name, "main");
     let function = {
         let mut function = Function::new(name.clone(), vec![], Some(Type::None));
-        let mut context =
-            Context::new(&mut compiler.scope, &mut compiler.data, function.clone(), 0);
+        let mut context = Context::new(
+            &mut compiler.scope,
+            &mut compiler.data,
+            &mut compiler.type_resolver,
+            function.clone(),
+            0,
+        );
         {
             let ctx = &mut context;
             gen_token(ctx, token)?;
