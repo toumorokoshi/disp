@@ -8,7 +8,9 @@ extern crate libc;
 extern crate llvm_sys;
 
 mod ast;
+mod compiler;
 mod error;
+mod function_loader;
 mod llvm_builder;
 mod llvm_codegen;
 mod loader;
