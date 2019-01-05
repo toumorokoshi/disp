@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::rc::Rc;
 
 #[derive(Clone, PartialEq)]
 pub enum Constraint<T>
@@ -9,13 +8,13 @@ where
 {
     /// specifie that the types introduced must be
     /// equal to each other.
-    Equality(Rc<TypeVar>, Rc<TypeVar>),
+    Equality(TypeVar, TypeVar),
     // specifies that the LHS must be a generic instance of the RHS.
-    IsGeneric(Rc<TypeVar>, Rc<TypeVar>),
+    IsGeneric(TypeVar, TypeVar),
     // specifies that the LHS should be the result of generalization the RHS.
-    ImplicitInstanceConstraint(Rc<TypeVar>, Rc<TypeVar>),
+    ImplicitInstanceConstraint(TypeVar, TypeVar),
     /// declares that the type of typevar is of the literal.
-    IsLiteral(Rc<TypeVar>, T),
+    IsLiteral(TypeVar, T),
 }
 
 /// A TypeVar collects assumptions around this variable
@@ -28,12 +27,12 @@ pub struct TypeResolver<T>
 where
     T: Clone + PartialEq + Debug,
 {
-    type_vars: Vec<Rc<TypeVar>>,
+    type_vars: Vec<TypeVar>,
     /// a counter to monotonically iterate reference
     /// count.
     reference_counter: usize,
     constraints_by_reference: HashMap<usize, Vec<Constraint<T>>>,
-    reference_by_typevar: HashMap<Rc<TypeVar>, usize>,
+    reference_by_typevar: HashMap<TypeVar, usize>,
     type_by_reference: HashMap<usize, T>,
 }
 
@@ -50,8 +49,8 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
 
     /// allocate a new type variable,
     /// which can be used in constraint relations.
-    pub fn create_type_var(&mut self) -> Rc<TypeVar> {
-        let var = Rc::new(self.type_vars.len());
+    pub fn create_type_var(&mut self) -> TypeVar {
+        let var = self.type_vars.len();
         self.type_vars.push(var.clone());
         var
     }
@@ -90,7 +89,7 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
         }
     }
 
-    fn get_or_create_reference(&mut self, t: &Rc<TypeVar>) -> usize {
+    fn get_or_create_reference(&mut self, t: &TypeVar) -> usize {
         self.reference_by_typevar
             .entry(t.clone())
             .or_insert({

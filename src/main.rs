@@ -14,19 +14,23 @@ mod function_loader;
 mod llvm_builder;
 mod llvm_codegen;
 mod loader;
+mod macros;
 mod parser;
 mod stdlib;
+mod type_annotator;
 
 use ast::Token;
 use error::{DispError, DispResult, GenericError, GenericResult};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
+use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
     compile_module, native_functions::*, Compiler, CompilerData, Function, FunctionType,
-    LLVMFunction, NativeFunction, Scope,
+    LLVMFunction, NativeFunction, Scope, Type,
 };
 use loader::{exec_file, load_file};
+use macros::{apply_macros_to_function_map, Macro, MacroMap};
 use parser::parse;
 use std::{
     env,

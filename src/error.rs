@@ -11,6 +11,8 @@ pub struct DispError {
 pub type DispResult<T> = Result<T, DispError>;
 
 impl DispError {
+    // TODO: change function signature to string.
+    // this will save unneeded reallocations.
     pub fn new(details: &str) -> DispError {
         DispError {
             details: details.to_string(),
