@@ -23,7 +23,7 @@ use self::productions::{
 pub use self::scope::Scope;
 pub use self::types::Type;
 use self::utils::{add_function, get_function, to_ptr, to_string};
-use super::{DispError, LLVMInstruction, Token};
+use super::{get_builtin_expressions, BuiltinExpressions, DispError, LLVMInstruction, Token};
 use llvm_sys::*;
 
 pub type LLVMFunction = extern "C" fn();

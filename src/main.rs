@@ -10,6 +10,7 @@ extern crate llvm_sys;
 mod ast;
 mod compiler;
 mod error;
+mod expressions;
 mod function_loader;
 mod llvm_builder;
 mod llvm_codegen;
@@ -23,6 +24,7 @@ use ast::Token;
 use error::{DispError, DispResult, GenericError, GenericResult};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
+use expressions::{get_builtin_expressions, BuiltinExpressions};
 use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
@@ -37,6 +39,7 @@ use std::{
     io::{self, Write},
 };
 use stdlib::load_stdlib;
+use type_annotator::annotate_types;
 // use stdlib::load_stdlib;
 
 fn main() {

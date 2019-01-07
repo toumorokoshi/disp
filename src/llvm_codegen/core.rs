@@ -1,4 +1,7 @@
-use super::{add_native_functions, FunctionPrototype, LLVMInstruction, Scope, Type};
+use super::{
+    add_native_functions, get_builtin_expressions, BuiltinExpressions, FunctionPrototype,
+    LLVMInstruction, Scope, Type,
+};
 use inference::TypeResolver;
 use std::collections::HashMap;
 
@@ -189,12 +192,14 @@ impl<'a> Compiler<'a> {
 
 pub struct CompilerData {
     pub functions: HashMap<String, FunctionType>,
+    pub builtin_expressions: BuiltinExpressions,
 }
 
 impl CompilerData {
     pub fn new() -> CompilerData {
         CompilerData {
             functions: HashMap::new(),
+            builtin_expressions: get_builtin_expressions(),
         }
     }
 }

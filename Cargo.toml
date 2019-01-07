@@ -10,6 +10,7 @@ pest = "^2.0"
 pest_derive = "^2.0"
 llvm-sys = "60"
 inference = {path = "inference"}
+lazy_static = "^1"
 
 [features]
 debug = []
