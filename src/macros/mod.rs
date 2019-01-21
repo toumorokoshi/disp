@@ -1,5 +1,5 @@
 use super::{FunctionMap, UnparsedFunction};
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 pub struct Macro {}
 
@@ -12,4 +12,4 @@ pub fn apply_macros_to_function_map(macros: &MacroMap, functions: &mut FunctionM
     }
 }
 
-fn apply_macros_to_function(macros: &MacroMap, function: &mut UnparsedFunction) {}
+fn apply_macros_to_function(macros: &MacroMap, function: &mut Rc<UnparsedFunction>) {}

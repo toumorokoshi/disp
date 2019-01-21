@@ -77,6 +77,12 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
         Ok(())
     }
 
+    /// return true if the type vars are referencing the
+    /// same variable.
+    pub fn is_equal(&mut self, l: &TypeVar, r: &TypeVar) -> bool {
+        self.get_or_create_reference(l) == self.get_or_create_reference(r)
+    }
+
     pub fn get_type(&self, t: &TypeVar) -> Option<T> {
         println!("{:?}", self.reference_by_typevar);
         println!("{:?}", self.type_by_reference);

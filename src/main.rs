@@ -21,6 +21,7 @@ mod stdlib;
 mod type_annotator;
 
 use ast::Token;
+use compiler::compile;
 use error::{DispError, DispResult, GenericError, GenericResult};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
@@ -28,18 +29,19 @@ use expressions::{get_builtin_expressions, BuiltinExpressions};
 use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
-    compile_module, native_functions::*, Compiler, CompilerData, Function, FunctionType,
-    LLVMFunction, NativeFunction, Scope, Type,
+    build_functions, compile_module, native_functions::*, Compiler, CompilerData, Function,
+    FunctionType, LLVMFunction, NativeFunction, Scope, Type,
 };
 use loader::{exec_file, load_file};
 use macros::{apply_macros_to_function_map, Macro, MacroMap};
 use parser::parse;
 use std::{
     env,
-    io::{self, Write},
+    fs::File,
+    io::{self, Read, Write},
 };
 use stdlib::load_stdlib;
-use type_annotator::annotate_types;
+use type_annotator::{annotate_types, AnnotatedFunction, AnnotatedFunctionMap};
 // use stdlib::load_stdlib;
 
 fn main() {
@@ -49,7 +51,7 @@ fn main() {
     // builder.cleanup();
     let args: Vec<String> = env::args().collect();
     let result = match args.len() {
-        2 => execute(&args[1]),
+        2 => execute_2(&args[1]),
         _ => {panic!("no repl atm.")}
         // _ => repl(),
     };
@@ -80,6 +82,15 @@ fn execute(path: &str) -> Result<(), GenericError> {
     {
         exec_file(&mut compiler, path)?;
     }
+    Ok(())
+}
+
+fn execute_2(path: &str) -> Result<(), GenericError> {
+    let mut compiler = Compiler::new();
+    let mut file = File::open(path)?;
+    let mut input = String::new();
+    file.read_to_string(&mut input)?;
+    compile(&mut compiler, &input)?;
     Ok(())
 }
 

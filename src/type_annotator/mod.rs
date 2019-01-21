@@ -190,7 +190,6 @@ fn parse_and_add_expression(
         if let Some(ref function) = annotated_functions.get(&*name, &arg_type_variables) {
             return Ok(function.return_type);
         }
-        // TODO: parse already generated functions.
         // finally, we check to see if there is an unparsed function with the name
         // and argument count, and if so we start generating and expression for that.
         match functions.get(&*name) {

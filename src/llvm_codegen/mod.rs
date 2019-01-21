@@ -1,3 +1,4 @@
+mod compiler;
 mod core;
 mod error;
 mod function;
@@ -9,6 +10,7 @@ mod scope;
 mod test_native_functions;
 mod types;
 mod utils;
+pub use self::compiler::build_functions;
 pub use self::core::{
     Compiler, CompilerData, Context, Function, FunctionType, NativeFunction, Object,
 };
@@ -23,7 +25,10 @@ use self::productions::{
 pub use self::scope::Scope;
 pub use self::types::Type;
 use self::utils::{add_function, get_function, to_ptr, to_string};
-use super::{get_builtin_expressions, BuiltinExpressions, DispError, LLVMInstruction, Token};
+use super::{
+    get_builtin_expressions, AnnotatedFunction, AnnotatedFunctionMap, BuiltinExpressions,
+    DispError, LLVMInstruction, Token,
+};
 use llvm_sys::*;
 
 pub type LLVMFunction = extern "C" fn();
@@ -47,7 +52,6 @@ pub fn compile_module<'a>(
             &mut compiler.scope,
             &mut compiler.data,
             &mut compiler.type_resolver,
-            function.clone(),
             0,
         );
         {
