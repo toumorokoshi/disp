@@ -107,6 +107,11 @@ impl Function {
         self.objects += 1;
         index
     }
+
+    pub fn allocate(&mut self, object_type: Type) -> Object {
+        let index = self.allocate_object();
+        Object::new(index, object_type)
+    }
 }
 
 /// The context object contains all relevant

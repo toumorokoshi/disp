@@ -52,6 +52,7 @@ pub fn compile_module<'a>(
             &mut compiler.scope,
             &mut compiler.data,
             &mut compiler.type_resolver,
+            function,
             0,
         );
         {

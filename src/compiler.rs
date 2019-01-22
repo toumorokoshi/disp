@@ -1,17 +1,29 @@
 use super::{
     annotate_types, apply_macros_to_function_map, build_functions, parse,
-    parse_functions_and_macros, Builder, Compiler, DispResult,
+    parse_functions_and_macros, Builder, Compiler, GenericResult,
 };
 use std::time::Instant;
 
 /// runs through the workflow as described
 /// in compiler-design.
-pub fn compile(compiler: &mut Compiler, input: &str) -> DispResult<()> {
+pub fn compile(compiler: &mut Compiler, input: &str) -> GenericResult<()> {
     let token = parse(input);
+    if cfg!(feature = "debug") {
+        println!("parsing functions...")
+    }
     let (mut functions, macros) = parse_functions_and_macros(compiler, token)?;
+    if cfg!(feature = "debug") {
+        println!("applying macros...")
+    }
     apply_macros_to_function_map(&macros, &mut functions);
+    if cfg!(feature = "debug") {
+        println!("annotating types...")
+    }
     let annotated_functions = annotate_types(compiler, &functions)?;
-    build_functions(&mut compiler.data, &annotated_functions);
+    if cfg!(feature = "debug") {
+        println!("building functions...")
+    }
+    build_functions(&mut compiler.data, &annotated_functions)?;
     let mut builder = Builder::new();
     builder.build(&compiler.data);
     let f = builder.get_function("main-main")?;
