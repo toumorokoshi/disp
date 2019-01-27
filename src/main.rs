@@ -29,8 +29,9 @@ use expressions::{get_builtin_expressions, BuiltinExpressions};
 use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
-    build_functions, compile_module, native_functions::*, Compiler, CompilerData, Function,
-    FunctionType, LLVMFunction, NativeFunction, Scope, Type,
+    build_functions, compile_module, gen_token, native_functions::*, CodegenError, Compiler,
+    CompilerData, Context, Function, FunctionType, LLVMFunction, NativeFunction, Object, Scope,
+    Type,
 };
 use loader::{exec_file, load_file};
 use macros::{apply_macros_to_function_map, Macro, MacroMap};

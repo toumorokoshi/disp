@@ -129,5 +129,19 @@ fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
 }
 
 fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
-    Ok(Object::none())
+    if let Some((func_token, args)) = args.split_first() {
+        match func_token {
+            // &Token::Symbol(ref s) => compile_expr(context, s, args),
+            &Token::Comment(ref c) => Ok(Object::none()),
+            _ => Err(CodegenError::new(&format!(
+                "first token must be a symbol for expression, found {}",
+                func_token
+            ))),
+        }
+    } else {
+        Err(CodegenError::new(&format!(
+            "no method found found {:?}",
+            args
+        )))
+    }
 }

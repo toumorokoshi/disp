@@ -14,7 +14,7 @@ pub use self::compiler::build_functions;
 pub use self::core::{
     Compiler, CompilerData, Context, Function, FunctionType, NativeFunction, Object,
 };
-use self::error::{CodegenError, CodegenResult};
+pub use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 use self::macros::{build_macro, expand_macro, Macro};
 pub use self::native_functions::*;
@@ -75,7 +75,7 @@ pub fn compile_module<'a>(
     Ok(())
 }
 
-fn gen_token<'a, 'b, 'c>(
+pub fn gen_token<'a, 'b, 'c>(
     context: &'a mut Context<'b, 'c>,
     token: &'a Token,
 ) -> CodegenResult<Object> {

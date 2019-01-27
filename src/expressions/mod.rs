@@ -1,6 +1,11 @@
-use super::{GenericResult, Type, TypevarFunction};
+use super::{
+    gen_token, CodegenError, Context, GenericResult, LLVMInstruction, Object, Token, Type,
+    TypevarFunction,
+};
 use inference::{Constraint, TypeResolver, TypeVar};
 use std::collections::HashMap;
+
+mod let_expression;
 /// This module contains all the expressions that are
 /// built in.
 /// Builtin expressions require a couple components:
@@ -8,55 +13,44 @@ use std::collections::HashMap;
 /// 2. A Codegen Function
 pub type BuiltinExpressions = HashMap<String, Expression>;
 pub struct Expression {
-    pub typecheck: fn(
-        resolver: &mut TypeResolver<Type>,
-        function: &TypevarFunction,
-        args: &Vec<TypeVar>,
-    ) -> GenericResult<TypeVar>,
+    pub typecheck:
+        fn(resolver: &mut TypeResolver<Type>, function: &TypevarFunction, args: &Vec<TypeVar>)
+            -> GenericResult<TypeVar>,
+    pub codegen: fn(&mut Context, &[Token]) -> GenericResult<Object>,
 }
 /// Return all expressions
 pub fn get_builtin_expressions() -> BuiltinExpressions {
     let mut expressions = HashMap::new();
-    expressions.insert(
-        String::from("let"),
-        Expression {
-            typecheck: let_typecheck,
-        },
-    );
+    expressions.insert(String::from("let"), let_expression::expression());
     expressions.insert(
         String::from("return"),
         Expression {
             typecheck: return_typecheck,
+            codegen: empty_codegen,
         },
     );
     expressions.insert(
         String::from("match"),
         Expression {
             typecheck: match_typecheck,
+            codegen: empty_codegen,
         },
     );
     expressions.insert(
         String::from("-"),
         Expression {
             typecheck: subtract_typecheck,
+            codegen: empty_codegen,
         },
     );
     expressions.insert(
         String::from("+"),
         Expression {
             typecheck: add_typecheck,
+            codegen: empty_codegen,
         },
     );
     expressions
-}
-
-pub fn let_typecheck(
-    resolver: &mut TypeResolver<Type>,
-    function: &TypevarFunction,
-    args: &Vec<TypeVar>,
-) -> GenericResult<TypeVar> {
-    resolver.add_constraint(Constraint::Equality(args[0].clone(), args[1].clone()))?;
-    Ok(args[0].clone())
 }
 
 pub fn return_typecheck(
@@ -101,4 +95,8 @@ pub fn add_typecheck(
     // data structure type variables.
     resolver.add_constraint(Constraint::Equality(args[1].clone(), args[0].clone()))?;
     Ok(args[0].clone())
+}
+
+pub fn empty_codegen(context: &mut Context, args: &[Token]) -> GenericResult<Object> {
+    return Err(Box::new(CodegenError::new(&format!("unimplemented type",))));
 }
