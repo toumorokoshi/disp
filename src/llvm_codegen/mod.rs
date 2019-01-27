@@ -1,4 +1,4 @@
-mod compiler;
+pub mod compiler;
 mod core;
 mod error;
 mod function;
@@ -11,9 +11,8 @@ mod test_native_functions;
 mod types;
 mod utils;
 pub use self::compiler::build_functions;
-pub use self::core::{
-    Compiler, CompilerData, Context, Function, FunctionType, NativeFunction, Object,
-};
+use self::core::Context;
+pub use self::core::{Compiler, CompilerData, Function, FunctionType, NativeFunction, Object};
 pub use self::error::{CodegenError, CodegenResult};
 use self::function::{get_or_compile_function, FunctionPrototype};
 use self::macros::{build_macro, expand_macro, Macro};

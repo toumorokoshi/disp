@@ -30,8 +30,7 @@ use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction}
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
     build_functions, compile_module, gen_token, native_functions::*, CodegenError, Compiler,
-    CompilerData, Context, Function, FunctionType, LLVMFunction, NativeFunction, Object, Scope,
-    Type,
+    CompilerData, Function, FunctionType, LLVMFunction, NativeFunction, Object, Scope, Type,
 };
 use loader::{exec_file, load_file};
 use macros::{apply_macros_to_function_map, Macro, MacroMap};

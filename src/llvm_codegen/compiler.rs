@@ -1,16 +1,25 @@
 use super::{
-    AnnotatedFunction, AnnotatedFunctionMap, CodegenError, CodegenResult, Compiler, CompilerData,
-    Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
+    super::GenericResult, AnnotatedFunction, AnnotatedFunctionMap, CodegenError, CodegenResult,
+    Compiler, CompilerData, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
 };
 
-struct Context<'a, 'b: 'a> {
-    function: &'a mut Function,
-    scope: &'a mut Scope<'b>,
+pub struct Context<'a, 'b: 'a> {
+    pub compiler: &'a CompilerData,
+    pub function: &'a mut Function,
+    pub scope: &'a mut Scope<'b>,
 }
 
 impl<'a, 'b> Context<'a, 'b> {
-    pub fn new(function: &'a mut Function, scope: &'a mut Scope<'b>) -> Context<'a, 'b> {
-        return Context { function, scope };
+    pub fn new(
+        compiler: &'a mut CompilerData,
+        function: &'a mut Function,
+        scope: &'a mut Scope<'b>,
+    ) -> Context<'a, 'b> {
+        return Context {
+            compiler,
+            function,
+            scope,
+        };
     }
 
     pub fn allocate(&mut self, object_type: Type) -> Object {
@@ -31,16 +40,18 @@ pub fn build_functions(
             if cfg!(feature = "debug") {
                 println!("building function {:?}", &function);
             }
-            compiler.functions.insert(
-                name.to_string(),
-                FunctionType::Disp(build_function(name, function)?),
-            );
+            let function = FunctionType::Disp(build_function(compiler, name, function)?);
+            compiler.functions.insert(name.to_string(), function);
         }
     }
     Ok(())
 }
 
-fn build_function(name: &str, source_function: &AnnotatedFunction) -> CodegenResult<Function> {
+fn build_function(
+    compiler: &mut CompilerData,
+    name: &str,
+    source_function: &AnnotatedFunction,
+) -> CodegenResult<Function> {
     if cfg!(feature = "debug") {
         println!("building function {}", name);
     }
@@ -51,14 +62,14 @@ fn build_function(name: &str, source_function: &AnnotatedFunction) -> CodegenRes
     );
     {
         let mut scope = Scope::new(None);
-        let mut context = Context::new(&mut function, &mut scope);
+        let mut context = Context::new(compiler, &mut function, &mut scope);
         gen_token(&mut context, &source_function.function.body)?;
     }
     function.instructions.push(LLVMInstruction::BuildRetVoid);
     Ok(function)
 }
 
-fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> {
+pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> {
     Ok(match token {
         &Token::Boolean(b) => {
             let object = context.allocate(Type::Bool);
@@ -131,7 +142,7 @@ fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
 fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
     if let Some((func_token, args)) = args.split_first() {
         match func_token {
-            // &Token::Symbol(ref s) => compile_expr(context, s, args),
+            &Token::Symbol(ref s) => compile_expr(context, s, args),
             &Token::Comment(ref c) => Ok(Object::none()),
             _ => Err(CodegenError::new(&format!(
                 "first token must be a symbol for expression, found {}",
@@ -144,4 +155,20 @@ fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
             args
         )))
     }
+}
+
+fn compile_expr<'a, 'b, 'c>(
+    context: &'a mut Context<'b, 'c>,
+    func_name: &'a str,
+    args: &'a [Token],
+) -> CodegenResult<Object> {
+    if let Some(expression) = context.compiler.builtin_expressions.get(func_name) {
+        return ((*expression).codegen)(context, args);
+    }
+    Ok(Object::none())
+    // match func_name {
+    //     symbol => match context.scope.get_macro(symbol) {
+    //         None => call_function(context, symbol, args),
+    //     },
+    // }
 }

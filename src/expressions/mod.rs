@@ -1,11 +1,13 @@
-use super::{
-    gen_token, CodegenError, Context, GenericResult, LLVMInstruction, Object, Token, Type,
-    TypevarFunction,
+use super::llvm_codegen::{
+    compiler::{gen_token, Context},
+    CodegenError, CodegenResult,
 };
+use super::{GenericResult, LLVMInstruction, Object, Token, Type, TypevarFunction};
 use inference::{Constraint, TypeResolver, TypeVar};
 use std::collections::HashMap;
 
 mod let_expression;
+mod return_expression;
 /// This module contains all the expressions that are
 /// built in.
 /// Builtin expressions require a couple components:
@@ -16,19 +18,13 @@ pub struct Expression {
     pub typecheck:
         fn(resolver: &mut TypeResolver<Type>, function: &TypevarFunction, args: &Vec<TypeVar>)
             -> GenericResult<TypeVar>,
-    pub codegen: fn(&mut Context, &[Token]) -> GenericResult<Object>,
+    pub codegen: fn(&mut Context, &[Token]) -> CodegenResult<Object>,
 }
 /// Return all expressions
 pub fn get_builtin_expressions() -> BuiltinExpressions {
     let mut expressions = HashMap::new();
     expressions.insert(String::from("let"), let_expression::expression());
-    expressions.insert(
-        String::from("return"),
-        Expression {
-            typecheck: return_typecheck,
-            codegen: empty_codegen,
-        },
-    );
+    expressions.insert(String::from("return"), return_expression::expression());
     expressions.insert(
         String::from("match"),
         Expression {
@@ -51,18 +47,6 @@ pub fn get_builtin_expressions() -> BuiltinExpressions {
         },
     );
     expressions
-}
-
-pub fn return_typecheck(
-    resolver: &mut TypeResolver<Type>,
-    function: &TypevarFunction,
-    args: &Vec<TypeVar>,
-) -> GenericResult<TypeVar> {
-    resolver.add_constraint(Constraint::Equality(
-        function.return_type.clone(),
-        args[0].clone(),
-    ))?;
-    Ok(args[0].clone())
 }
 
 pub fn match_typecheck(
@@ -97,6 +81,6 @@ pub fn add_typecheck(
     Ok(args[0].clone())
 }
 
-pub fn empty_codegen(context: &mut Context, args: &[Token]) -> GenericResult<Object> {
-    return Err(Box::new(CodegenError::new(&format!("unimplemented type",))));
+pub fn empty_codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
+    return Err(CodegenError::new(&format!("unimplemented type",)));
 }

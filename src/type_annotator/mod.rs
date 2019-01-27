@@ -202,7 +202,7 @@ fn annotate_token(
                     annotated_functions,
                     current_function,
                     &key.as_token(),
-                );
+                )?;
                 annotate_token(
                     compiler,
                     functions,
@@ -210,7 +210,7 @@ fn annotate_token(
                     annotated_functions,
                     current_function,
                     value,
-                );
+                )?;
             }
             // types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Map<Type::String, Type::String>));
         }
