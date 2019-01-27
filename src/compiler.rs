@@ -13,15 +13,21 @@ pub fn compile(compiler: &mut Compiler, input: &str) -> GenericResult<()> {
     }
     let (mut functions, macros) = parse_functions_and_macros(compiler, token)?;
     if cfg!(feature = "debug") {
-        println!("applying macros...")
+        println!(
+            "applying macros {:?} to functions: {:?}...",
+            &macros, &functions
+        );
     }
     apply_macros_to_function_map(&macros, &mut functions);
     if cfg!(feature = "debug") {
-        println!("annotating types...")
+        println!(
+            "applying annotating types for functions: {:?}...",
+            &functions
+        );
     }
     let annotated_functions = annotate_types(compiler, &functions)?;
     if cfg!(feature = "debug") {
-        println!("building functions...")
+        println!("building functions: {:?}...", &annotated_functions);
     }
     build_functions(&mut compiler.data, &annotated_functions)?;
     let mut builder = Builder::new();

@@ -41,7 +41,7 @@ use std::{
     io::{self, Read, Write},
 };
 use stdlib::load_stdlib;
-use type_annotator::{annotate_types, AnnotatedFunction, AnnotatedFunctionMap};
+use type_annotator::{annotate_types, AnnotatedFunction, AnnotatedFunctionMap, TypevarFunction};
 // use stdlib::load_stdlib;
 
 fn main() {

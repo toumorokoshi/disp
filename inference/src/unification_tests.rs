@@ -21,6 +21,23 @@ fn test_unification() {
     assert!(type_resolver.get_type(&c) == None);
 }
 
+#[test]
+fn test_unification_reverse() {
+    let mut type_resolver = TypeResolver::new();
+    let a = type_resolver.create_type_var();
+    let b = type_resolver.create_type_var();
+    let c = type_resolver.create_type_var();
+    let d = type_resolver.create_type_var();
+    type_resolver.add_constraint(Constraint::IsLiteral(b.clone(), ExampleTypes::Bool));
+    type_resolver.add_constraint(Constraint::Equality(a.clone(), b.clone()));
+    type_resolver.add_constraint(Constraint::IsLiteral(c.clone(), ExampleTypes::Bool));
+    type_resolver.add_constraint(Constraint::Equality(c.clone(), d.clone()));
+    assert!(type_resolver.get_type(&a) == Some(ExampleTypes::Bool));
+    assert!(type_resolver.get_type(&b) == Some(ExampleTypes::Bool));
+    assert!(type_resolver.get_type(&c) == Some(ExampleTypes::Bool));
+    assert!(type_resolver.get_type(&d) == Some(ExampleTypes::Bool));
+}
+
 //#[test]
 //fn test_example_from_paper() {
 //    let mut assumptions = AssumptionSet<ExamplesTypes>::new();

@@ -1,6 +1,7 @@
 use super::{FunctionMap, UnparsedFunction};
 use std::{collections::HashMap, rc::Rc};
 
+#[derive(Debug)]
 pub struct Macro {}
 
 pub type MacroMap = HashMap<String, Macro>;

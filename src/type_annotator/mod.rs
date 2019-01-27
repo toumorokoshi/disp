@@ -1,4 +1,6 @@
-use super::{Compiler, DispError, DispResult, FunctionMap, Token, Type, UnparsedFunction};
+use super::{
+    Compiler, DispError, DispResult, FunctionMap, GenericResult, Token, Type, UnparsedFunction,
+};
 use inference::{Constraint, TypeResolver, TypeVar};
 use std::{collections::HashMap, rc::Rc};
 
@@ -6,6 +8,7 @@ use std::{collections::HashMap, rc::Rc};
 /// of specialized functions, with their discrete types.
 pub type AnnotatedFunctionMap = HashMap<String, HashMap<Vec<Type>, AnnotatedFunction>>;
 
+#[derive(Debug)]
 pub struct AnnotatedFunction {
     pub function: Rc<UnparsedFunction>,
     pub arg_types: Vec<Type>,
@@ -15,7 +18,7 @@ pub struct AnnotatedFunction {
 /// Internal data structure to keep
 /// track of all of the annotated functions.
 struct TypevarFunctionMap {
-    pub map: HashMap<String, HashMap<Vec<TypeVar>, TypevarFunction>>,
+    pub map: HashMap<String, HashMap<usize, Rc<TypevarFunction>>>,
 }
 
 impl TypevarFunctionMap {
@@ -25,15 +28,15 @@ impl TypevarFunctionMap {
         }
     }
 
-    pub fn insert(&mut self, name: String, args: Vec<TypeVar>, function: TypevarFunction) {
+    pub fn insert(&mut self, name: String, arg_len: usize, function: Rc<TypevarFunction>) {
         let function_by_typevar = self.map.entry(name).or_insert(HashMap::new());
-        function_by_typevar.insert(args, function);
+        function_by_typevar.insert(arg_len, function);
     }
 
-    pub fn get(&self, name: &String, args: &Vec<TypeVar>) -> Option<&TypevarFunction> {
+    pub fn get(&self, name: &String, arg_len: usize) -> Option<&TypevarFunction> {
         match self.map.get(name) {
             None => None,
-            Some(ref function_by_typevar) => match function_by_typevar.get(args) {
+            Some(ref function_by_typevar) => match function_by_typevar.get(&arg_len) {
                 None => None,
                 Some(ref function) => Some(function),
             },
@@ -45,27 +48,49 @@ impl TypevarFunctionMap {
 /// but have not yet been resolved. This phase should ensure
 /// discrete types on all functions, thus should only be used
 /// internally.
-struct TypevarFunction {
+pub struct TypevarFunction {
     pub function: Rc<UnparsedFunction>,
     pub arg_types: Vec<TypeVar>,
     pub return_type: TypeVar,
 }
 
 impl TypevarFunction {
+    pub fn new(
+        function: Rc<UnparsedFunction>,
+        arg_types: Vec<TypeVar>,
+        return_type: TypeVar,
+    ) -> TypevarFunction {
+        return TypevarFunction {
+            function,
+            arg_types,
+            return_type,
+        };
+    }
+
     pub fn to_annotated_function(
         &self,
         type_resolver: &TypeResolver<Type>,
     ) -> DispResult<AnnotatedFunction> {
         let return_type = match type_resolver.get_type(&self.return_type) {
             Some(t) => t,
-            None => return Err(DispError::new("unable to resolve type variable")),
+            None => {
+                return Err(DispError::new(&format!(
+                    "unable to resolve return type variable {}",
+                    &self.return_type,
+                )))
+            }
         };
         let arg_types = {
             let mut arg_types = vec![];
             for type_var in &self.arg_types {
                 let typ = match type_resolver.get_type(type_var) {
                     Some(t) => t,
-                    None => return Err(DispError::new("unable to resolve type variable")),
+                    None => {
+                        return Err(DispError::new(&format!(
+                            "unable to resolve type variable {}",
+                            type_var,
+                        )))
+                    }
                 };
                 arg_types.push(typ);
             }
@@ -90,7 +115,7 @@ impl TypevarFunction {
 pub fn annotate_types(
     compiler: &mut Compiler,
     functions: &FunctionMap,
-) -> DispResult<AnnotatedFunctionMap> {
+) -> GenericResult<AnnotatedFunctionMap> {
     let mut type_resolver = TypeResolver::new();
     let mut annotated_functions = TypevarFunctionMap::new();
     // as all functions can have untyped arguments, we should
@@ -99,13 +124,16 @@ pub fn annotate_types(
     // TODO: have a more robust way to detect main functions.
     for (name, function) in functions {
         if name.contains("main") {
+            let main =
+                TypevarFunction::new(function.clone(), vec![], type_resolver.create_type_var());
             annotate_token(
                 compiler,
                 &functions,
                 &mut type_resolver,
                 &mut annotated_functions,
+                &main,
                 &function.body,
-            );
+            )?;
         }
     }
     // after this point. we have in annotated_functions all methods that are actually
@@ -129,28 +157,61 @@ fn annotate_token(
     functions: &FunctionMap,
     types: &mut TypeResolver<Type>,
     annotated_functions: &mut TypevarFunctionMap,
+    current_function: &TypevarFunction,
     token: &Token,
-) -> DispResult<TypeVar> {
+) -> GenericResult<TypeVar> {
     let type_var = types.create_type_var();
     match token {
         Token::List(ref token_list) => {
             for t in token_list {
-                annotate_token(compiler, functions, types, annotated_functions, t);
+                annotate_token(
+                    compiler,
+                    functions,
+                    types,
+                    annotated_functions,
+                    current_function,
+                    t,
+                )?;
             }
         }
         Token::Expression(ref expression) => {
-            parse_and_add_expression(compiler, functions, types, annotated_functions, expression)?;
+            parse_and_add_expression(
+                compiler,
+                functions,
+                types,
+                annotated_functions,
+                current_function,
+                expression,
+            )?;
         }
         Token::Integer(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Int));
+            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Int))?;
         }
         Token::Boolean(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Bool));
+            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Bool))?;
         }
         Token::String(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::String));
+            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::String))?;
         }
-        Token::Map(_) => {
+        Token::Map(map) => {
+            for (key, value) in map.iter() {
+                annotate_token(
+                    compiler,
+                    functions,
+                    types,
+                    annotated_functions,
+                    current_function,
+                    &key.as_token(),
+                );
+                annotate_token(
+                    compiler,
+                    functions,
+                    types,
+                    annotated_functions,
+                    current_function,
+                    value,
+                );
+            }
             // types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Map<Type::String, Type::String>));
         }
         _ => {}
@@ -163,8 +224,9 @@ fn parse_and_add_expression(
     functions: &FunctionMap,
     types: &mut TypeResolver<Type>,
     annotated_functions: &mut TypevarFunctionMap,
+    function: &TypevarFunction,
     expression: &Vec<Token>,
-) -> DispResult<TypeVar> {
+) -> GenericResult<TypeVar> {
     if let Token::Symbol(name) = expression[0].clone() {
         let arg_type_variables = {
             let mut arg_type_variables = vec![];
@@ -174,6 +236,7 @@ fn parse_and_add_expression(
                     functions,
                     types,
                     annotated_functions,
+                    function,
                     token,
                 )?);
             }
@@ -183,38 +246,51 @@ fn parse_and_add_expression(
         // there is a matching primitive function.
         // TODO: check types in compiler
         if let Some(expression) = compiler.data.builtin_expressions.get(&*name) {
-            return (expression.typecheck)(types, &arg_type_variables);
+            return (expression.typecheck)(types, function, &arg_type_variables);
         }
+        // next, there are builtin native functions that we should check against.
         // next, we check if there is an already
         // parsed function that matches the type signature
-        if let Some(ref function) = annotated_functions.get(&*name, &arg_type_variables) {
+        if let Some(ref function) = annotated_functions.get(&*name, arg_type_variables.len()) {
             return Ok(function.return_type);
         }
         // finally, we check to see if there is an unparsed function with the name
         // and argument count, and if so we start generating and expression for that.
         match functions.get(&*name) {
-            None => Err(DispError::new(&format!(
+            None => Err(Box::new(DispError::new(&format!(
                 "unable to find function with name {}",
                 *name
-            ))),
+            )))),
             Some(ref function) => {
                 let return_type = types.create_type_var();
-                let typevar_function = TypevarFunction {
-                    function: (*function).clone(),
-                    arg_types: arg_type_variables.clone(),
-                    return_type: return_type.clone(),
-                };
+                let typevar_function = Rc::new(TypevarFunction::new(
+                    (*function).clone(),
+                    arg_type_variables.clone(),
+                    return_type.clone(),
+                ));
                 // the annotated function must be inserted before parsing the body,
                 // to ensure that recursive definitions to not re-enter this and cause
                 // a recursive loop.
-                annotated_functions.insert(*name, arg_type_variables, typevar_function);
+                annotated_functions.insert(
+                    *name,
+                    arg_type_variables.len(),
+                    typevar_function.clone(),
+                );
+                annotate_token(
+                    compiler,
+                    functions,
+                    types,
+                    annotated_functions,
+                    &typevar_function,
+                    &function.body,
+                )?;
                 Ok(return_type)
             }
         }
     } else {
-        Err(DispError::new(&format!(
+        Err(Box::new(DispError::new(&format!(
             "expected symbol as first argument to expression, found {}",
             &expression[0]
-        )))
+        ))))
     }
 }

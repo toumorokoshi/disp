@@ -2,6 +2,7 @@ use super::{Compiler, DispError, DispResult, MacroMap, Token};
 use std::collections::HashMap;
 use std::rc::Rc;
 
+#[derive(Debug)]
 pub struct UnparsedFunction {
     pub args: Vec<Token>,
     pub body: Token,
@@ -34,15 +35,17 @@ pub fn parse_functions_and_macros(
                 // the only token we really need to parse out is the expression,
                 // since that's the only thing that can define a top-level function.
                 // everything else is part of the main function.
-                Token::Expression(e) => {
-                    let first_token = e[0].clone();
-                    if first_token == Token::String(Box::new(String::from("fn"))) {
-                        let (name, function) = parse_function(e)?;
-                        function_map.insert(name, function);
-                    } else {
-                        main_function_body.push(Token::Expression(e));
+                Token::Expression(e) => match e[0].clone() {
+                    Token::Symbol(ref s) => {
+                        if **s == "fn" {
+                            let (name, function) = parse_function(e)?;
+                            function_map.insert(name, function);
+                        } else {
+                            main_function_body.push(Token::Expression(e));
+                        }
                     }
-                }
+                    _ => main_function_body.push(Token::Expression(e)),
+                },
                 t => main_function_body.push(t),
             }
         }
@@ -75,11 +78,14 @@ fn parse_function(tokens: Vec<Token>) -> DispResult<(String, Rc<UnparsedFunction
             )));
         }
     };
+    if cfg!(feature = "debug") {
+        println!("parse function: {}", &name);
+    }
     if *name == "main" {
         return Err(DispError::new("unable to name function main"));
     }
     let args = {
-        if let Token::List(ref list) = tokens[1] {
+        if let Token::List(ref list) = tokens[2] {
             list.clone()
         } else {
             return Err(DispError::new(&format!(
@@ -90,6 +96,6 @@ fn parse_function(tokens: Vec<Token>) -> DispResult<(String, Rc<UnparsedFunction
     };
     return Ok((
         *name,
-        Rc::new(UnparsedFunction::new(args, tokens[2].clone())),
+        Rc::new(UnparsedFunction::new(args, tokens[3].clone())),
     ));
 }

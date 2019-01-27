@@ -31,7 +31,6 @@ where
     /// a counter to monotonically iterate reference
     /// count.
     reference_counter: usize,
-    constraints_by_reference: HashMap<usize, Vec<Constraint<T>>>,
     reference_by_typevar: HashMap<TypeVar, usize>,
     type_by_reference: HashMap<usize, T>,
 }
@@ -41,7 +40,6 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
         TypeResolver {
             type_vars: vec![],
             reference_counter: 0,
-            constraints_by_reference: HashMap::new(),
             reference_by_typevar: HashMap::new(),
             type_by_reference: HashMap::new(),
         }
@@ -60,13 +58,27 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
     /// with the new constraint provided.
     pub fn add_constraint(&mut self, c: Constraint<T>) -> Result<(), String> {
         match c {
-            Constraint::Equality(ref l, ref r) => {
-                /// unify the two references.
-                let left_index = self.get_or_create_reference(l);
-                let right_index = self.get_or_create_reference(r);
-                self.reference_by_typevar
-                    .insert(l.clone(), right_index.clone());
-            }
+            Constraint::Equality(ref l, ref r) => match self.reference_by_typevar.get(l).clone() {
+                None => {
+                    let right_index = self.get_or_create_reference(r);
+                    self.reference_by_typevar.insert(l.clone(), right_index);
+                }
+                Some(left_index) => match self.reference_by_typevar.get(r).clone() {
+                    None => {
+                        self.reference_by_typevar
+                            .insert(r.clone(), left_index.clone());
+                    }
+                    Some(right_index) => {
+                        let left_type = self.type_by_reference.get(right_index).clone();
+                        let right_type = self.type_by_reference.get(right_index).clone();
+                        if left_type != right_type {
+                            return Err(String::from(
+                                "type mismatch when trying to add constraint.",
+                            ));
+                        }
+                    }
+                },
+            },
             Constraint::IsLiteral(ref type_var, ref typ) => {
                 let reference = self.get_or_create_reference(type_var);
                 self.set_type(reference, typ.clone())?;

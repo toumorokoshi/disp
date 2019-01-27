@@ -28,6 +28,9 @@ pub fn build_functions(
 ) -> CodegenResult<()> {
     for (name, function_by_args) in functions {
         for (_, function) in function_by_args {
+            if cfg!(feature = "debug") {
+                println!("building function {:?}", &function);
+            }
             compiler.functions.insert(
                 name.to_string(),
                 FunctionType::Disp(build_function(name, function)?),
