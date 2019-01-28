@@ -4,12 +4,12 @@ use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct UnparsedFunction {
-    pub args: Vec<Token>,
+    pub args: Vec<String>,
     pub body: Token,
 }
 
 impl UnparsedFunction {
-    pub fn new(args: Vec<Token>, body: Token) -> UnparsedFunction {
+    pub fn new(args: Vec<String>, body: Token) -> UnparsedFunction {
         return UnparsedFunction { args, body };
     }
 }
@@ -85,8 +85,19 @@ fn parse_function(tokens: Vec<Token>) -> DispResult<(String, Rc<UnparsedFunction
         return Err(DispError::new("unable to name function main"));
     }
     let args = {
-        if let Token::List(ref list) = tokens[2] {
-            list.clone()
+        if let Token::List(ref raw_list) = tokens[2] {
+            let mut args = vec![];
+            for arg in raw_list {
+                match arg {
+                    Token::Symbol(s) => {
+                        args.push((**s).clone());
+                    }
+                    _ => {
+                        return Err(DispError::new("argument parameter should be a string"));
+                    }
+                }
+            }
+            args
         } else {
             return Err(DispError::new(&format!(
                 "function args must be a list of symbols, found {}",

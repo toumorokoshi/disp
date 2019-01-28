@@ -7,6 +7,12 @@ pub struct Context<'a, 'b: 'a> {
     pub compiler: &'a CompilerData,
     pub function: &'a mut Function,
     pub scope: &'a mut Scope<'b>,
+    /// this should be the current block that
+    /// the builder is building against. This allows
+    /// one to get back to it when switching context,
+    /// for example building a child function.
+    /// TODO: move current block to function
+    pub block: usize,
 }
 
 impl<'a, 'b> Context<'a, 'b> {
@@ -14,11 +20,13 @@ impl<'a, 'b> Context<'a, 'b> {
         compiler: &'a mut CompilerData,
         function: &'a mut Function,
         scope: &'a mut Scope<'b>,
+        block: usize,
     ) -> Context<'a, 'b> {
         return Context {
             compiler,
             function,
             scope,
+            block,
         };
     }
 
@@ -28,6 +36,21 @@ impl<'a, 'b> Context<'a, 'b> {
 
     pub fn add_instruction(&mut self, instruction: LLVMInstruction) {
         self.function.instructions.push(instruction);
+    }
+
+    pub fn allocate_without_type(&mut self) -> usize {
+        self.function.allocate_object()
+    }
+
+    // add a basic block, a pointer to a section
+    // of code for llvm.
+    pub fn add_basic_block(&mut self, name: String) -> usize {
+        self.function.basic_blocks += 1;
+        let target = self.function.basic_blocks - 1;
+        self.function
+            .instructions
+            .push(LLVMInstruction::AppendBasicBlock { name, target });
+        target
     }
 }
 
@@ -62,7 +85,28 @@ fn build_function(
     );
     {
         let mut scope = Scope::new(None);
-        let mut context = Context::new(compiler, &mut function, &mut scope);
+        let mut context = Context::new(compiler, &mut function, &mut scope, 0);
+        // load arguments into scope
+        for i in 0..source_function.arg_types.len() {
+            let param_value = context.allocate_without_type();
+            context.add_instruction(LLVMInstruction::GetParam {
+                arg_num: i as u32,
+                target: param_value,
+            });
+            let param = context.allocate(source_function.arg_types[i].clone());
+            context.add_instruction(LLVMInstruction::BuildAlloca {
+                llvm_type: source_function.arg_types[i].to_llvm_type(),
+                target: param.index,
+            });
+            context.add_instruction(LLVMInstruction::BuildStore {
+                source: param_value,
+                target: param.index,
+            });
+            context
+                .scope
+                .locals
+                .insert(source_function.function.args[i].clone(), param.clone());
+        }
         gen_token(&mut context, &source_function.function.body)?;
     }
     function.instructions.push(LLVMInstruction::BuildRetVoid);

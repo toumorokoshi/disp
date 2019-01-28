@@ -2,12 +2,12 @@ use super::*;
 
 pub fn expression() -> Expression {
     Expression {
-        typecheck: let_typecheck,
-        codegen: let_codegen,
+        typecheck: typecheck,
+        codegen: codegen,
     }
 }
 
-fn let_typecheck(
+fn typecheck(
     resolver: &mut TypeResolver<Type>,
     _: &TypevarFunction,
     args: &Vec<TypeVar>,
@@ -16,7 +16,7 @@ fn let_typecheck(
     Ok(args[0].clone())
 }
 
-pub fn let_codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
+pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
     if args.len() != 2 {
         return Err(CodegenError::new(&format!(
             "let function should only have two arguments. found {}: {:?}",
