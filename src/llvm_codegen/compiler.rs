@@ -4,6 +4,7 @@ use super::{
 };
 
 pub struct Context<'a, 'b: 'a> {
+    pub function_map: &'a AnnotatedFunctionMap,
     pub compiler: &'a CompilerData,
     pub function: &'a mut Function,
     pub scope: &'a mut Scope<'b>,
@@ -17,12 +18,14 @@ pub struct Context<'a, 'b: 'a> {
 
 impl<'a, 'b> Context<'a, 'b> {
     pub fn new(
+        function_map: &'a AnnotatedFunctionMap,
         compiler: &'a mut CompilerData,
         function: &'a mut Function,
         scope: &'a mut Scope<'b>,
         block: usize,
     ) -> Context<'a, 'b> {
         return Context {
+            function_map,
             compiler,
             function,
             scope,
@@ -58,12 +61,16 @@ pub fn build_functions(
     compiler: &mut CompilerData,
     functions: &AnnotatedFunctionMap,
 ) -> CodegenResult<()> {
+    // TODO: don't clone this. It's a waste
+    // to reallocate when the full map is available.
+    let function_map = functions.clone();
     for (name, function_by_args) in functions {
         for (_, function) in function_by_args {
             if cfg!(feature = "debug") {
                 println!("building function {:?}", &function);
             }
-            let function = FunctionType::Disp(build_function(compiler, name, function)?);
+            let function =
+                FunctionType::Disp(build_function(&function_map, compiler, name, function)?);
             compiler.functions.insert(name.to_string(), function);
         }
     }
@@ -71,6 +78,7 @@ pub fn build_functions(
 }
 
 fn build_function(
+    function_map: &AnnotatedFunctionMap,
     compiler: &mut CompilerData,
     name: &str,
     source_function: &AnnotatedFunction,
@@ -85,7 +93,7 @@ fn build_function(
     );
     {
         let mut scope = Scope::new(None);
-        let mut context = Context::new(compiler, &mut function, &mut scope, 0);
+        let mut context = Context::new(function_map, compiler, &mut function, &mut scope, 0);
         // load arguments into scope
         for i in 0..source_function.arg_types.len() {
             let param_value = context.allocate_without_type();
@@ -208,6 +216,26 @@ fn compile_expr<'a, 'b, 'c>(
 ) -> CodegenResult<Object> {
     if let Some(expression) = context.compiler.builtin_expressions.get(func_name) {
         return ((*expression).codegen)(context, args);
+    } else if let Some(function_by_arg_count) = context.function_map.get(func_name) {
+        let (argument_objects, argument_types) = {
+            let mut argument_objects = Vec::with_capacity(args.len());
+            let mut argument_types = Vec::with_capacity(args.len());
+            for arg in args {
+                let result = gen_token(context, arg)?;
+                argument_objects.push(result.index);
+                argument_types.push(result.object_type);
+            }
+            (argument_objects, argument_types)
+        };
+        if let Some(function) = function_by_arg_count.get(&argument_types) {
+            let object = context.allocate(function.return_type.clone());
+            context.add_instruction(LLVMInstruction::BuildCall {
+                name: func_name.to_owned(),
+                args: argument_objects,
+                target: object.index,
+            });
+            return Ok(object);
+        }
     }
     Ok(Object::none())
     // match func_name {
