@@ -124,8 +124,13 @@ pub fn annotate_types(
     // TODO: have a more robust way to detect main functions.
     for (name, function) in functions {
         if name.contains("main") {
-            let main =
-                TypevarFunction::new(function.clone(), vec![], type_resolver.create_type_var());
+            let main = Rc::new(TypevarFunction::new(
+                function.clone(),
+                vec![],
+                type_resolver.create_type_var(),
+            ));
+            type_resolver.add_constraint(Constraint::IsLiteral((*main).return_type, Type::None))?;
+            annotated_functions.insert((*name).to_owned(), 0, main.clone());
             annotate_token(
                 compiler,
                 &functions,

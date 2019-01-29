@@ -22,17 +22,17 @@ pub fn compile(compiler: &mut Compiler, input: &str) -> GenericResult<()> {
     if cfg!(feature = "debug") {
         println!(
             "applying annotating types for functions: {:?}...",
-            &functions
+            &functions.keys()
         );
     }
     let annotated_functions = annotate_types(compiler, &functions)?;
     if cfg!(feature = "debug") {
-        println!("building functions: {:?}...", &annotated_functions);
+        println!("building functions: {:?}...", &annotated_functions.keys());
     }
     build_functions(&mut compiler.data, &annotated_functions)?;
     let mut builder = Builder::new();
     builder.build(&compiler.data);
-    let f = builder.get_function("main-main")?;
+    let f = builder.get_function("main")?;
     if cfg!(feature = "debug") {
         let before = Instant::now();
         f();
