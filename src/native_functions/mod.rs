@@ -161,6 +161,18 @@ pub extern "C" fn count_map(map: *mut HashMap<String, bool>) -> i64 {
 }
 
 #[no_mangle]
+pub extern "C" fn print_map(map: *mut HashMap<String, bool>) {
+    let map_unpacked = unsafe { &*map };
+    // the pointer must be returned back into the general pool,
+    // by calling into raw.
+    print!("{{");
+    for (k, v) in &*map_unpacked {
+        print!("{}: {}, ", k, v);
+    }
+    print!("}}");
+}
+
+#[no_mangle]
 pub extern "C" fn string_to_int(s: *const c_char) -> i64 {
     let int_as_string = unsafe { CStr::from_ptr(s).to_str().unwrap() };
     match int_as_string.parse::<i64>() {

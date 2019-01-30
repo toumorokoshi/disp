@@ -9,13 +9,13 @@ pub fn expression() -> Expression {
 
 fn typecheck(
     resolver: &mut TypeResolver<Type>,
-    function: &TypevarFunction,
+    _function: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     // TODO: figure out how to recurse into nested
     // data structure type variables.
     resolver.add_constraint(Constraint::Equality(args[1].clone(), args[0].clone()))?;
-    resolver.add_constraint(Constraint::IsLiteral(args[0].clone(), Type::Int));
+    resolver.add_constraint(Constraint::IsLiteral(args[0].clone(), Type::Int))?;
     Ok(args[0].clone())
 }
 

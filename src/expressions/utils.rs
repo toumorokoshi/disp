@@ -15,7 +15,7 @@ pub fn codegen_binop(
     let rhs = gen_token(context, &args[1])?;
     let result = context.allocate(Type::Int);
     context.add_instruction(LLVMInstruction::BuildBinOp {
-        opcode: LLVMOpcode::LLVMAdd,
+        opcode: op,
         lhs: lhs.index,
         rhs: rhs.index,
         target: result.index,
