@@ -1,19 +1,26 @@
 use self::utils::codegen_binop;
 use super::llvm_codegen::{
     compiler::{gen_token, Context},
-    CodegenError, CodegenResult,
+    CodegenError, CodegenResult, Compiler, CompilerData, Scope,
 };
-use super::{GenericResult, LLVMInstruction, Object, Token, Type, TypevarFunction};
+use super::{
+    FunctionType, GenericResult, LLVMInstruction, NativeFunction, Object, Token, Type,
+    TypevarFunction,
+};
 use inference::{Constraint, TypeResolver, TypeVar};
+use libc::c_char;
 use llvm_sys::*;
-use std::collections::HashMap;
+use std::{collections::HashMap, ffi::CStr};
 
 mod add_expression;
 mod let_expression;
 mod match_expression;
+mod print_expression;
+pub use self::print_expression::*;
 mod return_expression;
 mod subtract_expression;
 mod utils;
+use self::utils::*;
 /// This module contains all the expressions that are
 /// built in.
 /// Builtin expressions require a couple components:
@@ -21,9 +28,12 @@ mod utils;
 /// 2. A Codegen Function
 pub type BuiltinExpressions = HashMap<String, Expression>;
 pub struct Expression {
-    pub typecheck:
-        fn(resolver: &mut TypeResolver<Type>, function: &TypevarFunction, args: &Vec<TypeVar>)
-            -> GenericResult<TypeVar>,
+    pub boostrap_compiler: fn(&mut Compiler),
+    pub typecheck: fn(
+        resolver: &mut TypeResolver<Type>,
+        function: &TypevarFunction,
+        args: &Vec<TypeVar>,
+    ) -> GenericResult<TypeVar>,
     pub codegen: fn(&mut Context, &[Token]) -> CodegenResult<Object>,
 }
 /// Return all expressions
@@ -34,6 +44,7 @@ pub fn get_builtin_expressions() -> BuiltinExpressions {
     expressions.insert(String::from("match"), match_expression::expression());
     expressions.insert(String::from("-"), subtract_expression::expression());
     expressions.insert(String::from("+"), add_expression::expression());
+    expressions.insert(String::from("print"), print_expression::expression());
     expressions
 }
 

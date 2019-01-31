@@ -2,10 +2,13 @@ use super::*;
 
 pub fn expression() -> Expression {
     Expression {
-        typecheck: typecheck,
-        codegen: codegen,
+        boostrap_compiler,
+        typecheck,
+        codegen,
     }
 }
+
+fn boostrap_compiler(compiler: &mut Compiler) {}
 
 pub fn typecheck(
     resolver: &mut TypeResolver<Type>,

@@ -12,28 +12,6 @@ use std::{collections::HashMap, ffi::CStr, io, mem::forget};
 // add native functions to a module context, to ensure
 // these builtins are available.
 pub fn add_native_functions(compiler: &mut Compiler) {
-    add_function_to_compiler(compiler, "print", Type::None, &vec![Type::Int], "print");
-    add_function_to_compiler(
-        compiler,
-        "print",
-        Type::None,
-        &vec![Type::Bool],
-        "print_bool",
-    );
-    add_function_to_compiler(
-        compiler,
-        "print",
-        Type::None,
-        &vec![Type::String],
-        "print_string",
-    );
-    add_function_to_compiler(
-        compiler,
-        "print",
-        Type::None,
-        &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
-        "print_map",
-    );
     add_function_to_compiler(compiler, "println", Type::None, &vec![Type::Int], "println");
     add_function_to_compiler(
         compiler,
@@ -102,24 +80,6 @@ fn add_function_to_compiler(
             }),
         );
     }
-}
-
-// no_mangle is required, to ensure that
-// it resolves the name that's specified by the method
-// signature.
-#[no_mangle]
-pub extern "C" fn print(value: i64) {
-    print!("{}", value);
-}
-
-#[no_mangle]
-pub extern "C" fn print_bool(value: bool) {
-    print!("{}", value);
-}
-
-#[no_mangle]
-pub extern "C" fn print_string(value: *const c_char) {
-    print!("{}", unsafe { CStr::from_ptr(value).to_str().unwrap() });
 }
 
 #[no_mangle]
