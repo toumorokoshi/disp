@@ -11,7 +11,7 @@ pub fn exec_file<'a>(compiler: &mut Compiler<'a>, path: &str) -> GenericResult<(
     if cfg!(feature = "debug") {
         let before = Instant::now();
         f();
-        println!("function duration: {}", before.elapsed().as_float_secs());
+        println!("function duration: {}", before.elapsed().as_secs_f64());
     } else {
         f();
     }

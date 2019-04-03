@@ -116,8 +116,8 @@ fn build_function(
                 .insert(source_function.function.args[i].clone(), param.clone());
         }
         gen_token(&mut context, &source_function.function.body)?;
+        context.add_instruction(LLVMInstruction::BuildRetVoid {});
     }
-    function.instructions.push(LLVMInstruction::BuildRetVoid);
     Ok(function)
 }
 

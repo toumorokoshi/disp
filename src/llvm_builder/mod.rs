@@ -8,7 +8,7 @@ use super::{
 /// * forward declaration of function signatures for type checking
 /// * reduces scope of unsafe calls to this module.
 use libc::c_char;
-use llvm_sys::{core::*, execution_engine::*, prelude::*, support::*, target::*, *};
+use llvm_sys::{core::*, execution_engine::*, prelude::*, support::*, target::*, *, analysis::*};
 use std::collections::HashSet;
 use std::ffi::{CStr, CString};
 use std::{mem, ptr};
@@ -70,6 +70,13 @@ impl Builder {
             println!("llvm module:");
             unsafe {
                 LLVMDumpModule(self.module);
+                let mut debug_output: *mut c_char = mem::zeroed();
+                if LLVMVerifyModule(self.module, LLVMVerifierFailureAction::LLVMPrintMessageAction, &mut debug_output) != 0 {
+                    println!(
+                        "llvm module verification failed\n{:?}",
+                        CStr::from_ptr(debug_output),
+                    );
+                }
             }
         }
     }

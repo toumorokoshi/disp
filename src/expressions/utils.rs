@@ -67,9 +67,9 @@ pub fn add_function(
 }
 
 pub fn call_function(
-    context: &'a mut Context,
-    func_name: &'a str,
-    args: &'a [Token],
+    context: &mut Context,
+    func_name: &str,
+    args: &[Token],
 ) -> CodegenResult<Object> {
     if let Some(function_by_arg_count) = context.function_map.get(func_name) {
         let (argument_objects, argument_types) = {

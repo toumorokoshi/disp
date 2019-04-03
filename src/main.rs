@@ -86,8 +86,8 @@ fn execute(path: &str) -> Result<(), GenericError> {
 }
 
 fn execute_2(path: &str) -> Result<(), GenericError> {
-    let mut compiler = Compiler::new();
-    let mut file = File::open(path)?;
+        let mut compiler = Compiler::new();
+        let mut file = File::open(path)?;
     let mut input = String::new();
     file.read_to_string(&mut input)?;
     compile(&mut compiler, &input)?;
