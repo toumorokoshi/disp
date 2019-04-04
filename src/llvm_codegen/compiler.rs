@@ -1,11 +1,11 @@
 use super::{
-    super::GenericResult, AnnotatedFunction, AnnotatedFunctionMap, CodegenError, CodegenResult,
-    Compiler, CompilerData, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
+    AnnotatedFunction, AnnotatedFunctionMap, CodegenError, CodegenResult,
+    CompilerData, BasicBlock, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
 };
 
 pub struct Context<'a, 'b: 'a> {
     pub function_map: &'a AnnotatedFunctionMap,
-    pub compiler: &'a CompilerData,
+    pub compiler: &'a mut CompilerData,
     pub function: &'a mut Function,
     pub scope: &'a mut Scope<'b>,
     /// this should be the current block that
@@ -38,7 +38,7 @@ impl<'a, 'b> Context<'a, 'b> {
     }
 
     pub fn add_instruction(&mut self, instruction: LLVMInstruction) {
-        self.function.instructions.push(instruction);
+        self.function.basic_blocks[self.block].add_instruction(instruction)
     }
 
     pub fn allocate_without_type(&mut self) -> usize {
@@ -47,13 +47,12 @@ impl<'a, 'b> Context<'a, 'b> {
 
     // add a basic block, a pointer to a section
     // of code for llvm.
-    pub fn add_basic_block(&mut self, name: String) -> usize {
-        self.function.basic_blocks += 1;
-        let target = self.function.basic_blocks - 1;
-        self.function
-            .instructions
-            .push(LLVMInstruction::AppendBasicBlock { name, target });
-        target
+    pub fn create_block(&mut self, name: String) -> usize {
+        self.function.create_block(name)
+    }
+
+    pub fn current_block(&self) -> &BasicBlock {
+        &self.function.basic_blocks[self.block]
     }
 }
 
@@ -93,7 +92,8 @@ fn build_function(
     );
     {
         let mut scope = Scope::new(None);
-        let mut context = Context::new(function_map, compiler, &mut function, &mut scope, 0);
+        let entry_block = function.create_block("entry".to_owned());
+        let mut context = Context::new(function_map, compiler, &mut function, &mut scope, entry_block);
         // load arguments into scope
         for i in 0..source_function.arg_types.len() {
             let param_value = context.allocate_without_type();
@@ -214,8 +214,14 @@ fn compile_expr<'a, 'b, 'c>(
     func_name: &'a str,
     args: &'a [Token],
 ) -> CodegenResult<Object> {
-    if let Some(expression) = context.compiler.builtin_expressions.get(func_name) {
-        return ((*expression).codegen)(context, args);
+    let codegen_function = {
+        match context.compiler.builtin_expressions.get(func_name) {
+            Some(expression) => Some((*expression).codegen),
+            None => None
+        }
+    };
+    if let Some(codegen) = codegen_function {
+        return codegen(context, args);
     } else if let Some(function_by_arg_count) = context.function_map.get(func_name) {
         let (argument_objects, argument_types) = {
             let mut argument_objects = Vec::with_capacity(args.len());

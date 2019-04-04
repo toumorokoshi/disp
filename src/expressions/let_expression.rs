@@ -1,4 +1,5 @@
 use super::*;
+use std::rc::{self, Rc};
 
 pub fn expression() -> Expression {
     Expression {
@@ -44,13 +45,12 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
         .or_insert({
             let object = context.function.objects;
             context.function.objects += 1;
-            context
-                .function
-                .instructions
-                .push(LLVMInstruction::BuildAlloca {
+            context.function.basic_blocks[context.block].add_instruction(
+                LLVMInstruction::BuildAlloca {
                     llvm_type: target.object_type.to_llvm_type(),
                     target: object,
-                });
+                },
+            );
             Object::new(object, target.object_type.clone())
         })
         .clone();

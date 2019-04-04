@@ -1,4 +1,4 @@
-use super::{compile_module, parse, Builder, Compiler, GenericResult, LLVMFunction};
+use super::{parse, Builder, Compiler, GenericResult};
 use std::time::Instant;
 use std::{fs::File, io::Read};
 
@@ -28,5 +28,7 @@ pub fn load_file<'a>(
     let mut input = String::new();
     file.read_to_string(&mut input)?;
     let inp = parse(&input);
-    Ok(compile_module(compiler, module_name, &inp)?)
+    // TODO: fix to compile a module
+    // Ok(compile_module(compiler, module_name, &inp)?)
+    Ok(())
 }

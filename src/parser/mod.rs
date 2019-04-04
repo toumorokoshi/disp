@@ -19,7 +19,7 @@ fn parse_rule(rule: Rule, body: &str) -> Token {
     if let Some(pair) = pairs.next() {
         if cfg!(feature = "debug") {
             println!("DEBUG pest parser result: {:?}", pair.clone());
-            println!("DEBUG pest string: {:?}", pair.clone().into_span().as_str());
+            println!("DEBUG pest string: {:?}", pair.clone().as_span().as_str());
         }
         return unpack(pair);
     }

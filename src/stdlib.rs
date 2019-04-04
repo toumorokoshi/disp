@@ -1,4 +1,4 @@
-use super::{load_file, Compiler, GenericError, GenericResult};
+use super::{load_file, Compiler, GenericError};
 
 // for now, we can emulate a standard library
 // by just loading a lib file before executing the file in question.

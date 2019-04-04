@@ -1,9 +1,9 @@
 use super::{
-    add_native_functions, get_builtin_expressions, BuiltinExpressions, FunctionPrototype,
-    LLVMInstruction, Scope, Type,
+    get_builtin_expressions, BuiltinExpressions,
+    LLVMInstruction, Scope, Type, add_native_functions
 };
 use inference::TypeResolver;
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
 /// Objects are to represent values,
 /// variables, and functions.
@@ -11,7 +11,6 @@ use std::collections::HashMap;
 pub struct Object {
     pub index: usize,
     pub object_type: Type,
-    pub function_prototype: Option<FunctionPrototype>,
 }
 
 impl Object {
@@ -19,15 +18,6 @@ impl Object {
         Object {
             index: index,
             object_type: object_type,
-            function_prototype: None,
-        }
-    }
-
-    pub fn function_prototype(function_prototype: FunctionPrototype) -> Object {
-        Object {
-            index: 0 as usize,
-            object_type: Type::FunctionPrototype,
-            function_prototype: Some(function_prototype),
         }
     }
 
@@ -46,8 +36,38 @@ pub struct Function {
     // be stored. registers are strongly typed.
     pub objects: usize,
     // a counter used simply to store indexes to basic blocks.
-    pub basic_blocks: usize,
+    // pub basic_blocks: usize,
+    pub basic_blocks: Vec<BasicBlock>,
+}
+
+/// BasicBlocks represent a set of statements that end with a terminator.
+#[derive(Clone)]
+pub struct BasicBlock {
+    pub name: String,
     pub instructions: Vec<LLVMInstruction>,
+    /// returns true if this BasicBlock contains a 
+    /// terminator. LLVM does not allow statements after a 
+    /// terminator.
+    contains_terminator: bool,
+}
+
+impl BasicBlock {
+    pub fn new(name: String) -> BasicBlock {
+        BasicBlock{name, instructions: vec![], contains_terminator: false}
+    }
+
+    /// add an LLVM instruction. this interface also validates and
+    /// handles situations such as 
+    pub fn add_instruction(&mut self, instruction: LLVMInstruction) {
+        if instruction.is_terminator() {
+            self.contains_terminator = true;
+        }
+        self.instructions.push(instruction);
+    }
+
+    pub fn has_been_terminated(&self) -> bool {
+        return self.contains_terminator;
+    }
 }
 
 #[derive(Clone)]
@@ -96,8 +116,7 @@ impl Function {
             arg_types,
             return_type,
             objects: 0,
-            basic_blocks: 0,
-            instructions: vec![],
+            basic_blocks: vec![],
         }
     }
 
@@ -112,65 +131,15 @@ impl Function {
         let index = self.allocate_object();
         Object::new(index, object_type)
     }
-}
 
-/// The context object contains all relevant
-/// information for the Codegen to successfully build
-/// llvm ode.
-pub struct Context<'a, 'b: 'a> {
-    pub scope: &'a mut Scope<'b>,
-    pub compiler: &'a mut CompilerData,
-    pub type_resolver: &'a mut TypeResolver<Type>,
-    pub function: Function,
-    /// this should be the current block that
-    /// the builder is building against. This allows
-    /// one to get back to it when switching context,
-    /// for example building a child function.
-    /// TODO: move current block to function
-    pub block: usize,
-}
-
-impl<'a, 'b> Context<'a, 'b> {
-    pub fn new(
-        scope: &'a mut Scope<'b>,
-        compiler: &'a mut CompilerData,
-        type_resolver: &'a mut TypeResolver<Type>,
-        function: Function,
-        block: usize,
-    ) -> Context<'a, 'b> {
-        Context {
-            scope,
-            compiler,
-            type_resolver,
-            function,
-            block,
-        }
-    }
-
-    // add a basic block, a pointer to a section
-    // of code for llvm.
-    pub fn add_basic_block(&mut self, name: String) -> usize {
-        self.function.basic_blocks += 1;
-        let target = self.function.basic_blocks - 1;
-        self.function
-            .instructions
-            .push(LLVMInstruction::AppendBasicBlock { name, target });
-        target
-    }
-
-    /// add an instruction.
-    pub fn add_instruction(&mut self, instruction: LLVMInstruction) {
-        self.function.instructions.push(instruction);
-    }
-
-    // allocate an object of a specific size.
-    pub fn allocate(&mut self, object_type: Type) -> Object {
-        let index = self.function.allocate_object();
-        Object::new(index, object_type.clone())
-    }
-
-    pub fn allocate_without_type(&mut self) -> usize {
-        self.function.allocate_object()
+    /// add a finalized basic block to the function, 
+    /// returning the index by which to reference it.
+    /// when constructing branches, this is a little 
+    /// counterintuitive because it requires constructing 
+    /// the blocks in reverse order from which they are executed.
+    pub fn create_block(&mut self, name: String) -> usize {
+        self.basic_blocks.push(BasicBlock::new(name));
+        self.basic_blocks.len() - 1
     }
 }
 

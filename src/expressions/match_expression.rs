@@ -28,7 +28,7 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
         )));
     };
     let condition = gen_token(context, &args[0])?;
-    let post_switch_block = context.add_basic_block("switchcomplete".to_owned());
+    let post_switch_block = context.create_block("postswitch".to_owned());
     if let Token::Map(ref map) = &args[1] {
         let mut key_values = vec![];
         // we construct all keys first, to ensure
@@ -43,25 +43,34 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
         let switch = context.allocate_without_type();
         context.add_instruction(LLVMInstruction::BuildSwitch {
             value: condition.index,
-            post_switch_block: post_switch_block,
-            num_cases: num_cases,
+            post_switch_block,
+            num_cases,
             target: switch,
         });
         for (index, (_key, value)) in map.iter().enumerate() {
-            let block = context.add_basic_block("case".to_owned());
+            let block = context.create_block("case".to_owned());
             let branch_key = &key_values[index];
             context.add_instruction(LLVMInstruction::AddCase {
                 switch,
                 value: branch_key.index,
-                block,
+                block: block,
             });
-            context.add_instruction(LLVMInstruction::PositionBuilderAtEnd { block });
+            let mut branch_context = Context::new(
+                context.function_map,
+                context.compiler,
+                context.function,
+                context.scope,
+                block
+            );
+            // context.add_instruction(LLVMInstruction::PositionBuilderAtEnd { block });
             // TODO: capture this value and make it the return value of the
             // match statement.
-            gen_token(context, value)?;
-            context.add_instruction(LLVMInstruction::BuildBr {
-                block: post_switch_block,
-            });
+            gen_token(&mut branch_context, value)?;
+            if !branch_context.current_block().has_been_terminated() {
+                branch_context.add_instruction(LLVMInstruction::BuildBr {
+                    block: post_switch_block,
+                });
+            }
         }
     } else {
         return Err(CodegenError::new(&format!(
@@ -69,9 +78,6 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
             &args[1]
         )));
     }
-    context.add_instruction(LLVMInstruction::PositionBuilderAtEnd {
-        block: post_switch_block,
-    });
     context.block = post_switch_block;
     Ok(Object::none())
 }

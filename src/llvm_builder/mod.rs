@@ -1,6 +1,4 @@
-use super::{
-    CompilerData, DispError, DispResult, Function, FunctionType, LLVMFunction, NativeFunction,
-};
+use super::{CompilerData, DispError, DispResult, Function, FunctionType, NativeFunction};
 /// the builder is responsible for building LLVM code.
 /// this is a separate layer from the codegen portion as it enables
 /// behavior such as:
@@ -8,10 +6,11 @@ use super::{
 /// * forward declaration of function signatures for type checking
 /// * reduces scope of unsafe calls to this module.
 use libc::c_char;
-use llvm_sys::{core::*, execution_engine::*, prelude::*, support::*, target::*, *, analysis::*};
+use llvm_sys::{analysis::*, core::*, execution_engine::*, prelude::*, support::*, target::*, *};
 use std::collections::HashSet;
 use std::ffi::{CStr, CString};
 use std::{mem, ptr};
+pub type LLVMFunction = extern "C" fn();
 
 pub struct Builder {
     context: LLVMContextRef,
@@ -71,7 +70,12 @@ impl Builder {
             unsafe {
                 LLVMDumpModule(self.module);
                 let mut debug_output: *mut c_char = mem::zeroed();
-                if LLVMVerifyModule(self.module, LLVMVerifierFailureAction::LLVMPrintMessageAction, &mut debug_output) != 0 {
+                if LLVMVerifyModule(
+                    self.module,
+                    LLVMVerifierFailureAction::LLVMPrintMessageAction,
+                    &mut debug_output,
+                ) != 0
+                {
                     println!(
                         "llvm module verification failed\n{:?}",
                         CStr::from_ptr(debug_output),
@@ -104,133 +108,144 @@ impl Builder {
     }
 
     pub fn build_function(&mut self, llvm_function: LLVMValueRef, function: &Function) {
+        // TODO: modify for iterating through basic blocks.
         unsafe {
             let basic_block =
                 LLVMAppendBasicBlockInContext(self.context, llvm_function, to_ptr("entry"));
             LLVMPositionBuilderAtEnd(self.builder, basic_block);
             let mut objects = vec![ptr::null_mut(); function.objects];
-            let mut basic_blocks = vec![ptr::null_mut(); function.basic_blocks];
-            for i in &function.instructions {
-                match i {
-                    LLVMInstruction::AddCase {
-                        switch,
-                        value,
-                        block,
-                    } => {
-                        LLVMAddCase(objects[*switch], objects[*value], basic_blocks[*block]);
-                    }
-                    LLVMInstruction::AppendBasicBlock { name, target } => {
-                        basic_blocks[*target] = LLVMAppendBasicBlockInContext(
-                            self.context,
-                            llvm_function,
-                            to_ptr(&name),
-                        );
-                    }
-                    LLVMInstruction::BuildAlloca { llvm_type, target } => {
-                        objects[*target] =
-                            LLVMBuildAlloca(self.builder, *llvm_type, to_ptr("alloca"));
-                    }
-                    LLVMInstruction::BuildBinOp {
-                        opcode,
-                        lhs,
-                        rhs,
-                        target,
-                    } => {
-                        objects[*target] = LLVMBuildBinOp(
-                            self.builder,
-                            *opcode,
-                            objects[*lhs],
-                            objects[*rhs],
-                            to_ptr("binop"),
-                        );
-                    }
-                    LLVMInstruction::BuildBr { block } => {
-                        LLVMBuildBr(self.builder, basic_blocks[*block]);
-                    }
-                    LLVMInstruction::BuildCondBr {
-                        value,
-                        true_block,
-                        false_block,
-                    } => {
-                        LLVMBuildCondBr(
-                            self.builder,
-                            objects[*value],
-                            basic_blocks[*true_block],
-                            basic_blocks[*false_block],
-                        );
-                    }
-                    LLVMInstruction::BuildLoad { source, target } => {
-                        objects[*target] =
-                            LLVMBuildLoad(self.builder, objects[*source], to_ptr("load"));
-                    }
-                    LLVMInstruction::BuildNot { source, target } => {
-                        objects[*target] =
-                            LLVMBuildNot(self.builder, objects[*source], to_ptr("not"));
-                    }
-                    LLVMInstruction::BuildRet { source } => {
-                        LLVMBuildRet(self.builder, objects[*source]);
-                    }
-                    LLVMInstruction::BuildRetVoid => {
-                        LLVMBuildRetVoid(self.builder);
-                    }
-                    LLVMInstruction::BuildSwitch {
-                        value,
-                        post_switch_block,
-                        num_cases,
-                        target,
-                    } => {
-                        objects[*target] = LLVMBuildSwitch(
-                            self.builder,
-                            objects[*value],
-                            basic_blocks[*post_switch_block],
-                            *num_cases,
-                        );
-                    }
-                    LLVMInstruction::BuildICmp { lhs, rhs, target } => {
-                        objects[*target] = LLVMBuildICmp(
-                            self.builder,
-                            LLVMIntPredicate::LLVMIntEQ,
-                            objects[*lhs],
-                            objects[*rhs],
-                            to_ptr("eqtemp"),
-                        );
-                    }
-                    LLVMInstruction::BuildStore { source, target } => {
-                        LLVMBuildStore(self.builder, objects[*source], objects[*target]);
-                    }
-                    LLVMInstruction::ConstBool { value, target } => {
-                        objects[*target] =
-                            LLVMConstInt(LLVMInt1Type(), if *value { 1 } else { 0 } as u64, 0);
-                    }
-                    LLVMInstruction::ConstInt { value, target } => {
-                        objects[*target] = LLVMConstInt(LLVMInt64Type(), *value as u64, 0);
-                    }
-                    LLVMInstruction::BuildCall { name, args, target } => {
-                        let function = LLVMGetNamedFunction(self.module, to_ptr(&name));
-                        let mut llvm_args = vec![];
-                        for a in args {
-                            llvm_args.push(objects[*a]);
+            let mut basic_blocks = vec![];
+            for block in &function.basic_blocks {
+                basic_blocks.push(LLVMAppendBasicBlockInContext(
+                    self.context,
+                    llvm_function,
+                    to_ptr(&block.name),
+                ));
+            }
+            for idx in 0..basic_blocks.len() - 1 {
+                LLVMPositionBuilderAtEnd(self.builder, basic_blocks[idx]);
+                for i in &function.basic_blocks[idx].instructions {
+                    match i {
+                        LLVMInstruction::AddCase {
+                            switch,
+                            value,
+                            block,
+                        } => {
+                            LLVMAddCase(objects[*switch], objects[*value], basic_blocks[*block]);
                         }
-                        objects[*target] = LLVMBuildCall(
-                            self.builder,
-                            function,
-                            llvm_args.as_mut_ptr(),
-                            llvm_args.len() as u32,
-                            to_ptr("result"),
-                        );
-                    }
-                    LLVMInstruction::BuildGlobalString { value, target } => {
-                        objects[*target] = LLVMBuildGlobalStringPtr(
-                            self.builder,
-                            to_ptr(&value),
-                            to_ptr("string"),
-                        );
-                    }
-                    LLVMInstruction::GetParam { arg_num, target } => {
-                        objects[*target] = LLVMGetParam(llvm_function, *arg_num);
-                    }
-                    LLVMInstruction::PositionBuilderAtEnd { block } => {
-                        LLVMPositionBuilderAtEnd(self.builder, basic_blocks[*block]);
+                        LLVMInstruction::AppendBasicBlock { name, target } => {
+                            basic_blocks[*target] = LLVMAppendBasicBlockInContext(
+                                self.context,
+                                llvm_function,
+                                to_ptr(&name),
+                            );
+                        }
+                        LLVMInstruction::BuildAlloca { llvm_type, target } => {
+                            objects[*target] =
+                                LLVMBuildAlloca(self.builder, *llvm_type, to_ptr("alloca"));
+                        }
+                        LLVMInstruction::BuildBinOp {
+                            opcode,
+                            lhs,
+                            rhs,
+                            target,
+                        } => {
+                            objects[*target] = LLVMBuildBinOp(
+                                self.builder,
+                                *opcode,
+                                objects[*lhs],
+                                objects[*rhs],
+                                to_ptr("binop"),
+                            );
+                        }
+                        LLVMInstruction::BuildBr { block } => {
+                            LLVMBuildBr(self.builder, basic_blocks[*block]);
+                        }
+                        LLVMInstruction::BuildCondBr {
+                            value,
+                            true_block,
+                            false_block,
+                        } => {
+                            LLVMBuildCondBr(
+                                self.builder,
+                                objects[*value],
+                                basic_blocks[*true_block],
+                                basic_blocks[*false_block],
+                            );
+                        }
+                        LLVMInstruction::BuildLoad { source, target } => {
+                            objects[*target] =
+                                LLVMBuildLoad(self.builder, objects[*source], to_ptr("load"));
+                        }
+                        LLVMInstruction::BuildNot { source, target } => {
+                            objects[*target] =
+                                LLVMBuildNot(self.builder, objects[*source], to_ptr("not"));
+                        }
+                        LLVMInstruction::BuildRet { source } => {
+                            LLVMBuildRet(self.builder, objects[*source]);
+                        }
+                        LLVMInstruction::BuildRetVoid => {
+                            LLVMBuildRetVoid(self.builder);
+                        }
+                        LLVMInstruction::BuildSwitch {
+                            value,
+                            post_switch_block,
+                            num_cases,
+                            target,
+                        } => {
+                            objects[*target] = LLVMBuildSwitch(
+                                self.builder,
+                                objects[*value],
+                                basic_blocks[*post_switch_block],
+                                *num_cases,
+                            );
+                        }
+                        LLVMInstruction::BuildICmp { lhs, rhs, target } => {
+                            objects[*target] = LLVMBuildICmp(
+                                self.builder,
+                                LLVMIntPredicate::LLVMIntEQ,
+                                objects[*lhs],
+                                objects[*rhs],
+                                to_ptr("eqtemp"),
+                            );
+                        }
+                        LLVMInstruction::BuildStore { source, target } => {
+                            LLVMBuildStore(self.builder, objects[*source], objects[*target]);
+                        }
+                        LLVMInstruction::ConstBool { value, target } => {
+                            objects[*target] =
+                                LLVMConstInt(LLVMInt1Type(), if *value { 1 } else { 0 } as u64, 0);
+                        }
+                        LLVMInstruction::ConstInt { value, target } => {
+                            objects[*target] = LLVMConstInt(LLVMInt64Type(), *value as u64, 0);
+                        }
+                        LLVMInstruction::BuildCall { name, args, target } => {
+                            let function = LLVMGetNamedFunction(self.module, to_ptr(&name));
+                            let mut llvm_args = vec![];
+                            for a in args {
+                                llvm_args.push(objects[*a]);
+                            }
+                            objects[*target] = LLVMBuildCall(
+                                self.builder,
+                                function,
+                                llvm_args.as_mut_ptr(),
+                                llvm_args.len() as u32,
+                                to_ptr("result"),
+                            );
+                        }
+                        LLVMInstruction::BuildGlobalString { value, target } => {
+                            objects[*target] = LLVMBuildGlobalStringPtr(
+                                self.builder,
+                                to_ptr(&value),
+                                to_ptr("string"),
+                            );
+                        }
+                        LLVMInstruction::GetParam { arg_num, target } => {
+                            objects[*target] = LLVMGetParam(llvm_function, *arg_num);
+                        }
+                        LLVMInstruction::PositionBuilderAtEnd { block } => {
+                            LLVMPositionBuilderAtEnd(self.builder, basic_blocks[*block]);
+                        }
                     }
                 }
             }
@@ -339,6 +354,29 @@ pub enum LLVMInstruction {
     PositionBuilderAtEnd {
         block: usize,
     },
+}
+
+impl LLVMInstruction {
+    /// returns true if the current instruction is a terminator.
+    pub fn is_terminator(&self) -> bool {
+        match self {
+            LLVMInstruction::BuildRet { source: _ } => true,
+            LLVMInstruction::BuildRetVoid {} => true,
+            LLVMInstruction::BuildBr { block: _ } => true,
+            LLVMInstruction::BuildCondBr {
+                value: _,
+                true_block: _,
+                false_block: _,
+            } => true,
+            LLVMInstruction::BuildSwitch {
+                value: _,
+                post_switch_block: _,
+                num_cases: _,
+                target: _,
+            } => true,
+            _ => false,
+        }
+    }
 }
 
 /// convert a string into an llvm compatible literal

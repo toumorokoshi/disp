@@ -1,4 +1,4 @@
-use super::{DispError, DispResult};
+use super::{DispError};
 use std::collections::HashMap;
 use std::fmt;
 
