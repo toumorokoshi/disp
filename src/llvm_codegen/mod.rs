@@ -13,6 +13,7 @@ pub use self::error::{CodegenError, CodegenResult};
 pub use self::native_functions::add_native_functions;
 pub use self::scope::Scope;
 pub use self::types::Type;
+pub use self::utils::*;
 use super::{
     get_builtin_expressions, AnnotatedFunction, AnnotatedFunctionMap, BuiltinExpressions,
     LLVMInstruction, Token,
