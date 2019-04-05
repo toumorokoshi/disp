@@ -110,9 +110,6 @@ impl Builder {
     pub fn build_function(&mut self, llvm_function: LLVMValueRef, function: &Function) {
         // TODO: modify for iterating through basic blocks.
         unsafe {
-            let basic_block =
-                LLVMAppendBasicBlockInContext(self.context, llvm_function, to_ptr("entry"));
-            LLVMPositionBuilderAtEnd(self.builder, basic_block);
             let mut objects = vec![ptr::null_mut(); function.objects];
             let mut basic_blocks = vec![];
             for block in &function.basic_blocks {
@@ -122,7 +119,7 @@ impl Builder {
                     to_ptr(&block.name),
                 ));
             }
-            for idx in 0..basic_blocks.len() - 1 {
+            for idx in 0..basic_blocks.len() {
                 LLVMPositionBuilderAtEnd(self.builder, basic_blocks[idx]);
                 for i in &function.basic_blocks[idx].instructions {
                     match i {

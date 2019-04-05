@@ -1,6 +1,6 @@
 use super::{
-    AnnotatedFunction, AnnotatedFunctionMap, CodegenError, CodegenResult,
-    CompilerData, BasicBlock, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
+    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, CompilerData,
+    Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
 };
 
 pub struct Context<'a, 'b: 'a> {
@@ -93,7 +93,13 @@ fn build_function(
     {
         let mut scope = Scope::new(None);
         let entry_block = function.create_block("entry".to_owned());
-        let mut context = Context::new(function_map, compiler, &mut function, &mut scope, entry_block);
+        let mut context = Context::new(
+            function_map,
+            compiler,
+            &mut function,
+            &mut scope,
+            entry_block,
+        );
         // load arguments into scope
         for i in 0..source_function.arg_types.len() {
             let param_value = context.allocate_without_type();
@@ -116,7 +122,9 @@ fn build_function(
                 .insert(source_function.function.args[i].clone(), param.clone());
         }
         gen_token(&mut context, &source_function.function.body)?;
-        context.add_instruction(LLVMInstruction::BuildRetVoid {});
+        if !context.current_block().has_been_terminated() {
+            context.add_instruction(LLVMInstruction::BuildRetVoid {});
+        }
     }
     Ok(function)
 }
@@ -217,7 +225,7 @@ fn compile_expr<'a, 'b, 'c>(
     let codegen_function = {
         match context.compiler.builtin_expressions.get(func_name) {
             Some(expression) => Some((*expression).codegen),
-            None => None
+            None => None,
         }
     };
     if let Some(codegen) = codegen_function {
