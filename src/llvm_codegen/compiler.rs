@@ -1,11 +1,11 @@
 use super::{
-    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, CompilerData,
+    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Compiler, CompilerData,
     Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
 };
 
 pub struct Context<'a, 'b: 'a> {
     pub function_map: &'a AnnotatedFunctionMap,
-    pub compiler: &'a mut CompilerData,
+    pub compiler: &'a mut Compiler<'b>,
     pub function: &'a mut Function,
     pub scope: &'a mut Scope<'b>,
     /// this should be the current block that
@@ -19,7 +19,7 @@ pub struct Context<'a, 'b: 'a> {
 impl<'a, 'b> Context<'a, 'b> {
     pub fn new(
         function_map: &'a AnnotatedFunctionMap,
-        compiler: &'a mut CompilerData,
+        compiler: &'a mut Compiler<'b>,
         function: &'a mut Function,
         scope: &'a mut Scope<'b>,
         block: usize,
@@ -54,10 +54,20 @@ impl<'a, 'b> Context<'a, 'b> {
     pub fn current_block(&self) -> &BasicBlock {
         &self.function.basic_blocks[self.block]
     }
+
+    pub fn get_function(&self, name: &str, arg_types: &[Type]) -> Option<String> {
+        match self.scope.get_function(name, arg_types) {
+            Some(function) => Some(function),
+            None => match self.compiler.scope.get_function(name, arg_types) {
+                Some(function) => Some(function),
+                None => None,
+            }
+        }
+    }
 }
 
 pub fn build_functions(
-    compiler: &mut CompilerData,
+    compiler: &mut Compiler,
     functions: &AnnotatedFunctionMap,
 ) -> CodegenResult<()> {
     // TODO: don't clone this. It's a waste
@@ -70,7 +80,7 @@ pub fn build_functions(
             }
             let function =
                 FunctionType::Disp(build_function(&function_map, compiler, name, function)?);
-            compiler.functions.insert(name.to_string(), function);
+            compiler.data.functions.insert(name.to_string(), function);
         }
     }
     Ok(())
@@ -78,7 +88,7 @@ pub fn build_functions(
 
 fn build_function(
     function_map: &AnnotatedFunctionMap,
-    compiler: &mut CompilerData,
+    compiler: &mut Compiler,
     name: &str,
     source_function: &AnnotatedFunction,
 ) -> CodegenResult<Function> {
@@ -223,7 +233,7 @@ fn compile_expr<'a, 'b, 'c>(
     args: &'a [Token],
 ) -> CodegenResult<Object> {
     let codegen_function = {
-        match context.compiler.builtin_expressions.get(func_name) {
+        match context.compiler.data.builtin_expressions.get(func_name) {
             Some(expression) => Some((*expression).codegen),
             None => None,
         }

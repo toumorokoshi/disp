@@ -9,7 +9,7 @@ pub fn expression() -> Expression {
 }
 
 fn boostrap_compiler(compiler: &mut Compiler) {
-    add_function_to_compiler(compiler, "print", Type::None, &vec![Type::Int], "print");
+    add_function_to_compiler(compiler, "print", Type::None, &vec![Type::Int], "print_int");
     add_function_to_compiler(
         compiler,
         "print",

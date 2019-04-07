@@ -1,9 +1,8 @@
 use super::{
-    get_builtin_expressions, BuiltinExpressions,
-    LLVMInstruction, Scope, Type, add_native_functions
+    add_native_functions, get_builtin_expressions, BuiltinExpressions, LLVMInstruction, Scope, Type,
 };
 use inference::TypeResolver;
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 /// Objects are to represent values,
 /// variables, and functions.
@@ -45,19 +44,23 @@ pub struct Function {
 pub struct BasicBlock {
     pub name: String,
     pub instructions: Vec<LLVMInstruction>,
-    /// returns true if this BasicBlock contains a 
-    /// terminator. LLVM does not allow statements after a 
+    /// returns true if this BasicBlock contains a
+    /// terminator. LLVM does not allow statements after a
     /// terminator.
     contains_terminator: bool,
 }
 
 impl BasicBlock {
     pub fn new(name: String) -> BasicBlock {
-        BasicBlock{name, instructions: vec![], contains_terminator: false}
+        BasicBlock {
+            name,
+            instructions: vec![],
+            contains_terminator: false,
+        }
     }
 
     /// add an LLVM instruction. this interface also validates and
-    /// handles situations such as 
+    /// handles situations such as
     pub fn add_instruction(&mut self, instruction: LLVMInstruction) {
         if instruction.is_terminator() {
             self.contains_terminator = true;
@@ -115,7 +118,7 @@ impl Function {
             name,
             arg_types,
             return_type,
-            objects: 0,
+            objects: 1,
             basic_blocks: vec![],
         }
     }
@@ -132,10 +135,10 @@ impl Function {
         Object::new(index, object_type)
     }
 
-    /// add a finalized basic block to the function, 
+    /// add a finalized basic block to the function,
     /// returning the index by which to reference it.
-    /// when constructing branches, this is a little 
-    /// counterintuitive because it requires constructing 
+    /// when constructing branches, this is a little
+    /// counterintuitive because it requires constructing
     /// the blocks in reverse order from which they are executed.
     pub fn create_block(&mut self, name: String) -> usize {
         self.basic_blocks.push(BasicBlock::new(name));
@@ -149,7 +152,6 @@ impl Function {
 pub struct Compiler<'a> {
     pub scope: Scope<'a>,
     pub data: CompilerData,
-    pub type_resolver: TypeResolver<Type>,
 }
 
 impl<'a> Compiler<'a> {
@@ -157,9 +159,11 @@ impl<'a> Compiler<'a> {
         let mut compiler = Compiler {
             scope: Scope::new(None),
             data: CompilerData::new(),
-            type_resolver: TypeResolver::new(),
         };
-        add_native_functions(&mut compiler);
+        for expression in get_builtin_expressions().values() {
+            (expression.boostrap_compiler)(&mut compiler);
+        }
+        // add_native_functions(&mut compiler);
         compiler
     }
 }

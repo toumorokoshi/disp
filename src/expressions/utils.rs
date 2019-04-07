@@ -60,6 +60,13 @@ pub fn add_function(
     function: FunctionType,
 ) {
     scope.add_function(name, &function.arg_types(), function.name().to_string());
+    if cfg!(feature = "debug") {
+        println!(
+            "adding function {} with argument types {:?}",
+            name,
+            &function.arg_types()
+        );
+    }
     // next, we add the function to the compiler.
     compiler
         .functions
@@ -71,17 +78,19 @@ pub fn call_function(
     func_name: &str,
     args: &[Token],
 ) -> CodegenResult<Object> {
+    let (argument_objects, argument_types) = {
+        let mut argument_objects = Vec::with_capacity(args.len());
+        let mut argument_types = Vec::with_capacity(args.len());
+        for arg in args {
+            let result = gen_token(context, arg)?;
+            argument_objects.push(result.index);
+            argument_types.push(result.object_type);
+        }
+        (argument_objects, argument_types)
+    };
+
+    // first, check the functions declared for a valid option
     if let Some(function_by_arg_count) = context.function_map.get(func_name) {
-        let (argument_objects, argument_types) = {
-            let mut argument_objects = Vec::with_capacity(args.len());
-            let mut argument_types = Vec::with_capacity(args.len());
-            for arg in args {
-                let result = gen_token(context, arg)?;
-                argument_objects.push(result.index);
-                argument_types.push(result.object_type);
-            }
-            (argument_objects, argument_types)
-        };
         if let Some(function) = function_by_arg_count.get(&argument_types) {
             let object = context.allocate(function.return_type.clone());
             context.add_instruction(LLVMInstruction::BuildCall {
@@ -92,5 +101,20 @@ pub fn call_function(
             return Ok(object);
         }
     }
-    Err(CodegenError::new("unable to find function"))
+    // second, check functions in scope.
+    if let Some(function) = context.get_function(func_name, &argument_types) {
+        // TODO: refactor scope to use real function objects.
+        // as a workaround we'll have a nonetype here
+        let object = Object::none();
+        context.add_instruction(LLVMInstruction::BuildCall {
+            name: function.to_owned(),
+            args: argument_objects,
+            target: object.index,
+        });
+        return Ok(object);
+    }
+    Err(CodegenError::new(&format!(
+        "unable to find function with name {} and argument types {:?}",
+        func_name, &argument_types
+    )))
 }

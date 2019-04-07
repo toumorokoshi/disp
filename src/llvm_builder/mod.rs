@@ -222,12 +222,20 @@ impl Builder {
                             for a in args {
                                 llvm_args.push(objects[*a]);
                             }
+                            // in the case where the object type is None,
+                            // (i.e. void), LLVM IR should not capture the result.
+                            // passing an empty string results in call without a
+                            // captured result
+                            let result_ptr = match *target != 0 {
+                                true => to_ptr("result"),
+                                false => to_ptr(""),
+                            };
                             objects[*target] = LLVMBuildCall(
                                 self.builder,
                                 function,
                                 llvm_args.as_mut_ptr(),
                                 llvm_args.len() as u32,
-                                to_ptr("result"),
+                                result_ptr,
                             );
                         }
                         LLVMInstruction::BuildGlobalString { value, target } => {

@@ -29,7 +29,7 @@ pub fn compile(compiler: &mut Compiler, input: &str) -> GenericResult<()> {
     if cfg!(feature = "debug") {
         println!("building functions: {:?}...", &annotated_functions.keys());
     }
-    build_functions(&mut compiler.data, &annotated_functions)?;
+    build_functions(compiler, &annotated_functions)?;
     let mut builder = Builder::new();
     builder.build(&compiler.data);
     let f = builder.get_function("main")?;
