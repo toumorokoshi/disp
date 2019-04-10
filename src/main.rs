@@ -29,18 +29,18 @@ use expressions::{get_builtin_expressions, BuiltinExpressions};
 use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
-    build_functions, CodegenError, Compiler,
-    CompilerData, Function, FunctionType, NativeFunction, Object, Scope, Type,
+    build_functions, CodegenError, Compiler, CompilerData, Function, FunctionType, NativeFunction,
+    Object, Scope, Type,
 };
 use loader::{exec_file, load_file};
-use macros::{apply_macros_to_function_map, MacroMap, parse_macro};
+use macros::{apply_macros_to_function_map, parse_macro, MacroMap};
 use parser::parse;
 use std::{
     env,
     fs::File,
     io::{self, Read, Write},
 };
-use stdlib::load_stdlib;
+use stdlib::{load_stdlib, LIB_FILE};
 use type_annotator::{annotate_types, AnnotatedFunction, AnnotatedFunctionMap, TypevarFunction};
 // use stdlib::load_stdlib;
 
@@ -86,9 +86,13 @@ fn execute(path: &str) -> Result<(), GenericError> {
 }
 
 fn execute_2(path: &str) -> Result<(), GenericError> {
-        let mut compiler = Compiler::new();
-        let mut file = File::open(path)?;
+    let mut compiler = Compiler::new();
     let mut input = String::new();
+    // load the standard lib
+    let mut stdlib = File::open(LIB_FILE)?;
+    stdlib.read_to_string(&mut input)?;
+    // load the main file
+    let mut file = File::open(path)?;
     file.read_to_string(&mut input)?;
     compile(&mut compiler, &input)?;
     Ok(())
