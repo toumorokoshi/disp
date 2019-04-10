@@ -5,6 +5,6 @@ macro! unless [cond body]
 
 
 if true
-	println "macro from stdlib works!"
+	print "macro from stdlib works!"
 unless false
-	println "macro from scope works!"
+	print "macro from scope works!"

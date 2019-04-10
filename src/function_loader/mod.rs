@@ -1,4 +1,4 @@
-use super::{Compiler, DispError, DispResult, MacroMap, Token};
+use super::{Compiler, DispError, DispResult, MacroMap, Token, parse_macro};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -26,6 +26,7 @@ pub fn parse_functions_and_macros(
     parent_token: Token,
 ) -> DispResult<(FunctionMap, MacroMap)> {
     let mut function_map = HashMap::new();
+    let mut macro_map = MacroMap::new();
     // instructions that are not a part of any function
     // are automatically added to the main function.
     let mut main_function_body = vec![];
@@ -43,7 +44,15 @@ pub fn parse_functions_and_macros(
                         } else {
                             main_function_body.push(Token::Expression(e));
                         }
-                    }
+                    },
+                    Token::BangSymbol(ref s) => {
+                        if **s == "macro" {
+                            let (name, macro_instance) = parse_macro(e)?;
+                            macro_map.insert(name, macro_instance);
+                        } else {
+                            main_function_body.push(Token::Expression(e));
+                        }
+                    },
                     _ => main_function_body.push(Token::Expression(e)),
                 },
                 t => main_function_body.push(t),
@@ -57,7 +66,7 @@ pub fn parse_functions_and_macros(
             Token::List(main_function_body),
         )),
     );
-    Ok((function_map, HashMap::new()))
+    Ok((function_map, macro_map))
 }
 
 fn parse_function(tokens: Vec<Token>) -> DispResult<(String, Rc<UnparsedFunction>)> {

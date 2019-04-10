@@ -33,7 +33,7 @@ pub use llvm_codegen::{
     CompilerData, Function, FunctionType, NativeFunction, Object, Scope, Type,
 };
 use loader::{exec_file, load_file};
-use macros::{apply_macros_to_function_map, MacroMap};
+use macros::{apply_macros_to_function_map, MacroMap, parse_macro};
 use parser::parse;
 use std::{
     env,

@@ -18,7 +18,7 @@ pub fn compile(compiler: &mut Compiler, input: &str) -> GenericResult<()> {
             &macros, &functions
         );
     }
-    apply_macros_to_function_map(&macros, &mut functions);
+    apply_macros_to_function_map(&macros, &mut functions)?;
     if cfg!(feature = "debug") {
         println!(
             "applying annotating types for functions: {:?}...",

@@ -1,7 +1,4 @@
-use super::{
-    add_native_functions, get_builtin_expressions, BuiltinExpressions, LLVMInstruction, Scope, Type,
-};
-use inference::TypeResolver;
+use super::{get_builtin_expressions, BuiltinExpressions, LLVMInstruction, Scope, Type};
 use std::collections::HashMap;
 
 /// Objects are to represent values,
