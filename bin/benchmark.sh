@@ -16,6 +16,7 @@ time {
 fi
 
 if [ -e "./benchmarks/$SCRIPT/$SCRIPT.ds" ]; then
+cargo build --release  # make sure we have an up-to-date binary first 
 echo
 echo
 echo "Disp:"

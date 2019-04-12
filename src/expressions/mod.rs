@@ -13,6 +13,8 @@ use llvm_sys::*;
 use std::{collections::HashMap, ffi::CStr};
 
 mod add_expression;
+mod bytes_builtins;
+pub use self::bytes_builtins::*;
 mod let_expression;
 mod match_expression;
 mod print_expression;

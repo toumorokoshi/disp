@@ -198,6 +198,9 @@ fn annotate_token(
         Token::String(_) => {
             types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::String))?;
         }
+        Token::Bytes(_) => {
+            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Bytes))?;
+        }
         Token::Map(map) => {
             for (key, value) in map.iter() {
                 annotate_token(

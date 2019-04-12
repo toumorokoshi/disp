@@ -5,6 +5,7 @@ use llvm_sys::{core::*, prelude::*};
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
     Bool,
+    Bytes,
     FunctionPrototype,
     Int,
     None,
@@ -25,6 +26,7 @@ impl Type {
         unsafe {
             match self {
                 &Type::Bool => LLVMInt1Type(),
+                &Type::Bytes => LLVMPointerType(LLVMInt8Type(), 0),
                 &Type::FunctionPrototype => LLVMVoidType(),
                 &Type::Int => LLVMInt64Type(),
                 &Type::None => LLVMVoidType(),

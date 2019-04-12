@@ -1,4 +1,4 @@
-use super::{DispError};
+use super::DispError;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -6,6 +6,7 @@ use std::fmt;
 pub enum Token {
     BangSymbol(Box<String>),
     Boolean(bool),
+    Bytes(Box<String>),
     Comment(Box<String>),
     Expression(Vec<Token>),
     Integer(i64),
@@ -70,6 +71,7 @@ impl fmt::Display for Token {
                 write!(f, ")")
             }
             &Token::BangSymbol(ref s) => write!(f, "{}!", s),
+            &Token::Bytes(ref b) => write!(f, "{}", b),
             &Token::Comment(ref s) => write!(f, "# {}", s),
             &Token::Symbol(ref s) => write!(f, "{}", s),
             &Token::String(ref s) => write!(f, "{}", s),

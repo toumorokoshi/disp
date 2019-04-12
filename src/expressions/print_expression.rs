@@ -28,6 +28,13 @@ fn boostrap_compiler(compiler: &mut Compiler) {
         compiler,
         "print",
         Type::None,
+        &vec![Type::Bytes],
+        "print_bytes",
+    );
+    add_function_to_compiler(
+        compiler,
+        "print",
+        Type::None,
         &vec![Type::Map(Box::new(Type::String), Box::new(Type::Int))],
         "print_map",
     );
@@ -36,7 +43,7 @@ fn boostrap_compiler(compiler: &mut Compiler) {
 fn typecheck(
     resolver: &mut TypeResolver<Type>,
     _function: &TypevarFunction,
-    args: &Vec<TypeVar>,
+    _args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     let type_var = resolver.create_type_var();
     resolver.add_constraint(Constraint::IsLiteral(type_var, Type::None));
@@ -61,6 +68,11 @@ pub extern "C" fn print_map(map: *mut HashMap<String, bool>) {
 
 #[no_mangle]
 pub extern "C" fn print_string(value: *const c_char) {
+    print!("{}", unsafe { CStr::from_ptr(value).to_str().unwrap() });
+}
+
+#[no_mangle]
+pub extern "C" fn print_bytes(value: *const c_char) {
     print!("{}", unsafe { CStr::from_ptr(value).to_str().unwrap() });
 }
 

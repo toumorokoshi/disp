@@ -1,0 +1,2 @@
+let byte-string "foo"
+print (get byte-string 0)
