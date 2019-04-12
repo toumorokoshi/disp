@@ -1,2 +1,3 @@
-let byte-string "foo"
-print (get byte-string 0)
+let byte-array 'foo'
+print byte-array
+print (get byte-array 0)

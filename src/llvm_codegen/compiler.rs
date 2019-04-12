@@ -1,6 +1,6 @@
 use super::{
-    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Compiler, CompilerData,
-    Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
+    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Compiler,
+    CompilerData, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
 };
 
 pub struct Context<'a, 'b: 'a> {
@@ -61,7 +61,7 @@ impl<'a, 'b> Context<'a, 'b> {
             None => match self.compiler.scope.get_function(name, arg_types) {
                 Some(function) => Some(function),
                 None => None,
-            }
+            },
         }
     }
 }
@@ -159,6 +159,14 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
             object
         }
         &Token::None => Object::none(),
+        &Token::Bytes(ref s) => {
+            let object = context.allocate(Type::Bytes);
+            context.add_instruction(LLVMInstruction::BuildGlobalString {
+                value: *s.clone(),
+                target: object.index,
+            });
+            object
+        }
         &Token::String(ref s) => {
             let object = context.allocate(Type::String);
             context.add_instruction(LLVMInstruction::BuildGlobalString {

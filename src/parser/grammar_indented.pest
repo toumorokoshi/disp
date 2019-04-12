@@ -10,8 +10,7 @@ expression_no_parens = {
 comment = { "#" ~ comment_body }
 indented_list = _{ PEEK_ALL ~ PUSH(indentation) ~ list_of_lines ~ DROP }
 delimiter = _{ (delimiter_no_newline | "\n" | "\t")+ }
-delimiter_no_newline = _{ (" ")+ }
-indentation = _{ ("\t")+ }
+delimiter_no_newline = _{ (" ")+ } indentation = _{ ("\t")+ }
 token = _{
   none | expression | integer | list | map |
   // ordering is important! symbol must come after

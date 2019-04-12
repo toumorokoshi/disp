@@ -15,6 +15,7 @@ use std::{collections::HashMap, ffi::CStr};
 mod add_expression;
 mod bytes_builtins;
 pub use self::bytes_builtins::*;
+mod get_expression;
 mod let_expression;
 mod match_expression;
 mod print_expression;
@@ -47,6 +48,7 @@ pub fn get_builtin_expressions() -> BuiltinExpressions {
     expressions.insert(String::from("-"), subtract_expression::expression());
     expressions.insert(String::from("+"), add_expression::expression());
     expressions.insert(String::from("print"), print_expression::expression());
+    expressions.insert(String::from("get"), get_expression::expression());
     expressions
 }
 

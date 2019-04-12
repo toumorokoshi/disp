@@ -73,7 +73,7 @@ fn unpack(pair: Pair<Rule>) -> Token {
             Token::Map(Box::new(map))
         }
         _s @ Rule::string => Token::String(Box::new(String::from(pair.as_str()))),
-        _s @ Rule::bytes => Token::String(Box::new(String::from(pair.as_str()))),
+        _s @ Rule::bytes => Token::Bytes(Box::new(String::from(pair.as_str()))),
         _s @ Rule::symbol => Token::Symbol(Box::new(String::from(pair.as_str()))),
         _t @ Rule::true_value => Token::Boolean(true),
         _ => Token::None,

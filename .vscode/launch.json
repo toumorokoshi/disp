@@ -10,7 +10,7 @@
             "name": "fib-lldb",
             "program": "${workspaceRoot}/target/debug/disp",
             "args": [
-                "${workspaceRoot}/examples_working/fib.ds"
+                "${workspaceRoot}/examples_working/bytes.ds"
             ],
             "sourceLanguages": [
                 "rust"
