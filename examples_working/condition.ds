@@ -1,3 +1,4 @@
-print (eq 1 2)
-print (eq 0 2)
+let i 2
+print (eq 1 i)
+print (eq 0 i)
 print (eq 0 0)

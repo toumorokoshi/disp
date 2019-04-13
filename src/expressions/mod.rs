@@ -15,7 +15,9 @@ use std::{collections::HashMap, ffi::CStr};
 mod add_expression;
 mod bytes_builtins;
 pub use self::bytes_builtins::*;
+mod eq_expression;
 mod get_expression;
+mod len_expression;
 mod let_expression;
 mod match_expression;
 mod print_expression;
@@ -42,7 +44,9 @@ pub struct Expression {
 /// Return all expressions
 pub fn get_builtin_expressions() -> BuiltinExpressions {
     let mut expressions = HashMap::new();
+    expressions.insert(String::from("eq"), eq_expression::expression());
     expressions.insert(String::from("let"), let_expression::expression());
+    expressions.insert(String::from("len"), len_expression::expression());
     expressions.insert(String::from("return"), return_expression::expression());
     expressions.insert(String::from("match"), match_expression::expression());
     expressions.insert(String::from("-"), subtract_expression::expression());

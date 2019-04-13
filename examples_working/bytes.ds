@@ -1,3 +1,8 @@
 let byte-array 'foo'
 print byte-array
 print (get byte-array 0)
+print (len byte-array)
+for [
+    (let i 0)
+    (ne )
+]
