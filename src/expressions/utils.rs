@@ -102,12 +102,19 @@ pub fn call_function(
         }
     }
     // second, check functions in scope.
-    if let Some(function) = context.get_function(func_name, &argument_types) {
+    if let Some(function_name) = context.get_function(func_name, &argument_types) {
+        let return_type = context
+            .compiler
+            .data
+            .functions
+            .get(&function_name)
+            .unwrap()
+            .return_type();
         // TODO: refactor scope to use real function objects.
         // as a workaround we'll have a nonetype here
-        let object = Object::none();
+        let object = context.allocate(return_type);
         context.add_instruction(LLVMInstruction::BuildCall {
-            name: function.to_owned(),
+            name: function_name.to_owned(),
             args: argument_objects,
             target: object.index,
         });

@@ -128,6 +128,9 @@ impl Function {
     }
 
     pub fn allocate(&mut self, object_type: Type) -> Object {
+        if (object_type == Type::None) {
+            return Object::none();
+        }
         let index = self.allocate_object();
         Object::new(index, object_type)
     }

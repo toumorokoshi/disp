@@ -7,6 +7,7 @@ extern crate inference;
 extern crate libc;
 extern crate llvm_sys;
 
+mod array;
 mod ast;
 mod compiler;
 mod error;
@@ -20,6 +21,7 @@ mod parser;
 mod stdlib;
 mod type_annotator;
 
+use array::llvm_declare_array;
 use ast::Token;
 use compiler::compile;
 use error::{DispError, DispResult, GenericError, GenericResult};
@@ -30,7 +32,7 @@ use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction}
 use llvm_builder::{Builder, LLVMInstruction};
 pub use llvm_codegen::{
     build_functions, CodegenError, Compiler, CompilerData, Function, FunctionType, NativeFunction,
-    Object, Scope, Type,
+    Object, Scope, Type, to_ptr,
 };
 use loader::{exec_file, load_file};
 use macros::{apply_macros_to_function_map, parse_macro, MacroMap};

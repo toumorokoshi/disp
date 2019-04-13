@@ -1,4 +1,6 @@
-use super::{CompilerData, DispError, DispResult, Function, FunctionType, NativeFunction};
+use super::{
+    llvm_declare_array, CompilerData, DispError, DispResult, Function, FunctionType, NativeFunction,
+};
 /// the builder is responsible for building LLVM code.
 /// this is a separate layer from the codegen portion as it enables
 /// behavior such as:
@@ -21,12 +23,22 @@ pub struct Builder {
 impl Builder {
     pub fn new() -> Builder {
         unsafe {
-            let context = LLVMContextCreate();
+            // It would be nice to create a new context here. However,
+            // earlier in the code types are already created. These types
+            // are built within the global context, which is the context passed
+            // into functions. As such, creating a new context would create a
+            // context mismatch between the function (global) context and the
+            // context used by the rest of the builder.
+            let context = LLVMGetGlobalContext();
             // This is required to ensure that exported
             // functions area available to the context.
             LLVMLoadLibraryPermanently(ptr::null());
             let module = LLVMModuleCreateWithNameInContext(to_ptr("main"), context);
             let builder = LLVMCreateBuilderInContext(context);
+            // TODO: figure out the right organization
+            // for LLVM objects and codegen objects... strongly
+            // itertwined.
+            llvm_declare_array(context, LLVMInt8Type());
             return Builder {
                 context,
                 module,
@@ -388,8 +400,4 @@ impl LLVMInstruction {
 pub fn to_ptr(s: &str) -> *const c_char {
     let c_string = CString::new(s.clone()).unwrap();
     c_string.into_raw()
-}
-
-pub fn to_string(s: *const c_char) -> String {
-    unsafe { String::from(CStr::from_ptr(*&s).to_str().unwrap()) }
 }

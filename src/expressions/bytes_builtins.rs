@@ -13,5 +13,5 @@ pub extern "C" fn print_bytes(value: *const c_char) {
 
 #[no_mangle]
 pub extern "C" fn print_byte(value: u8) {
-    print!("{}", value);
+    print!("{}", value as char);
 }
