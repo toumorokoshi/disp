@@ -6,7 +6,7 @@ use super::llvm_codegen::{
 use super::{
     CompilerData,
     FunctionType, GenericResult, LLVMInstruction, NativeFunction, Object, Token, Type,
-    TypevarFunction,
+    TypevarFunction, to_llvm_type,
 };
 use inference::{Constraint, TypeResolver, TypeVar};
 use libc::c_char;

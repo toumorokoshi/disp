@@ -24,7 +24,7 @@ mod workflow;
 
 use self::array::llvm_declare_array;
 use self::ast::Token;
-use self::compiler::CompilerData;
+use self::compiler::{CompilerData, Type};
 use self::error::{DispError, DispResult, GenericError, GenericResult};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
@@ -33,7 +33,7 @@ use self::function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFun
 use self::llvm_builder::{Builder, LLVMInstruction};
 pub use self::llvm_codegen::{
     build_functions, to_ptr, CodegenError, Compiler, Function, FunctionType, NativeFunction,
-    Object, Scope, Type,
+    Object, Scope, to_llvm_type,
 };
 use self::loader::{exec_file, load_file};
 use self::macros::{apply_macros_to_function_map, parse_macro, MacroMap};

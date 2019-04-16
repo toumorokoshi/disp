@@ -14,3 +14,17 @@ impl CompilerData {
         }
     }
 }
+
+/// The type enum is used to define types for Disp's
+/// type checker.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Type {
+    Bool,
+    Byte,
+    Bytes,
+    FunctionPrototype,
+    Int,
+    None,
+    String,
+    Map(Box<Type>, Box<Type>),
+}

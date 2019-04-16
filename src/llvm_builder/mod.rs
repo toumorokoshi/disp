@@ -1,5 +1,5 @@
 use super::{
-    llvm_declare_array, CompilerData, DispError, DispResult, Function, FunctionType, NativeFunction,
+    llvm_declare_array, CompilerData, DispError, DispResult, Function, FunctionType, NativeFunction, to_llvm_type
 };
 /// the builder is responsible for building LLVM code.
 /// this is a separate layer from the codegen portion as it enables
@@ -31,7 +31,7 @@ impl Builder {
             // context used by the rest of the builder.
             let context = LLVMGetGlobalContext();
             // This is required to ensure that exported
-            // functions area available to the context.
+            // functions are available to the context.
             LLVMLoadLibraryPermanently(ptr::null());
             let module = LLVMModuleCreateWithNameInContext(to_ptr("main"), context);
             let builder = LLVMCreateBuilderInContext(context);
@@ -56,10 +56,10 @@ impl Builder {
                     FunctionType::Disp(f) => unsafe {
                         let mut args = Vec::with_capacity(f.arg_types.len());
                         for a in &f.arg_types {
-                            args.push(a.to_llvm_type());
+                            args.push(to_llvm_type(&a));
                         }
                         let return_type = match f.return_type {
-                            Some(ref return_type) => return_type.to_llvm_type(),
+                            Some(ref return_type) => to_llvm_type(&return_type),
                             None => LLVMVoidType(),
                         };
                         let function_type =
@@ -100,7 +100,7 @@ impl Builder {
     pub fn build_native_function(&mut self, function: &NativeFunction) {
         let mut llvm_args = Vec::with_capacity(function.arg_types.len());
         for arg in &function.arg_types {
-            llvm_args.push(arg.to_llvm_type());
+            llvm_args.push(to_llvm_type(&arg));
         }
         unsafe {
             let llvm_function = LLVMGetNamedFunction(self.module, to_ptr(&function.name));
@@ -109,7 +109,7 @@ impl Builder {
                     self.module,
                     to_ptr(&function.name),
                     LLVMFunctionType(
-                        function.return_type.to_llvm_type(),
+                        to_llvm_type(&function.return_type),
                         llvm_args.as_mut_ptr(),
                         llvm_args.len() as u32,
                         0,
@@ -183,14 +183,22 @@ impl Builder {
                             );
                         }
                         LLVMInstruction::BuildGEP {
-                            value, indices, target
+                            value,
+                            indices,
+                            target,
                         } => {
                             let mut value_indices = vec![];
                             for i in 0..indices.len() {
                                 value_indices.push(objects[indices[i]]);
                             }
-                            objects[*target] = LLVMBuildGEP(self.builder, objects[*value], value_indices.as_mut_ptr(), value_indices.len() as u32, to_ptr("gep"));
-                        },
+                            objects[*target] = LLVMBuildGEP(
+                                self.builder,
+                                objects[*value],
+                                value_indices.as_mut_ptr(),
+                                value_indices.len() as u32,
+                                to_ptr("gep"),
+                            );
+                        }
                         LLVMInstruction::BuildLoad { source, target } => {
                             objects[*target] =
                                 LLVMBuildLoad(self.builder, objects[*source], to_ptr("load"));

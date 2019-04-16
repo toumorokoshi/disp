@@ -47,7 +47,7 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
             context.function.objects += 1;
             context.function.basic_blocks[context.block].add_instruction(
                 LLVMInstruction::BuildAlloca {
-                    llvm_type: target.object_type.to_llvm_type(),
+                    llvm_type: to_llvm_type(&target.object_type),
                     target: object,
                 },
             );

@@ -1,6 +1,6 @@
 use super::{
     AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Compiler,
-    CompilerData, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
+    Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type, to_llvm_type
 };
 
 pub struct Context<'a, 'b: 'a> {
@@ -119,7 +119,7 @@ fn build_function(
             });
             let param = context.allocate(source_function.arg_types[i].clone());
             context.add_instruction(LLVMInstruction::BuildAlloca {
-                llvm_type: source_function.arg_types[i].to_llvm_type(),
+                llvm_type: to_llvm_type(&source_function.arg_types[i]),
                 target: param.index,
             });
             context.add_instruction(LLVMInstruction::BuildStore {
@@ -166,11 +166,11 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
                 target: object.index,
             });
             context.add_instruction(LLVMInstruction::BuildAlloca{
-                llvm_type: Type::Bytes.to_llvm_type(), 
+                llvm_type: to_llvm_type(&Type::Bytes), 
                 target: object.index
             });
             context.add_instruction(LLVMInstruction::BuildAlloca{
-                llvm_type: Type::Bytes.to_llvm_type(), 
+                llvm_type: to_llvm_type(&Type::Bytes), 
                 target: object.index
             });
 
