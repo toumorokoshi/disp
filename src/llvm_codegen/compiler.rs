@@ -165,6 +165,15 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
                 value: *s.clone(),
                 target: object.index,
             });
+            context.add_instruction(LLVMInstruction::BuildAlloca{
+                llvm_type: Type::Bytes.to_llvm_type(), 
+                target: object.index
+            });
+            context.add_instruction(LLVMInstruction::BuildAlloca{
+                llvm_type: Type::Bytes.to_llvm_type(), 
+                target: object.index
+            });
+
             object
         }
         &Token::String(ref s) => {

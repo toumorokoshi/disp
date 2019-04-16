@@ -1,5 +1,4 @@
-use super::{get_builtin_expressions, BuiltinExpressions, LLVMInstruction, Scope, Type};
-use std::collections::HashMap;
+use super::{get_builtin_expressions, LLVMInstruction, Scope, Type, CompilerData};
 
 /// Objects are to represent values,
 /// variables, and functions.
@@ -165,19 +164,5 @@ impl<'a> Compiler<'a> {
         }
         // add_native_functions(&mut compiler);
         compiler
-    }
-}
-
-pub struct CompilerData {
-    pub functions: HashMap<String, FunctionType>,
-    pub builtin_expressions: BuiltinExpressions,
-}
-
-impl CompilerData {
-    pub fn new() -> CompilerData {
-        CompilerData {
-            functions: HashMap::new(),
-            builtin_expressions: get_builtin_expressions(),
-        }
     }
 }

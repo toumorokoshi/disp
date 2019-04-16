@@ -20,30 +20,34 @@ mod macros;
 mod parser;
 mod stdlib;
 mod type_annotator;
+mod workflow;
 
-use array::llvm_declare_array;
-use ast::Token;
-use compiler::compile;
-use error::{DispError, DispResult, GenericError, GenericResult};
+use self::array::llvm_declare_array;
+use self::ast::Token;
+use self::compiler::CompilerData;
+use self::error::{DispError, DispResult, GenericError, GenericResult};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
-use expressions::{get_builtin_expressions, BuiltinExpressions};
-use function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
-use llvm_builder::{Builder, LLVMInstruction};
-pub use llvm_codegen::{
-    build_functions, CodegenError, Compiler, CompilerData, Function, FunctionType, NativeFunction,
-    Object, Scope, Type, to_ptr,
+use self::expressions::{get_builtin_expressions, BuiltinExpressions};
+use self::function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
+use self::llvm_builder::{Builder, LLVMInstruction};
+pub use self::llvm_codegen::{
+    build_functions, to_ptr, CodegenError, Compiler, Function, FunctionType, NativeFunction,
+    Object, Scope, Type,
 };
-use loader::{exec_file, load_file};
-use macros::{apply_macros_to_function_map, parse_macro, MacroMap};
-use parser::parse;
+use self::loader::{exec_file, load_file};
+use self::macros::{apply_macros_to_function_map, parse_macro, MacroMap};
+use self::parser::parse;
+use self::stdlib::{load_stdlib, LIB_FILE};
+use self::type_annotator::{
+    annotate_types, AnnotatedFunction, AnnotatedFunctionMap, TypevarFunction,
+};
+use self::workflow::load_string_into_compiler;
 use std::{
     env,
     fs::File,
     io::{self, Read, Write},
 };
-use stdlib::{load_stdlib, LIB_FILE};
-use type_annotator::{annotate_types, AnnotatedFunction, AnnotatedFunctionMap, TypevarFunction};
 // use stdlib::load_stdlib;
 
 fn main() {
@@ -53,7 +57,7 @@ fn main() {
     // builder.cleanup();
     let args: Vec<String> = env::args().collect();
     let result = match args.len() {
-        2 => execute_2(&args[1]),
+        2 => execute(&args[1]),
         _ => {panic!("no repl atm.")}
         // _ => repl(),
     };
@@ -62,32 +66,7 @@ fn main() {
     }
 }
 
-// fn repl() -> Result<(), DispError> {
-//     let mut vm = build_vm()?;
-//     loop {
-//         let inp = read()?;
-//         let func = Arc::new(compile(&mut vm, &inp)?);
-//         if cfg!(feature = "debug") {
-//             println!("DEBUG: ops: ");
-//             func.print_ops();
-//         }
-//         vm.submit(func.clone(), vec![]);
-//         sleep(Duration::from_millis(1000));
-//     }
-// }
-
 fn execute(path: &str) -> Result<(), GenericError> {
-    let mut compiler = Compiler::new();
-    {
-        load_stdlib(&mut compiler)?;
-    }
-    {
-        exec_file(&mut compiler, path)?;
-    }
-    Ok(())
-}
-
-fn execute_2(path: &str) -> Result<(), GenericError> {
     let mut compiler = Compiler::new();
     let mut input = String::new();
     // load the standard lib
@@ -96,7 +75,7 @@ fn execute_2(path: &str) -> Result<(), GenericError> {
     // load the main file
     let mut file = File::open(path)?;
     file.read_to_string(&mut input)?;
-    compile(&mut compiler, &input)?;
+    load_string_into_compiler(&mut compiler, &input)?;
     Ok(())
 }
 

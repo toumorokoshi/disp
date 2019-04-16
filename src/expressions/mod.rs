@@ -1,9 +1,10 @@
 use self::utils::codegen_binop;
 use super::llvm_codegen::{
     compiler::{gen_token, Context},
-    CodegenError, CodegenResult, Compiler, CompilerData, Scope,
+    CodegenError, CodegenResult, Compiler, Scope,
 };
 use super::{
+    CompilerData,
     FunctionType, GenericResult, LLVMInstruction, NativeFunction, Object, Token, Type,
     TypevarFunction,
 };

@@ -182,6 +182,15 @@ impl Builder {
                                 basic_blocks[*false_block],
                             );
                         }
+                        LLVMInstruction::BuildGEP {
+                            value, indices, target
+                        } => {
+                            let mut value_indices = vec![];
+                            for i in 0..indices.len() {
+                                value_indices.push(objects[indices[i]]);
+                            }
+                            objects[*target] = LLVMBuildGEP(self.builder, objects[*value], value_indices.as_mut_ptr(), value_indices.len() as u32, to_ptr("gep"));
+                        },
                         LLVMInstruction::BuildLoad { source, target } => {
                             objects[*target] =
                                 LLVMBuildLoad(self.builder, objects[*source], to_ptr("load"));
@@ -324,6 +333,11 @@ pub enum LLVMInstruction {
         value: usize,
         true_block: usize,
         false_block: usize,
+    },
+    BuildGEP {
+        value: usize,
+        indices: Vec<usize>,
+        target: usize,
     },
     BuildGlobalString {
         value: String,
