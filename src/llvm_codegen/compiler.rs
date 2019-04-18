@@ -1,70 +1,7 @@
 use super::{
-    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Compiler,
-    Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type, to_llvm_type
+    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Context,
+    Compiler, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
 };
-
-pub struct Context<'a, 'b: 'a> {
-    pub function_map: &'a AnnotatedFunctionMap,
-    pub compiler: &'a mut Compiler<'b>,
-    pub function: &'a mut Function,
-    pub scope: &'a mut Scope<'b>,
-    /// this should be the current block that
-    /// the builder is building against. This allows
-    /// one to get back to it when switching context,
-    /// for example building a child function.
-    /// TODO: move current block to function
-    pub block: usize,
-}
-
-impl<'a, 'b> Context<'a, 'b> {
-    pub fn new(
-        function_map: &'a AnnotatedFunctionMap,
-        compiler: &'a mut Compiler<'b>,
-        function: &'a mut Function,
-        scope: &'a mut Scope<'b>,
-        block: usize,
-    ) -> Context<'a, 'b> {
-        return Context {
-            function_map,
-            compiler,
-            function,
-            scope,
-            block,
-        };
-    }
-
-    pub fn allocate(&mut self, object_type: Type) -> Object {
-        self.function.allocate(object_type)
-    }
-
-    pub fn add_instruction(&mut self, instruction: LLVMInstruction) {
-        self.function.basic_blocks[self.block].add_instruction(instruction)
-    }
-
-    pub fn allocate_without_type(&mut self) -> usize {
-        self.function.allocate_object()
-    }
-
-    // add a basic block, a pointer to a section
-    // of code for llvm.
-    pub fn create_block(&mut self, name: String) -> usize {
-        self.function.create_block(name)
-    }
-
-    pub fn current_block(&self) -> &BasicBlock {
-        &self.function.basic_blocks[self.block]
-    }
-
-    pub fn get_function(&self, name: &str, arg_types: &[Type]) -> Option<String> {
-        match self.scope.get_function(name, arg_types) {
-            Some(function) => Some(function),
-            None => match self.compiler.scope.get_function(name, arg_types) {
-                Some(function) => Some(function),
-                None => None,
-            },
-        }
-    }
-}
 
 pub fn build_functions(
     compiler: &mut Compiler,
@@ -118,8 +55,9 @@ fn build_function(
                 target: param_value,
             });
             let param = context.allocate(source_function.arg_types[i].clone());
+            let param_type = context.compiler.llvm.types.get(&source_function.arg_types[i]);
             context.add_instruction(LLVMInstruction::BuildAlloca {
-                llvm_type: to_llvm_type(&source_function.arg_types[i]),
+                llvm_type: param_type,
                 target: param.index,
             });
             context.add_instruction(LLVMInstruction::BuildStore {
@@ -161,17 +99,18 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
         &Token::None => Object::none(),
         &Token::Bytes(ref s) => {
             let object = context.allocate(Type::Bytes);
+            let bytes_type = context.compiler.llvm.types.get(&Type::Bytes);
             context.add_instruction(LLVMInstruction::BuildGlobalString {
                 value: *s.clone(),
                 target: object.index,
             });
-            context.add_instruction(LLVMInstruction::BuildAlloca{
-                llvm_type: to_llvm_type(&Type::Bytes), 
-                target: object.index
+            context.add_instruction(LLVMInstruction::BuildAlloca {
+                llvm_type: bytes_type,
+                target: object.index,
             });
-            context.add_instruction(LLVMInstruction::BuildAlloca{
-                llvm_type: to_llvm_type(&Type::Bytes), 
-                target: object.index
+            context.add_instruction(LLVMInstruction::BuildAlloca {
+                llvm_type: bytes_type,
+                target: object.index,
             });
 
             object

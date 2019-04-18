@@ -1,4 +1,5 @@
-use super::{get_builtin_expressions, LLVMInstruction, Scope, Type, CompilerData};
+use super::{LLVMInstruction, Type};
+use llvm_sys::{analysis::*, core::*, execution_engine::*};
 
 /// Objects are to represent values,
 /// variables, and functions.
@@ -142,27 +143,5 @@ impl Function {
     pub fn create_block(&mut self, name: String) -> usize {
         self.basic_blocks.push(BasicBlock::new(name));
         self.basic_blocks.len() - 1
-    }
-}
-
-// the dispcompiler object is a global
-/// that contains context for the whole
-/// disp application being created.
-pub struct Compiler<'a> {
-    pub scope: Scope<'a>,
-    pub data: CompilerData,
-}
-
-impl<'a> Compiler<'a> {
-    pub fn new() -> Compiler<'a> {
-        let mut compiler = Compiler {
-            scope: Scope::new(None),
-            data: CompilerData::new(),
-        };
-        for expression in get_builtin_expressions().values() {
-            (expression.boostrap_compiler)(&mut compiler);
-        }
-        // add_native_functions(&mut compiler);
-        compiler
     }
 }

@@ -5,8 +5,8 @@ use std::{fs::File, io::Read};
 // load and execute a file into the vm.
 pub fn exec_file<'a>(compiler: &mut Compiler<'a>, path: &str) -> GenericResult<()> {
     load_file(compiler, path, "main")?;
-    let mut builder = Builder::new();
-    builder.build(&compiler.data);
+    let mut builder = Builder::new(&compiler.llvm);
+    builder.build(&compiler.data, &mut compiler.llvm.types);
     let f = builder.get_function("main-main")?;
     if cfg!(feature = "debug") {
         let before = Instant::now();

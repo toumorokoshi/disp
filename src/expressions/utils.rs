@@ -34,7 +34,7 @@ pub fn add_function_to_compiler(
 ) {
     let mut llvm_args = Vec::with_capacity(arg_types.len());
     for arg in arg_types {
-        llvm_args.push(to_llvm_type(&arg));
+        llvm_args.push(compiler.llvm.types.get(&arg));
     }
     if let None = compiler.scope.get_function(name, arg_types) {
         add_function(

@@ -30,8 +30,8 @@ pub fn load_string_into_compiler(compiler: &mut Compiler, input: &str) -> Generi
         println!("building functions: {:?}...", &annotated_functions.keys());
     }
     build_functions(compiler, &annotated_functions)?;
-    let mut builder = Builder::new();
-    builder.build(&compiler.data);
+    let mut builder = Builder::new(&compiler.llvm);
+    builder.build(&compiler.data, &mut compiler.llvm.types);
     let f = builder.get_function("main")?;
     if cfg!(feature = "debug") {
         let before = Instant::now();

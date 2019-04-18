@@ -1,5 +1,6 @@
 use super::{
-    llvm_declare_array, CompilerData, DispError, DispResult, Function, FunctionType, NativeFunction, to_llvm_type
+    CompilerData, DispError, DispResult, Function, FunctionType, LLVMCompiler,
+    NativeFunction, LLVMTypeCache
 };
 /// the builder is responsible for building LLVM code.
 /// this is a separate layer from the codegen portion as it enables
@@ -21,33 +22,15 @@ pub struct Builder {
 }
 
 impl Builder {
-    pub fn new() -> Builder {
-        unsafe {
-            // It would be nice to create a new context here. However,
-            // earlier in the code types are already created. These types
-            // are built within the global context, which is the context passed
-            // into functions. As such, creating a new context would create a
-            // context mismatch between the function (global) context and the
-            // context used by the rest of the builder.
-            let context = LLVMGetGlobalContext();
-            // This is required to ensure that exported
-            // functions are available to the context.
-            LLVMLoadLibraryPermanently(ptr::null());
-            let module = LLVMModuleCreateWithNameInContext(to_ptr("main"), context);
-            let builder = LLVMCreateBuilderInContext(context);
-            // TODO: figure out the right organization
-            // for LLVM objects and codegen objects... strongly
-            // itertwined.
-            llvm_declare_array(context, LLVMInt8Type());
-            return Builder {
-                context,
-                module,
-                builder,
-            };
+    pub fn new(llvm: &LLVMCompiler) -> Builder {
+        Builder {
+            context: llvm.context,
+            module: llvm.module,
+            builder: llvm.builder,
         }
     }
 
-    pub fn build(&mut self, compiler: &CompilerData) {
+    pub fn build(&mut self, compiler: &CompilerData, types: &mut LLVMTypeCache) {
         let mut functions_to_build = vec![];
         let mut built_functions = HashSet::new();
         for function in compiler.functions.values() {
@@ -56,10 +39,10 @@ impl Builder {
                     FunctionType::Disp(f) => unsafe {
                         let mut args = Vec::with_capacity(f.arg_types.len());
                         for a in &f.arg_types {
-                            args.push(to_llvm_type(&a));
+                            args.push(types.get(&a));
                         }
                         let return_type = match f.return_type {
-                            Some(ref return_type) => to_llvm_type(&return_type),
+                            Some(ref return_type) => types.get(&return_type),
                             None => LLVMVoidType(),
                         };
                         let function_type =
@@ -68,7 +51,7 @@ impl Builder {
                             LLVMAddFunction(self.module, to_ptr(&f.name), function_type);
                         functions_to_build.push((llvm_function, f.clone()));
                     },
-                    FunctionType::Native(f) => self.build_native_function(&f),
+                    FunctionType::Native(f) => self.build_native_function(&f, types),
                 }
                 built_functions.insert(function.name().to_owned());
             }
@@ -97,10 +80,10 @@ impl Builder {
         }
     }
 
-    pub fn build_native_function(&mut self, function: &NativeFunction) {
+    pub fn build_native_function(&mut self, function: &NativeFunction, types: &mut LLVMTypeCache) {
         let mut llvm_args = Vec::with_capacity(function.arg_types.len());
         for arg in &function.arg_types {
-            llvm_args.push(to_llvm_type(&arg));
+            llvm_args.push(types.get(&arg));
         }
         unsafe {
             let llvm_function = LLVMGetNamedFunction(self.module, to_ptr(&function.name));
@@ -109,7 +92,7 @@ impl Builder {
                     self.module,
                     to_ptr(&function.name),
                     LLVMFunctionType(
-                        to_llvm_type(&function.return_type),
+                        types.get(&function.return_type),
                         llvm_args.as_mut_ptr(),
                         llvm_args.len() as u32,
                         0,

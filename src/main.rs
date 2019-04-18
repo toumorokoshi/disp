@@ -7,7 +7,6 @@ extern crate inference;
 extern crate libc;
 extern crate llvm_sys;
 
-mod array;
 mod ast;
 mod compiler;
 mod error;
@@ -20,20 +19,21 @@ mod macros;
 mod parser;
 mod stdlib;
 mod type_annotator;
+mod types;
 mod workflow;
 
-use self::array::llvm_declare_array;
 use self::ast::Token;
-use self::compiler::{CompilerData, Type};
+use self::compiler::CompilerData;
 use self::error::{DispError, DispResult, GenericError, GenericResult};
+use self::types::{Type, TypeSet};
 // Exporting all functions publicy, so they will
 // be discovered by llvm.
 use self::expressions::{get_builtin_expressions, BuiltinExpressions};
 use self::function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
 use self::llvm_builder::{Builder, LLVMInstruction};
 pub use self::llvm_codegen::{
-    build_functions, to_ptr, CodegenError, Compiler, Function, FunctionType, NativeFunction,
-    Object, Scope, to_llvm_type,
+    build_functions, to_ptr, CodegenError, Compiler, Function, FunctionType,
+    LLVMCompiler, NativeFunction, Object, Scope, Context, LLVMTypeCache
 };
 use self::loader::{exec_file, load_file};
 use self::macros::{apply_macros_to_function_map, parse_macro, MacroMap};
@@ -51,10 +51,6 @@ use std::{
 // use stdlib::load_stdlib;
 
 fn main() {
-    // let builder = LLVMBuilder::new();
-    // builder.build_function();
-    // builder.run();
-    // builder.cleanup();
     let args: Vec<String> = env::args().collect();
     let result = match args.len() {
         2 => execute(&args[1]),
