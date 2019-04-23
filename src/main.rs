@@ -32,8 +32,8 @@ use self::expressions::{get_builtin_expressions, BuiltinExpressions};
 use self::function_loader::{parse_functions_and_macros, FunctionMap, UnparsedFunction};
 use self::llvm_builder::{Builder, LLVMInstruction};
 pub use self::llvm_codegen::{
-    build_functions, to_ptr, CodegenError, Compiler, Function, FunctionType,
-    LLVMCompiler, NativeFunction, Object, Scope, Context, LLVMTypeCache
+    build_functions, to_ptr, CodegenError, Compiler, Context, Function, FunctionType, LLVMCompiler,
+    LLVMTypeCache, NativeFunction, Object, Scope,
 };
 use self::loader::{exec_file, load_file};
 use self::macros::{apply_macros_to_function_map, parse_macro, MacroMap};

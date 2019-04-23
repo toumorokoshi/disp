@@ -1,14 +1,20 @@
 use libc::c_char;
 use std::ffi::CStr;
 
-#[no_mangle]
-pub extern "C" fn get_bytes(value: *const c_char, index: i64) -> u8 {
-    unsafe { CStr::from_ptr(value).to_bytes()[index as usize] }
+#[repr(C)]
+pub struct Bytes<'a> {
+    pub values: &'a [u8],
+    pub size: i64,
 }
 
 #[no_mangle]
-pub extern "C" fn print_bytes(value: *const c_char) {
-    print!("{}", unsafe { CStr::from_ptr(value).to_str().unwrap() });
+pub extern "C" fn get_bytes(bytes: *mut Bytes, index: i64) -> u8 {
+    unsafe { (*bytes).values[index as usize] }
+}
+
+#[no_mangle]
+pub extern "C" fn print_bytes(bytes: *mut Bytes) {
+    print!("{}", unsafe { String::from_utf8((*bytes).values.to_vec()).unwrap() });
 }
 
 #[no_mangle]
@@ -17,6 +23,8 @@ pub extern "C" fn print_byte(value: u8) {
 }
 
 #[no_mangle]
-pub extern "C" fn len_bytes(value: *const c_char) -> i64 {
-    unsafe { CStr::from_ptr(value).to_str().unwrap().len() as i64 }
+pub extern "C" fn len_bytes(bytes: *mut Bytes) -> i64 {
+    unsafe {
+        (*bytes).size
+    }
 }

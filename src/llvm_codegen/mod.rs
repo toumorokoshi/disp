@@ -3,20 +3,20 @@ mod context;
 mod core;
 mod error;
 mod llvm_context;
-mod types;
 mod scope;
+mod types;
 mod utils;
+pub use self::compiler::build_functions;
 pub use self::context::Context;
-pub use self::compiler::{build_functions};
 pub use self::core::{BasicBlock, Function, FunctionType, NativeFunction, Object};
 pub use self::error::{CodegenError, CodegenResult};
 pub use self::llvm_context::LLVMCompiler;
 pub use self::scope::Scope;
-pub use self::utils::*;
 pub use self::types::LLVMTypeCache;
+pub use self::utils::*;
 use super::{
-    get_builtin_expressions, AnnotatedFunction, AnnotatedFunctionMap, BuiltinExpressions,
-    CompilerData, LLVMInstruction, Token, Type,
+    get_builtin_expressions, AnnotatedFunction, AnnotatedFunctionMap, CompilerData,
+    LLVMInstruction, Token, Type,
 };
 
 // the dispcompiler object is a global

@@ -1,4 +1,4 @@
-use super::{Type, to_ptr};
+use super::{to_ptr, Type};
 use llvm_sys::{core::*, execution_engine::*, prelude::*, support::*, target::*, *};
 use std::collections::HashMap;
 
@@ -27,9 +27,11 @@ impl LLVMTypeCache {
     fn to_llvm_type(&self, t: &Type) -> LLVMTypeRef {
         unsafe {
             match t {
-                &Type::Array(ref subtype) => llvm_declare_array(self.context, self.to_llvm_type(subtype)),
+                &Type::Array(ref subtype) => {
+                    llvm_declare_array(self.context, self.to_llvm_type(subtype))
+                }
                 &Type::Bool => LLVMInt1TypeInContext(self.context),
-                &Type::Bytes => LLVMPointerType(LLVMInt8TypeInContext(self.context), 0),
+                &Type::Bytes => llvm_declare_array(self.context, self.to_llvm_type(&Type::Byte)),
                 &Type::Byte => LLVMInt8TypeInContext(self.context),
                 &Type::FunctionPrototype => LLVMVoidTypeInContext(self.context),
                 &Type::Int => LLVMInt64TypeInContext(self.context),
@@ -47,7 +49,10 @@ fn llvm_declare_array(context: LLVMContextRef, base_type: LLVMTypeRef) -> LLVMTy
     // a pointer of the base type, representing the raw array
     // an i64 representing the type
     unsafe {
-        let mut types = [base_type, LLVMInt64TypeInContext(context)];
+        let mut types = [
+            LLVMPointerType(base_type, 0),
+            LLVMInt64TypeInContext(context),
+        ];
         let struct_ref = LLVMStructCreateNamed(context, to_ptr(&format!("array[{:?}]", base_type)));
         LLVMStructSetBody(struct_ref, types.as_mut_ptr(), 2, 1);
         return struct_ref;

@@ -1,6 +1,6 @@
 use super::{
-    CompilerData, DispError, DispResult, Function, FunctionType, LLVMCompiler,
-    NativeFunction, LLVMTypeCache
+    CompilerData, DispError, DispResult, Function, FunctionType, LLVMCompiler, LLVMTypeCache,
+    NativeFunction,
 };
 /// the builder is responsible for building LLVM code.
 /// this is a separate layer from the codegen portion as it enables
@@ -172,7 +172,11 @@ impl Builder {
                         } => {
                             let mut value_indices = vec![];
                             for i in 0..indices.len() {
-                                value_indices.push(objects[indices[i]]);
+                                value_indices.push(LLVMConstInt(
+                                    LLVMInt32TypeInContext(self.context),
+                                    indices[i],
+                                    0,
+                                ));
                             }
                             objects[*target] = LLVMBuildGEP(
                                 self.builder,
@@ -327,7 +331,7 @@ pub enum LLVMInstruction {
     },
     BuildGEP {
         value: usize,
-        indices: Vec<usize>,
+        indices: Vec<u64>,
         target: usize,
     },
     BuildGlobalString {

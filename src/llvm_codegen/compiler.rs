@@ -1,6 +1,6 @@
 use super::{
-    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Context,
-    Compiler, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
+    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Compiler,
+    Context, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
 };
 
 pub fn build_functions(
@@ -55,7 +55,11 @@ fn build_function(
                 target: param_value,
             });
             let param = context.allocate(source_function.arg_types[i].clone());
-            let param_type = context.compiler.llvm.types.get(&source_function.arg_types[i]);
+            let param_type = context
+                .compiler
+                .llvm
+                .types
+                .get(&source_function.arg_types[i]);
             context.add_instruction(LLVMInstruction::BuildAlloca {
                 llvm_type: param_type,
                 target: param.index,
@@ -98,21 +102,47 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
         }
         &Token::None => Object::none(),
         &Token::Bytes(ref s) => {
-            let object = context.allocate(Type::Bytes);
             let bytes_type = context.compiler.llvm.types.get(&Type::Bytes);
+            let global_string_pointer = context.allocate_without_type();
             context.add_instruction(LLVMInstruction::BuildGlobalString {
                 value: *s.clone(),
-                target: object.index,
+                target: global_string_pointer,
             });
+            let object = context.allocate(Type::Bytes);
             context.add_instruction(LLVMInstruction::BuildAlloca {
                 llvm_type: bytes_type,
                 target: object.index,
             });
-            context.add_instruction(LLVMInstruction::BuildAlloca {
-                llvm_type: bytes_type,
-                target: object.index,
+            // assign the array pointer first
+            let array_pointer = context.allocate_without_type();
+            context.add_instruction(LLVMInstruction::BuildGEP {
+                value: object.index,
+                // first element of object pointer, first field
+                indices: vec![0, 0],
+                target: array_pointer,
             });
-
+            context.add_instruction(LLVMInstruction::BuildStore {
+                source: global_string_pointer,
+                target: array_pointer,
+            });
+            // set the length next
+            let length_pointer = context.allocate_without_type();
+            let length_value = context.allocate(Type::Int);
+            context.add_instruction(LLVMInstruction::BuildGEP {
+                value: object.index,
+                // first element of object pointer, second field
+                indices: vec![0, 1],
+                target: length_pointer,
+            });
+            context.add_instruction(LLVMInstruction::ConstInt {
+                value: s.len() as i64,
+                target: length_value.index,
+            });
+            context.add_instruction(LLVMInstruction::BuildStore {
+                source: length_value.index,
+                target: length_pointer,
+            });
+            // finally, return the object
             object
         }
         &Token::String(ref s) => {
