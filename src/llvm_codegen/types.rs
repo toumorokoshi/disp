@@ -31,7 +31,10 @@ impl LLVMTypeCache {
                     llvm_declare_array(self.context, self.to_llvm_type(subtype))
                 }
                 &Type::Bool => LLVMInt1TypeInContext(self.context),
-                &Type::Bytes => llvm_declare_array(self.context, self.to_llvm_type(&Type::Byte)),
+                &Type::Bytes => LLVMPointerType(
+                    llvm_declare_array(self.context, self.to_llvm_type(&Type::Byte)),
+                    0,
+                ),
                 &Type::Byte => LLVMInt8TypeInContext(self.context),
                 &Type::FunctionPrototype => LLVMVoidTypeInContext(self.context),
                 &Type::Int => LLVMInt64TypeInContext(self.context),
@@ -55,6 +58,6 @@ fn llvm_declare_array(context: LLVMContextRef, base_type: LLVMTypeRef) -> LLVMTy
         ];
         let struct_ref = LLVMStructCreateNamed(context, to_ptr(&format!("array[{:?}]", base_type)));
         LLVMStructSetBody(struct_ref, types.as_mut_ptr(), 2, 1);
-        return struct_ref;
+        struct_ref
     }
 }

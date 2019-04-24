@@ -1,7 +1,9 @@
 use super::{
-    AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError, CodegenResult, Compiler,
-    Context, Function, FunctionType, LLVMInstruction, Object, Scope, Token, Type,
+    extract_type_from_pointer, AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError,
+    CodegenResult, Compiler, Context, Function, FunctionType, LLVMInstruction, Object, Scope,
+    Token, Type,
 };
+use llvm_sys::core::*;
 
 pub fn build_functions(
     compiler: &mut Compiler,
@@ -102,7 +104,9 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
         }
         &Token::None => Object::none(),
         &Token::Bytes(ref s) => {
-            let bytes_type = context.compiler.llvm.types.get(&Type::Bytes);
+            let bytes_type =
+                extract_type_from_pointer(context.compiler.llvm.types.get(&Type::Bytes));
+            // extract the proper subtype
             let global_string_pointer = context.allocate_without_type();
             context.add_instruction(LLVMInstruction::BuildGlobalString {
                 value: *s.clone(),
@@ -135,7 +139,8 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
                 target: length_pointer,
             });
             context.add_instruction(LLVMInstruction::ConstInt {
-                value: s.len() as i64,
+                // value: s.len() as i64,
+                value: (s.len() + 10) as i64,
                 target: length_value.index,
             });
             context.add_instruction(LLVMInstruction::BuildStore {
