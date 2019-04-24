@@ -75,7 +75,7 @@ pub extern "C" fn print_map(map: *mut HashMap<String, bool>) {
 
 #[no_mangle]
 pub extern "C" fn print_string(value: *const c_char) {
-    print!("{}", unsafe { CStr::from_ptr(value).to_str().unwrap() });
+    print!("{}\n", unsafe { CStr::from_ptr(value).to_str().unwrap() });
 }
 
 #[no_mangle]
@@ -85,5 +85,5 @@ pub extern "C" fn print_bool(value: bool) {
 
 #[no_mangle]
 pub extern "C" fn print_int(value: i64) {
-    print!("{}", value);
+    print!("{}\n", value);
 }

@@ -140,7 +140,7 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
             });
             context.add_instruction(LLVMInstruction::ConstInt {
                 // value: s.len() as i64,
-                value: (s.len() + 10) as i64,
+                value: s.len() as i64,
                 target: length_value.index,
             });
             context.add_instruction(LLVMInstruction::BuildStore {
