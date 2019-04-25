@@ -1,8 +1,8 @@
 mod parser;
 
+pub use self::parser::parse_macro;
 use super::{DispError, DispResult, FunctionMap, Token, UnparsedFunction};
 use std::{collections::HashMap, rc::Rc};
-pub use self::parser::parse_macro;
 
 /// Macros represent functions that execute
 /// compile time and return back additional syntax blocks to
@@ -54,7 +54,11 @@ fn apply_macros_to_token(macros: &MacroMap, token: &mut Token) -> DispResult<Tok
 
 /// Return the expanded token if an expansion was performed. Otherwise
 /// return None
-fn expand_expression(macros: &MacroMap, expression: Vec<Token>) -> DispResult<Token> {
+fn expand_expression(macros: &MacroMap, mut expression: Vec<Token>) -> DispResult<Token> {
+    let expression_length = expression.len();
+    for i in 0..expression_length {
+        expression[i] = apply_macros_to_token(macros, &mut expression[i])?;
+    }
     if let Some((func_token, args)) = expression.split_first() {
         if let Token::Symbol(ref s) = func_token {
             if let Some(macro_instance) = macros.get(&**s) {
