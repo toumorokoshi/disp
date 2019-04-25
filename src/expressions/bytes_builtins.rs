@@ -1,5 +1,4 @@
-use libc::c_char;
-use std::{ffi::CStr, slice, str};
+use std::{slice, str};
 
 #[repr(C)]
 pub struct Bytes {

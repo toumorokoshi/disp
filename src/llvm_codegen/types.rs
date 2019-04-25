@@ -27,14 +27,9 @@ impl LLVMTypeCache {
     fn to_llvm_type(&self, t: &Type) -> LLVMTypeRef {
         unsafe {
             match t {
-                &Type::Array(ref subtype) => {
-                    llvm_declare_array(self.context, self.to_llvm_type(subtype))
-                }
+                &Type::Array(ref subtype) => self.llvm_declare_array(subtype),
                 &Type::Bool => LLVMInt1TypeInContext(self.context),
-                &Type::Bytes => LLVMPointerType(
-                    llvm_declare_array(self.context, self.to_llvm_type(&Type::Byte)),
-                    0,
-                ),
+                &Type::Bytes => LLVMPointerType(self.llvm_declare_array(&Type::Byte), 0),
                 &Type::Byte => LLVMInt8TypeInContext(self.context),
                 &Type::FunctionPrototype => LLVMVoidTypeInContext(self.context),
                 &Type::Int => LLVMInt64TypeInContext(self.context),
@@ -44,20 +39,21 @@ impl LLVMTypeCache {
             }
         }
     }
-}
 
-// Declare the LLVM Array Object Type
-fn llvm_declare_array(context: LLVMContextRef, base_type: LLVMTypeRef) -> LLVMTypeRef {
-    // Our array struct is two values:
-    // a pointer of the base type, representing the raw array
-    // an i64 representing the type
-    unsafe {
-        let mut types = [
-            LLVMPointerType(base_type, 0),
-            LLVMInt64TypeInContext(context),
-        ];
-        let struct_ref = LLVMStructCreateNamed(context, to_ptr(&format!("array[{:?}]", base_type)));
-        LLVMStructSetBody(struct_ref, types.as_mut_ptr(), 2, 1);
-        struct_ref
+    // Declare the LLVM Array Object Type
+    fn llvm_declare_array(&self, base_type: &Type) -> LLVMTypeRef {
+        // Our array struct is two values:
+        // a pointer of the base type, representing the raw array
+        // an i64 representing the type
+        unsafe {
+            let mut types = [
+                LLVMPointerType(self.to_llvm_type(base_type), 0),
+                LLVMInt64TypeInContext(self.context),
+            ];
+            let struct_ref =
+                LLVMStructCreateNamed(self.context, to_ptr(&format!("Array<{:?}>", base_type)));
+            LLVMStructSetBody(struct_ref, types.as_mut_ptr(), 2, 1);
+            struct_ref
+        }
     }
 }

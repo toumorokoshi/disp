@@ -4,4 +4,3 @@ print other-byte-array
 print (len other-byte-array)
 print (len byte-array)
 print (get other-byte-array 0)
-print 15

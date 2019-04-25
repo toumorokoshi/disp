@@ -6,10 +6,13 @@
 Disp
 ====
 
-Disp is a programming language designed with the goals of:
+Disp is a programming language, with the goal of being a practical choice as a single programming languages across an organization.
 
-* high performance by default: choices are built in that ensure mechanical sympathy.
-* managing large codebases easily: reducing cost for refactors, managing code across multiple code repositories.
+This goal manifests itself as several sub-goals:
+
+* good performance for many use cases: reduces the need of learning a second, faster language once your primary one hits performance limits.
+* upgrading large codebases easily: reducing cost for major refactors, managing code across multiple code repositories.
+* maintainability and readability: large organizations will face some level of developer churn, and the person who originally wrote the code may no longer be there. 
 
 The specific features of Disp include:
 
@@ -22,7 +25,7 @@ The specific features of Disp include:
   Disp is not ready for use in any production project! Literally anything about the language can change until 1.0
 
 
-You can see a code example here (solving the qualifier problem a for Google Code Jam 2008):
+You can see a recent code example here (solving the qualifier problem a for Google Code Jam 2008):
 
 .. literalinclude:: ../examples/gcj_2008.ds
   :language: lisp

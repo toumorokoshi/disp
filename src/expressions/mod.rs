@@ -1,8 +1,8 @@
 use self::utils::codegen_binop;
 use super::llvm_codegen::{compiler::gen_token, CodegenError, CodegenResult, Compiler, Scope};
 use super::{
-    CompilerData, Context, FunctionType, GenericResult, LLVMInstruction,
-    NativeFunction, Object, Token, Type, TypevarFunction,
+    CompilerData, Context, FunctionType, GenericResult, LLVMInstruction, NativeFunction, Object,
+    Token, Type, TypevarFunction,
 };
 use inference::{Constraint, TypeResolver, TypeVar};
 use libc::c_char;
@@ -17,7 +17,9 @@ mod get_expression;
 mod len_expression;
 mod let_expression;
 mod match_expression;
+mod not_expression;
 mod print_expression;
+pub use self::not_expression::*;
 pub use self::print_expression::*;
 mod return_expression;
 mod subtract_expression;
@@ -41,15 +43,16 @@ pub struct Expression {
 /// Return all expressions
 pub fn get_builtin_expressions() -> BuiltinExpressions {
     let mut expressions = HashMap::new();
-    expressions.insert(String::from("eq"), eq_expression::expression());
-    expressions.insert(String::from("let"), let_expression::expression());
-    expressions.insert(String::from("len"), len_expression::expression());
-    expressions.insert(String::from("return"), return_expression::expression());
-    expressions.insert(String::from("match"), match_expression::expression());
     expressions.insert(String::from("-"), subtract_expression::expression());
     expressions.insert(String::from("+"), add_expression::expression());
-    expressions.insert(String::from("print"), print_expression::expression());
+    expressions.insert(String::from("eq"), eq_expression::expression());
     expressions.insert(String::from("get"), get_expression::expression());
+    expressions.insert(String::from("let"), let_expression::expression());
+    expressions.insert(String::from("len"), len_expression::expression());
+    expressions.insert(String::from("match"), match_expression::expression());
+    expressions.insert(String::from("not"), not_expression::expression());
+    expressions.insert(String::from("print"), print_expression::expression());
+    expressions.insert(String::from("return"), return_expression::expression());
     expressions
 }
 
