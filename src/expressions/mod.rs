@@ -19,6 +19,7 @@ mod let_expression;
 mod match_expression;
 mod not_expression;
 mod print_expression;
+mod while_expression;
 pub use self::not_expression::*;
 pub use self::print_expression::*;
 mod return_expression;
@@ -53,6 +54,7 @@ pub fn get_builtin_expressions() -> BuiltinExpressions {
     expressions.insert(String::from("not"), not_expression::expression());
     expressions.insert(String::from("print"), print_expression::expression());
     expressions.insert(String::from("return"), return_expression::expression());
+    expressions.insert(String::from("while"), while_expression::expression());
     expressions
 }
 
