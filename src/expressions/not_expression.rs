@@ -8,15 +8,7 @@ pub fn expression() -> Expression {
     }
 }
 
-fn boostrap_compiler(compiler: &mut Compiler) {
-    add_function_to_compiler(
-        compiler,
-        "not",
-        Type::Bool,
-        &vec![Type::Bool],
-        "not",
-    );
-}
+fn boostrap_compiler(compiler: &mut Compiler) {}
 
 fn typecheck(
     resolver: &mut TypeResolver<Type>,
@@ -30,11 +22,11 @@ fn typecheck(
 }
 
 pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
-    call_function(context, "not", args)
-}
-
-
-#[no_mangle]
-pub extern "C" fn not(value: bool) -> bool {
-    !value
+    let source = gen_token(context, &args[0])?;
+    let target = context.allocate(Type::Bool);
+    context.add_instruction(LLVMInstruction::BuildNot {
+        source: source.index,
+        target: target.index,
+    });
+    Ok(target)
 }
