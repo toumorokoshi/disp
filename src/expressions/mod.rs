@@ -1,7 +1,7 @@
 use self::utils::codegen_binop;
 use super::llvm_codegen::{compiler::gen_token, CodegenError, CodegenResult, Compiler, Scope};
 use super::{
-    CompilerData, Context, FunctionType, GenericResult, LLVMInstruction, NativeFunction, Object,
+    Array, CompilerData, Context, FunctionType, GenericResult, LLVMInstruction, NativeFunction, Object,
     Token, Type, TypevarFunction,
 };
 use inference::{Constraint, TypeResolver, TypeVar};

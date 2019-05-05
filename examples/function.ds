@@ -1,2 +1,10 @@
 fn foo [x y]
   print bar
+
+fn typecheck [
+  {:n resolver :t TypeResolver :d "type resolver to use" :e (new TypeResolver)}
+  {:n function :t TypevarFunction}
+  {:n args     :t (Vec TypeVar)}
+] GenericResult 
+  let type-var (create_type_var resolver)
+  add_constraint resolver (IsLiteral type-var Type::Bool)

@@ -7,6 +7,7 @@ extern crate inference;
 extern crate libc;
 extern crate llvm_sys;
 
+mod array;
 mod ast;
 mod compiler;
 mod error;
@@ -22,6 +23,7 @@ mod type_annotator;
 mod types;
 mod workflow;
 
+use self::array::Array;
 use self::ast::Token;
 use self::compiler::CompilerData;
 use self::error::{DispError, DispResult, GenericError, GenericResult};

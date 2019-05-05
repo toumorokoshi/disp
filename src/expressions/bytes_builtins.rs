@@ -1,10 +1,7 @@
+use super::Array;
 use std::{slice, str};
 
-#[repr(C)]
-pub struct Bytes {
-    pub values: *mut u8,
-    pub size: i64,
-}
+type Bytes = Array<u8>;
 
 #[no_mangle]
 pub extern "C" fn get_bytes(bytes: *mut Bytes, index: i64) -> u8 {

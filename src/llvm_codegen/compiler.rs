@@ -104,15 +104,20 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
         }
         &Token::None => Object::none(),
         &Token::Bytes(ref s) => {
-            let bytes_type =
-                extract_type_from_pointer(context.compiler.llvm.types.get(&Type::Bytes));
-            // extract the proper subtype
+            let bytes_type = extract_type_from_pointer(
+                context
+                    .compiler
+                    .llvm
+                    .types
+                    .get(&Type::Array(Box::new(Type::Byte))),
+            );
+            // extract the proper subtypalex chance pove
             let global_string_pointer = context.allocate_without_type();
             context.add_instruction(LLVMInstruction::BuildGlobalString {
                 value: *s.clone(),
                 target: global_string_pointer,
             });
-            let object = context.allocate(Type::Bytes);
+            let object = context.allocate(Type::Array(Box::new(Type::Byte)));
             context.add_instruction(LLVMInstruction::BuildAlloca {
                 llvm_type: bytes_type,
                 target: object.index,

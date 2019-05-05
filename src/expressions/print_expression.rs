@@ -28,7 +28,7 @@ fn boostrap_compiler(compiler: &mut Compiler) {
         compiler,
         "print",
         Type::None,
-        &vec![Type::Bytes],
+        &vec![Type::Array(Box::new(Type::Byte))],
         "print_bytes",
     );
     add_function_to_compiler(

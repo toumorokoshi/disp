@@ -13,7 +13,7 @@ fn boostrap_compiler(compiler: &mut Compiler) {
         compiler,
         "len",
         Type::Int,
-        &vec![Type::Bytes],
+        &vec![Type::Array(Box::new(Type::Byte))],
         "len_bytes",
     );
 }

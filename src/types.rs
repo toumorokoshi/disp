@@ -7,7 +7,6 @@ pub enum Type {
     Array(Box<Type>),
     Bool,
     Byte,
-    Bytes,
     FunctionPrototype,
     Int,
     None,
