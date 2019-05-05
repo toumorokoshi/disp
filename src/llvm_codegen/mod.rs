@@ -1,3 +1,4 @@
+mod array;
 pub mod compiler;
 mod context;
 mod core;
@@ -6,6 +7,7 @@ mod llvm_context;
 mod scope;
 mod types;
 mod utils;
+pub use self::array::create_array;
 pub use self::compiler::build_functions;
 pub use self::context::Context;
 pub use self::core::{BasicBlock, Function, FunctionType, NativeFunction, Object};
