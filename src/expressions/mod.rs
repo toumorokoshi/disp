@@ -1,8 +1,8 @@
 use self::utils::codegen_binop;
 use super::llvm_codegen::{compiler::gen_token, CodegenError, CodegenResult, Compiler, Scope};
 use super::{
-    Array, CompilerData, Context, FunctionType, GenericResult, LLVMInstruction, NativeFunction, Object,
-    Token, Type, TypevarFunction,
+    Array, CompilerData, Context, FunctionType, GenericResult, LLVMInstruction, NativeFunction,
+    Object, Token, Type, TypevarFunction,
 };
 use inference::{Constraint, TypeResolver, TypeVar};
 use libc::c_char;
@@ -19,9 +19,11 @@ mod let_expression;
 mod match_expression;
 mod not_expression;
 mod print_expression;
+mod readline_expression;
 mod while_expression;
 pub use self::not_expression::*;
 pub use self::print_expression::*;
+pub use self::readline_expression::*;
 mod return_expression;
 mod subtract_expression;
 mod utils;
@@ -54,6 +56,7 @@ pub fn get_builtin_expressions() -> BuiltinExpressions {
     expressions.insert(String::from("not"), not_expression::expression());
     expressions.insert(String::from("print"), print_expression::expression());
     expressions.insert(String::from("return"), return_expression::expression());
+    expressions.insert(String::from("read-line"), readline_expression::expression());
     expressions.insert(String::from("while"), while_expression::expression());
     expressions
 }
