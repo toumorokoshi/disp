@@ -1,5 +1,8 @@
 use super::*;
-use std::io;
+use std::{
+    ffi::{CStr, CString},
+    io,
+};
 
 pub fn expression() -> Expression {
     Expression {
@@ -10,32 +13,26 @@ pub fn expression() -> Expression {
 }
 
 fn boostrap_compiler(compiler: &mut Compiler) {
-    add_function_to_compiler(
-        compiler,
-        "len",
-        Type::Int,
-        &vec![Type::Array(Box::new(Type::Byte))],
-        "len_bytes",
-    );
+    add_function_to_compiler(compiler, "int", Type::Int, &vec![Type::String], "int");
 }
 
 fn typecheck(
     resolver: &mut TypeResolver<Type>,
     _function: &TypevarFunction,
-    _args: &Vec<TypeVar>,
+    args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     let type_var = resolver.create_type_var();
+    resolver.add_constraint(Constraint::IsLiteral(args[0], Type::String))?;
     resolver.add_constraint(Constraint::IsLiteral(type_var, Type::Int))?;
     Ok(type_var)
 }
 
 pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
-    call_function(context, "len", args)
+    call_function(context, "int", args)
 }
 
 #[no_mangle]
-pub extern "C" fn readline() -> *const c_char {
-    io::stdin
-    print!("{}", value);
+pub extern "C" fn int(value: *const c_char) -> i64 {
+    let s = unsafe { CStr::from_ptr(value).to_str().unwrap() };
+    s.parse::<i64>().unwrap()
 }
-

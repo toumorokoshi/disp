@@ -1,4 +1,4 @@
-let n (Int (read-line))
+let n (int (read-line))
 let i 0
 while (not (eq i n))
 	let s (Int (read-line))

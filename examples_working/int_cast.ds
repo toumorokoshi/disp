@@ -1,1 +1,1 @@
-print (Int "15")
+print (int "15")
