@@ -1,24 +1,24 @@
-use super::{LLVMInstruction, Type};
+use super::{LLVMInstruction, Type, LLVMValueRef};
 use llvm_sys::{analysis::*, core::*, execution_engine::*};
+use std::ptr;
 
 /// Objects are to represent values,
 /// variables, and functions.
 #[derive(Clone, Debug)]
 pub struct Object {
-    pub index: usize,
+    pub llvm_value: LLVMValueRef,
     pub object_type: Type,
 }
 
 impl Object {
-    pub fn new(index: usize, object_type: Type) -> Object {
+    pub fn new(llvm_value: LLVMValueRef, object_type: Type) -> Object {
         Object {
-            index: index,
-            object_type: object_type,
+            llvm_value, object_type
         }
     }
 
     pub fn none() -> Object {
-        Object::new(0, Type::None)
+        Object::new(ptr::null(), Type::None)
     }
 }
 

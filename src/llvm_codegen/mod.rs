@@ -1,6 +1,7 @@
 mod array;
 pub mod compiler;
 mod context;
+mod functions;
 mod core;
 mod error;
 mod llvm_context;
@@ -20,6 +21,17 @@ use super::{
     get_builtin_expressions, AnnotatedFunction, AnnotatedFunctionMap, CompilerData,
     LLVMInstruction, Token, Type,
 };
+use llvm_sys::{analysis::*, core::*, execution_engine::*, prelude::*, support::*, target::*, *};
+use std::collections::HashSet;
+
+/// Construct the LLVM module and native functions
+pub fn build(compiler: &mut Compiler, functions: &AnnotatedFunctionMap) {
+    // the first step is iterating through all codegen functions,
+    // building their function objects.
+    // this ensures that invocations are referenced.
+    self::functions::populate_function_pointers(&mut compiler.llvm, functions);
+    // now we sequentially construct each function's IR
+}
 
 // the dispcompiler object is a global
 /// that contains context for the whole
@@ -41,5 +53,31 @@ impl<'a> Compiler<'a> {
             (expression.boostrap_compiler)(&mut compiler);
         }
         compiler
+    }
+}
+
+pub fn build_native_function(
+    function: &NativeFunction,
+    module: *mut LLVMModule,
+    types: &mut LLVMTypeCache,
+) {
+    let mut llvm_args = Vec::with_capacity(function.arg_types.len());
+    for arg in &function.arg_types {
+        llvm_args.push(types.get(&arg));
+    }
+    unsafe {
+        let llvm_function = LLVMGetNamedFunction(module, to_ptr(&function.name));
+        if llvm_function.is_null() {
+            LLVMAddFunction(
+                module,
+                to_ptr(&function.name),
+                LLVMFunctionType(
+                    types.get(&function.return_type),
+                    llvm_args.as_mut_ptr(),
+                    llvm_args.len() as u32,
+                    0,
+                ),
+            );
+        }
     }
 }

@@ -1,12 +1,15 @@
 use llvm_sys::{core::*, execution_engine::*, prelude::*, support::*, target::*, *};
 use super::{to_ptr, Type, LLVMTypeCache};
-use std::ptr;
+use std::{ptr, collections::HashMap};
 
 pub struct LLVMCompiler {
     pub context: LLVMContextRef,
     pub module: LLVMModuleRef,
     pub builder: LLVMBuilderRef,
     pub types: LLVMTypeCache,
+    /// pointers to functions.
+    /// used to reference functions in the builder.
+    pub functions: HashMap<String, LLVMValueRef>
 }
 
 impl LLVMCompiler {
@@ -32,7 +35,8 @@ impl LLVMCompiler {
                 context,
                 module,
                 builder,
-                types
+                types,
+                functions: HashMap::new(),
             };
         }
     }

@@ -1,7 +1,7 @@
 use super::{
-    extract_type_from_pointer, AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError,
-    CodegenResult, Compiler, Context, Function, FunctionType, LLVMInstruction, Object, Scope,
-    Token, Type, create_array,
+    create_array, extract_type_from_pointer, AnnotatedFunction, AnnotatedFunctionMap, BasicBlock,
+    CodegenError, CodegenResult, Compiler, Context, Function, FunctionType, LLVMInstruction,
+    Object, Scope, Token, Type,
 };
 use llvm_sys::core::*;
 

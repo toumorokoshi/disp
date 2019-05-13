@@ -1,16 +1,12 @@
-use super::{AnnotatedFunctionMap, Compiler, Function, Scope, Type, Object, LLVMInstruction, BasicBlock};
+use super::{AnnotatedFunctionMap, Compiler, Function, Scope, Type, Object, LLVMInstruction, BasicBlock, to_ptr};
+use llvm_sys::{analysis::*, core::*, execution_engine::*, prelude::*, support::*, target::*, *};
+
 
 pub struct Context<'a, 'b: 'a> {
     pub function_map: &'a AnnotatedFunctionMap,
     pub compiler: &'a mut Compiler<'b>,
     pub function: &'a mut Function,
     pub scope: &'a mut Scope<'b>,
-    /// this should be the current block that
-    /// the builder is building against. This allows
-    /// one to get back to it when switching context,
-    /// for example building a child function.
-    /// TODO: move current block to function
-    pub block: usize,
 }
 
 impl<'a, 'b> Context<'a, 'b> {
@@ -19,19 +15,29 @@ impl<'a, 'b> Context<'a, 'b> {
         compiler: &'a mut Compiler<'b>,
         function: &'a mut Function,
         scope: &'a mut Scope<'b>,
-        block: usize,
     ) -> Context<'a, 'b> {
         return Context {
             function_map,
             compiler,
             function,
             scope,
-            block,
         };
     }
 
     pub fn allocate(&mut self, object_type: Type) -> Object {
-        self.function.allocate(object_type)
+        let typ = self
+            .compiler
+            .llvm
+            .types
+            .get(&object_type);
+        let alloca = LLVMBuildAlloca(
+            self.compiler.llvm.builder, 
+            typ,
+            to_ptr("alloca")
+        );
+        Object::new(
+            alloca, object_type
+        )
     }
 
     pub fn add_instruction(&mut self, instruction: LLVMInstruction) {
