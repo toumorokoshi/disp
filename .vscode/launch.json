@@ -27,7 +27,7 @@
             "debugger_args": [
                 "--args",
                 "./target/debug/disp",
-                "./examples_working/fib.ds",
+                "./examples_working/bytes.ds",
             ],
             "cwd": "${workspaceRoot}"
         }

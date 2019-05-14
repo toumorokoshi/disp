@@ -1,7 +1,7 @@
 use super::{
-    extract_type_from_pointer, AnnotatedFunction, AnnotatedFunctionMap, BasicBlock, CodegenError,
-    CodegenResult, Compiler, Context, Function, FunctionType, LLVMInstruction, Object, Scope,
-    Token, Type, create_array,
+    create_array, extract_type_from_pointer, AnnotatedFunction, AnnotatedFunctionMap, BasicBlock,
+    CodegenError, CodegenResult, Compiler, Context, Function, FunctionType, LLVMInstruction,
+    Object, Scope, Token, Type,
 };
 use llvm_sys::core::*;
 
@@ -139,14 +139,7 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
                 }
             }
         }
-        &Token::Integer(i) => {
-            let object = context.allocate(Type::Int);
-            context.add_instruction(LLVMInstruction::ConstInt {
-                value: i,
-                target: object.index,
-            });
-            object
-        }
+        &Token::Integer(i) => context.const_int(i),
         &Token::List(ref tl) => gen_list(context, tl)?,
         &Token::Expression(ref tl) => gen_expr(context, tl)?,
         _ => Object::none(),

@@ -1,10 +1,15 @@
 /// Utility Code For Creating Disp Arrays (array + fat pointer)
 /// in LLVM
-use super::{extract_type_from_pointer, Context, LLVMInstruction, Type, CodegenResult, Object};
+use super::{extract_type_from_pointer, CodegenResult, Context, LLVMInstruction, Object, Type};
 
 /// array_value_pointer should not be an actual pointer, but the
 /// index in the scope in which the pointer actually lives.
-pub fn create_array(context: &mut Context, subtype: &Type, array_value_pointer: usize, length: i64) -> CodegenResult<Object> {
+pub fn create_array(
+    context: &mut Context,
+    subtype: &Type,
+    array_value_pointer: usize,
+    length: i64,
+) -> CodegenResult<Object> {
     let array_type = Type::Array(Box::new(subtype.clone()));
     // the array type is a pointer to the struct, so
     // we need to get the actual struct type to construct
@@ -15,12 +20,14 @@ pub fn create_array(context: &mut Context, subtype: &Type, array_value_pointer: 
         llvm_type: struct_type,
         target: object.index,
     });
+    let zero_value = context.const_i32(0);
+    let one_value = context.const_i32(1);
     // assign the array pointer first
     let array_pointer = context.allocate_without_type();
     context.add_instruction(LLVMInstruction::BuildGEP {
         value: object.index,
         // first element of object pointer, first field
-        indices: vec![0, 0],
+        indices: vec![zero_value.index, zero_value.index],
         target: array_pointer,
     });
     context.add_instruction(LLVMInstruction::BuildStore {
@@ -33,7 +40,7 @@ pub fn create_array(context: &mut Context, subtype: &Type, array_value_pointer: 
     context.add_instruction(LLVMInstruction::BuildGEP {
         value: object.index,
         // first element of object pointer, second field
-        indices: vec![0, 1],
+        indices: vec![zero_value.index, one_value.index],
         target: length_pointer,
     });
     context.add_instruction(LLVMInstruction::ConstInt {

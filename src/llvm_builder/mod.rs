@@ -171,12 +171,8 @@ impl Builder {
                             target,
                         } => {
                             let mut value_indices = vec![];
-                            for i in 0..indices.len() {
-                                value_indices.push(LLVMConstInt(
-                                    LLVMInt32TypeInContext(self.context),
-                                    indices[i],
-                                    0,
-                                ));
+                            for i in indices {
+                                value_indices.push(objects[*i]);
                             }
                             objects[*target] = LLVMBuildGEP(
                                 self.builder,
@@ -230,7 +226,20 @@ impl Builder {
                                 LLVMConstInt(LLVMInt1Type(), if *value { 1 } else { 0 } as u64, 0);
                         }
                         LLVMInstruction::ConstInt { value, target } => {
-                            objects[*target] = LLVMConstInt(LLVMInt64Type(), *value as u64, 0);
+                            objects[*target] = LLVMConstInt(
+                                // TODO: switch back to 64
+                                // once GEP is figured out
+                                LLVMInt32TypeInContext(self.context),
+                                *value as u64,
+                                0,
+                            );
+                        }
+                        LLVMInstruction::ConstI32 { value, target } => {
+                            objects[*target] = LLVMConstInt(
+                                LLVMInt32TypeInContext(self.context),
+                                *value as u64,
+                                0,
+                            );
                         }
                         LLVMInstruction::BuildCall { name, args, target } => {
                             let function = LLVMGetNamedFunction(self.module, to_ptr(&name));
@@ -331,7 +340,7 @@ pub enum LLVMInstruction {
     },
     BuildGEP {
         value: usize,
-        indices: Vec<u64>,
+        indices: Vec<usize>,
         target: usize,
     },
     BuildGlobalString {
@@ -371,6 +380,10 @@ pub enum LLVMInstruction {
     },
     ConstInt {
         value: i64,
+        target: usize,
+    },
+    ConstI32 {
+        value: i32,
         target: usize,
     },
     GetParam {

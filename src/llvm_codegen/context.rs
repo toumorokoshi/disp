@@ -1,4 +1,6 @@
-use super::{AnnotatedFunctionMap, Compiler, Function, Scope, Type, Object, LLVMInstruction, BasicBlock};
+use super::{
+    AnnotatedFunctionMap, BasicBlock, Compiler, Function, LLVMInstruction, Object, Scope, Type,
+};
 
 pub struct Context<'a, 'b: 'a> {
     pub function_map: &'a AnnotatedFunctionMap,
@@ -40,6 +42,28 @@ impl<'a, 'b> Context<'a, 'b> {
 
     pub fn allocate_without_type(&mut self) -> usize {
         self.function.allocate_object()
+    }
+
+    pub fn const_int(&mut self, value: i64) -> Object {
+        let object = self.allocate(Type::Int);
+        self.add_instruction(LLVMInstruction::ConstInt {
+            value: value,
+            target: object.index,
+        });
+        object
+    }
+
+    /// LLVM GetElementPtr calls must use i32 values to
+    /// specify indices. Thus exposing that option.
+    /// const_int should be used when authoring code for
+    /// disp itself.
+    pub fn const_i32(&mut self, value: i32) -> Object {
+        let object = self.allocate(Type::Int);
+        self.add_instruction(LLVMInstruction::ConstI32 {
+            value: value,
+            target: object.index,
+        });
+        object
     }
 
     // add a basic block, a pointer to a section

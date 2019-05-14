@@ -1,0 +1,5 @@
+let other-byte-array 'barries'
+let x 0
+while (not (eq x 500000))
+	let x (+ x 1)
+	get other-byte-array 1

@@ -1,5 +1,5 @@
 #[repr(C)]
 pub struct Array<T> {
     pub values: *mut T,
-    pub size: i64,
+    pub size: i32,
 }

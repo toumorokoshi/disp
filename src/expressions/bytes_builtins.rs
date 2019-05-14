@@ -4,7 +4,7 @@ use std::{slice, str};
 type Bytes = Array<u8>;
 
 #[no_mangle]
-pub extern "C" fn get_bytes(bytes: *mut Bytes, index: i64) -> u8 {
+pub extern "C" fn get_bytes(bytes: *mut Bytes, index: i32) -> u8 {
     unsafe { slice::from_raw_parts((*bytes).values, (*bytes).size as usize)[index as usize] }
 }
 
@@ -22,6 +22,6 @@ pub extern "C" fn print_byte(value: u8) {
 }
 
 #[no_mangle]
-pub extern "C" fn len_bytes(bytes: *mut Bytes) -> i64 {
+pub extern "C" fn len_bytes(bytes: *mut Bytes) -> i32 {
     unsafe { (*bytes).size }
 }

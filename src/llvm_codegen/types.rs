@@ -31,7 +31,7 @@ impl LLVMTypeCache {
                 &Type::Bool => LLVMInt1TypeInContext(self.context),
                 &Type::Byte => LLVMInt8TypeInContext(self.context),
                 &Type::FunctionPrototype => LLVMVoidTypeInContext(self.context),
-                &Type::Int => LLVMInt64TypeInContext(self.context),
+                &Type::Int => LLVMInt32TypeInContext(self.context),
                 &Type::None => LLVMVoidTypeInContext(self.context),
                 &Type::String => LLVMPointerType(LLVMInt8TypeInContext(self.context), 0),
                 &Type::Map(ref k, ref v) => LLVMPointerType(LLVMVoidTypeInContext(self.context), 0),
@@ -47,7 +47,7 @@ impl LLVMTypeCache {
         unsafe {
             let mut types = [
                 LLVMPointerType(self.to_llvm_type(base_type), 0),
-                LLVMInt64TypeInContext(self.context),
+                LLVMInt32TypeInContext(self.context),
             ];
             let struct_ref =
                 LLVMStructCreateNamed(self.context, to_ptr(&format!("Array<{:?}>", base_type)));

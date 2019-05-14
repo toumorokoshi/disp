@@ -3,4 +3,4 @@ let other-byte-array 'barries'
 print other-byte-array
 print (len other-byte-array)
 print (len byte-array)
-print (get other-byte-array 0)
+print (get other-byte-array 1)
