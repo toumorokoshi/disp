@@ -17,7 +17,10 @@ fn typecheck(
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     // TODO: support ANY parameters for generics
-    // resolver.add_constraint(Constraint::IsLiteral(args[0], Type::Array))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        args[0],
+        Type::Array(Box::new(Type::Any)),
+    ))?;
     resolver.add_constraint(Constraint::IsLiteral(args[1], Type::Int))?;
     let type_var = resolver.create_type_var();
     // TODO: support Generic relationship constraints
@@ -57,8 +60,17 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
         indices: vec![index.index],
         target: value_pointer,
     });
-    let result = context.allocate(Type::Byte);
-    let llvm_byte_type = context.compiler.llvm.types.get(&Type::Byte);
+    let result_type = match array.object_type {
+        Type::Array(subtype) => (*subtype).clone(),
+        other => {
+            return Err(CodegenError::new(&format!(
+                "type {:?} is not an array",
+                other
+            )));
+        }
+    };
+    let llvm_byte_type = context.compiler.llvm.types.get(&result_type);
+    let result = context.allocate(result_type);
     context.add_instruction(LLVMInstruction::BuildAlloca {
         llvm_type: llvm_byte_type,
         target: result.index,
@@ -68,5 +80,4 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
         target: result.index,
     });
     Ok(result)
-    // call_function(context, "get", args)
 }
