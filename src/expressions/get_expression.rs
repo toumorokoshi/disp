@@ -9,22 +9,19 @@ pub fn expression() -> Expression {
     }
 }
 
-fn boostrap_compiler(compiler: &mut Compiler) {
-    add_function_to_compiler(
-        compiler,
-        "get",
-        Type::Byte,
-        &vec![Type::Array(Box::new(Type::Byte)), Type::Int],
-        "get_bytes",
-    );
-}
+fn boostrap_compiler(_compiler: &mut Compiler) {}
 
 fn typecheck(
     resolver: &mut TypeResolver<Type>,
     _function: &TypevarFunction,
-    _args: &Vec<TypeVar>,
+    args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
+    // TODO: support ANY parameters for generics
+    // resolver.add_constraint(Constraint::IsLiteral(args[0], Type::Array))?;
+    resolver.add_constraint(Constraint::IsLiteral(args[1], Type::Int))?;
     let type_var = resolver.create_type_var();
+    // TODO: support Generic relationship constraints
+    // resolver.add_constraint(Constraint::IsGenericOf(args[0], type_var));
     resolver.add_constraint(Constraint::IsLiteral(type_var, Type::Byte))?;
     Ok(type_var)
 }

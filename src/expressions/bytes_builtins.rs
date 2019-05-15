@@ -4,11 +4,6 @@ use std::{slice, str};
 type Bytes = Array<u8>;
 
 #[no_mangle]
-pub extern "C" fn get_bytes(bytes: *mut Bytes, index: i32) -> u8 {
-    unsafe { slice::from_raw_parts((*bytes).values, (*bytes).size as usize)[index as usize] }
-}
-
-#[no_mangle]
 pub extern "C" fn print_bytes(bytes: *mut Bytes) {
     print!("{}\n", unsafe {
         let bytes_in_rust = slice::from_raw_parts((*bytes).values, (*bytes).size as usize);

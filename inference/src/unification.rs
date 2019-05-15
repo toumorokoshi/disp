@@ -1,10 +1,19 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+pub trait UnificationTypes {
+    /// returns the any type
+    // fn any_type() -> Self;
+    // fn is_generic_declaration(&self) -> bool;
+    fn unify(left: &Self, right: &Self) -> Result<Self, String>
+    where
+        Self: Sized;
+}
+
 #[derive(Clone, PartialEq)]
 pub enum Constraint<T>
 where
-    T: Clone + PartialEq + Debug,
+    T: Clone + PartialEq + Debug + UnificationTypes,
 {
     /// specifie that the types introduced must be
     /// equal to each other.
@@ -25,7 +34,7 @@ pub type TypeVar = usize;
 /// evaluates conditions and provides results and errors.
 pub struct TypeResolver<T>
 where
-    T: Clone + PartialEq + Debug,
+    T: Clone + PartialEq + Debug + UnificationTypes,
 {
     type_vars: Vec<TypeVar>,
     /// a counter to monotonically iterate reference
@@ -35,7 +44,7 @@ where
     type_by_reference: HashMap<usize, T>,
 }
 
-impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
+impl<T: Clone + PartialEq + Debug + UnificationTypes> TypeResolver<T> {
     pub fn new() -> TypeResolver<T> {
         TypeResolver {
             type_vars: vec![],
@@ -69,13 +78,17 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
                             .insert(r.clone(), left_index.clone());
                     }
                     Some(right_index) => {
-                        let left_type = self.type_by_reference.get(right_index).clone();
-                        let right_type = self.type_by_reference.get(right_index).clone();
-                        if left_type != right_type {
-                            return Err(String::from(
-                                "type mismatch when trying to add constraint.",
-                            ));
-                        }
+                        let left = self.type_by_reference.get(left_index).unwrap().clone();
+                        let right = self.type_by_reference.get(right_index).unwrap().clone();
+                        let unified_type = T::unify(&left, &right)?;
+                        self.type_by_reference
+                            .insert(*left_index, unified_type.clone());
+                        self.type_by_reference.insert(*right_index, unified_type);
+                        // if left_type != right_type {
+                        //     return Err(String::from(
+                        //         "type mismatch when trying to add constraint.",
+                        //     ));
+                        // }
                     }
                 },
             },
@@ -83,6 +96,7 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
                 let reference = self.get_or_create_reference(type_var);
                 self.set_type(reference, typ.clone())?;
             }
+            Constraint::IsGeneric(ref type_var, ref typ) => {}
             // TODO: fully enumerate all constraints.
             _ => {}
         }
@@ -118,16 +132,11 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
     }
 
     fn set_type(&mut self, reference: usize, typ: T) -> Result<(), String> {
-        let current_value = self
-            .type_by_reference
-            .entry(reference)
-            .or_insert(typ.clone());
-        if *current_value != typ {
-            return Err(format!(
-                "type collision! Literal already determined as {:?}, but found {:?}",
-                current_value, typ
-            ));
-        }
+        let unified_value = match self.type_by_reference.get(&reference) {
+            Some(ref current_typ) => T::unify(current_typ, &typ)?,
+            None => typ,
+        };
+        self.type_by_reference.insert(reference, unified_value);
         Ok(())
     }
 }

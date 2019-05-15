@@ -1,9 +1,11 @@
 use std::collections::HashSet;
+use inference::UnificationTypes; 
 
 /// The type enum is used to define types for Disp's
 /// type checker.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Type {
+    Any,
     Array(Box<Type>),
     Bool,
     Byte,
@@ -12,6 +14,32 @@ pub enum Type {
     None,
     String,
     Map(Box<Type>, Box<Type>),
+}
+
+impl UnificationTypes for Type {
+    fn unify(left: &Type, right: &Type) -> Result<Type, String> {
+        match left {
+            // Any is the most generic: return the right type if so.
+            Type::Any => Ok(right.clone()),
+            Type::Array(ref typ) => {
+                if let Type::Array(ref other_type) = right {
+                    Ok(Type::Array(Box::new(Self::unify(
+                        &(*typ),
+                        &(*other_type),
+                    )?)))
+                } else {
+                    Err(String::from("unable to unify array types"))
+                }
+            }
+            normal_type => {
+                if normal_type == right {
+                    Ok(normal_type.clone())
+                } else {
+                    Err(format!("type mismatch: {:?} vs {:?}", left, right))
+                }
+            }
+        }
+    }
 }
 
 /// A map that contains all created types.
