@@ -1,54 +1,35 @@
 use super::unification::*;
 
+// Types that are passed in for type
+// inference may differ than the final type,
+// because they do not include type variables.
 #[derive(Clone, PartialEq, Debug)]
 enum ExampleTypes {
     Any,
     Bool,
-    Array(Box<ExampleTypes>),
+    Array,
 }
 
-impl UnificationTypes for ExampleTypes {
-    // fn any_type() -> ExampleTypes {
-    //     ExampleTypes::Any
-    // }
-    //
-    //     /// returns true if the the type and all subtypes are either
-    //     /// a Generic or Any.
-    //     fn is_generic_declaration(&self) -> bool {
-    //         match self {
-    //             ExampleTypes::Any => true,
-    //             ExampleTypes::Array(ref typ) => typ.is_generic_declaration(),
-    //             _ => false,
-    //         }
-    //     }
-
-    /// Unify the left and right types. This operation should
-    /// perform actions such as:
-    /// * choose the more specific type, if there are Any / Generic Types.
-    /// * return an error if unification is not possible.
-    fn unify(left: &ExampleTypes, right: &ExampleTypes) -> Result<ExampleTypes, String> {
-        match left {
-            /// Any is the most generic: return the right type if so.
-            ExampleTypes::Any => Ok(right.clone()),
-            ExampleTypes::Bool => {
-                if &ExampleTypes::Bool == right {
-                    Ok(ExampleTypes::Bool)
-                } else {
-                    Err(String::from("unable to unify bools"))
-                }
-            }
-            ExampleTypes::Array(ref typ) => {
-                if let ExampleTypes::Array(ref other_type) = right {
-                    Ok(ExampleTypes::Array(Box::new(Self::unify(
-                        &(*typ),
-                        &(*other_type),
-                    )?)))
-                } else {
-                    Err(String::from("unable to unify array types"))
-                }
-            }
-        }
-    }
+#[test]
+fn test_unification_with_generics() {
+    let mut type_resolver = TypeResolver::new();
+    let a = type_resolver.create_type_var();
+    let b = type_resolver.create_type_var();
+    type_resolver.add_constraint(Constraint::IsLiteral(
+        a.clone(),
+        Unresolved::Generic(ExampleTypes::Array, vec![b]),
+    ));
+    type_resolver.add_constraint(Constraint::IsLiteral(
+        b.clone(),
+        Unresolved::Literal(ExampleTypes::Bool),
+    ));
+    assert!(
+        type_resolver.get_type(&a)
+            == Some(Resolved::Generic(
+                ExampleTypes::Array,
+                vec![Resolved::Literal(ExampleTypes::Bool)]
+            ))
+    );
 }
 
 #[test]
@@ -58,9 +39,12 @@ fn test_unification() {
     let b = type_resolver.create_type_var();
     let c = type_resolver.create_type_var();
     type_resolver.add_constraint(Constraint::Equality(a.clone(), b.clone()));
-    type_resolver.add_constraint(Constraint::IsLiteral(a.clone(), ExampleTypes::Bool));
-    assert!(type_resolver.get_type(&a) == Some(ExampleTypes::Bool));
-    assert!(type_resolver.get_type(&b) == Some(ExampleTypes::Bool));
+    type_resolver.add_constraint(Constraint::IsLiteral(
+        a.clone(),
+        Unresolved::Literal(ExampleTypes::Bool),
+    ));
+    assert!(type_resolver.get_type(&a) == Some(Resolved::Literal(ExampleTypes::Bool)));
+    assert!(type_resolver.get_type(&b) == Some(Resolved::Literal(ExampleTypes::Bool)));
     // if there isn't any conflicting information, and the
     // available variables are insufficient, then type inference
     // cannot be performed, and the result should be none.
@@ -74,14 +58,29 @@ fn test_unification_reverse() {
     let b = type_resolver.create_type_var();
     let c = type_resolver.create_type_var();
     let d = type_resolver.create_type_var();
-    type_resolver.add_constraint(Constraint::IsLiteral(b.clone(), ExampleTypes::Bool));
-    type_resolver.add_constraint(Constraint::Equality(a.clone(), b.clone()));
-    type_resolver.add_constraint(Constraint::IsLiteral(c.clone(), ExampleTypes::Bool));
-    type_resolver.add_constraint(Constraint::Equality(c.clone(), d.clone()));
-    assert!(type_resolver.get_type(&a) == Some(ExampleTypes::Bool));
-    assert!(type_resolver.get_type(&b) == Some(ExampleTypes::Bool));
-    assert!(type_resolver.get_type(&c) == Some(ExampleTypes::Bool));
-    assert!(type_resolver.get_type(&d) == Some(ExampleTypes::Bool));
+    type_resolver
+        .add_constraint(Constraint::IsLiteral(
+            b.clone(),
+            Unresolved::Literal(ExampleTypes::Bool),
+        ))
+        .unwrap();
+    type_resolver
+        .add_constraint(Constraint::Equality(a.clone(), b.clone()))
+        .unwrap();
+    type_resolver
+        .add_constraint(Constraint::IsLiteral(
+            c.clone(),
+            Unresolved::Literal(ExampleTypes::Bool),
+        ))
+        .unwrap();
+    type_resolver
+        .add_constraint(Constraint::Equality(c.clone(), d.clone()))
+        .unwrap();
+    assert!(type_resolver.get_type(&a) == Some(Resolved::Literal(ExampleTypes::Bool)));
+    assert!(type_resolver.get_type(&b) == Some(Resolved::Literal(ExampleTypes::Bool)));
+    assert!(type_resolver.get_type(&c) == Some(Resolved::Literal(ExampleTypes::Bool)));
+    println!("get type: {:?}", type_resolver.get_type(&d));
+    assert!(type_resolver.get_type(&d) == Some(Resolved::Literal(ExampleTypes::Bool)));
 }
 
 /// For parametric polymorphism, type resolvers
@@ -91,17 +90,15 @@ fn test_unification_reverse() {
 fn test_unification_any_parameter() {
     let mut type_resolver = TypeResolver::new();
     let a = type_resolver.create_type_var();
+    let b = type_resolver.create_type_var();
     type_resolver
-        .add_constraint(Constraint::IsLiteral(
-            a.clone(),
-            ExampleTypes::Array(Box::new(ExampleTypes::Any)),
-        ))
+        .add_constraint(Constraint::IsLiteral(a.clone(), Unresolved::Any))
         .unwrap();
     type_resolver
         .add_constraint(Constraint::IsLiteral(
             a.clone(),
-            ExampleTypes::Array(Box::new(ExampleTypes::Bool)),
+            Unresolved::Literal(ExampleTypes::Bool),
         ))
         .unwrap();
-    assert!(type_resolver.get_type(&a) == Some(ExampleTypes::Array(Box::new(ExampleTypes::Bool))));
+    assert!(type_resolver.get_type(&a) == Some(Resolved::Literal(ExampleTypes::Bool)));
 }

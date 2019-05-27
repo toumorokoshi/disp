@@ -208,3 +208,8 @@ So, to combat that, Greyhawk need really, really good isolation. It should by ea
 * will install packages locally (Greyhawk as a language should
   disallow global packages). It should have a way to install CLIs
   though.
+
+
+## Casing: Types should be uppercase, type variables should be lowercase
+
+* functions with the Type in question should always return that type.
