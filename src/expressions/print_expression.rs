@@ -48,12 +48,14 @@ fn boostrap_compiler(compiler: &mut Compiler) {
 }
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     _function: &TypevarFunction,
     _args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     let type_var = resolver.create_type_var();
-    resolver.add_constraint(Constraint::IsLiteral(type_var, Type::None))?;
+    resolver.add_constraint(Constraint::IsLiteral(type_var, 
+        Unresolved::Literal(TypecheckType::None)
+    ))?;
     Ok(type_var)
 }
 

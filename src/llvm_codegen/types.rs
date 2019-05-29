@@ -27,7 +27,6 @@ impl LLVMTypeCache {
     fn to_llvm_type(&self, t: &Type) -> LLVMTypeRef {
         unsafe {
             match t {
-                &Type::Any => LLVMVoidTypeInContext(self.context),
                 &Type::Array(ref subtype) => LLVMPointerType(self.llvm_declare_array(subtype), 0),
                 &Type::Bool => LLVMInt1TypeInContext(self.context),
                 &Type::Byte => LLVMInt8TypeInContext(self.context),
@@ -35,7 +34,9 @@ impl LLVMTypeCache {
                 &Type::Int => LLVMInt32TypeInContext(self.context),
                 &Type::None => LLVMVoidTypeInContext(self.context),
                 &Type::String => LLVMPointerType(LLVMInt8TypeInContext(self.context), 0),
-                &Type::Map(ref k, ref v) => LLVMPointerType(LLVMVoidTypeInContext(self.context), 0),
+                &Type::Map(ref _k, ref _v) => {
+                    LLVMPointerType(LLVMVoidTypeInContext(self.context), 0)
+                }
             }
         }
     }

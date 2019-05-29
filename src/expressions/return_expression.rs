@@ -8,10 +8,10 @@ pub fn expression() -> Expression {
     }
 }
 
-fn boostrap_compiler(compiler: &mut Compiler) {}
+fn boostrap_compiler(_compiler: &mut Compiler) {}
 
 pub fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     function: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {

@@ -1,8 +1,10 @@
 use super::{
     Compiler, DispError, DispResult, FunctionMap, GenericResult, Token, Type, UnparsedFunction,
 };
-use inference::{Constraint, TypeResolver, TypeVar};
+use inference::{Constraint, TypeResolver, TypeVar, Unresolved, Resolved};
 use std::{collections::HashMap, rc::Rc};
+mod types;
+pub use self::types::{to_type, TypecheckType};
 
 /// The result of the type annotation phase is a map
 /// of specialized functions, with their discrete types.
@@ -69,7 +71,7 @@ impl TypevarFunction {
 
     pub fn to_annotated_function(
         &self,
-        type_resolver: &TypeResolver<Type>,
+        type_resolver: &TypeResolver<TypecheckType>,
     ) -> DispResult<AnnotatedFunction> {
         let return_type = match type_resolver.get_type(&self.return_type) {
             Some(t) => t,
@@ -92,13 +94,13 @@ impl TypevarFunction {
                         )))
                     }
                 };
-                arg_types.push(typ);
+                arg_types.push(to_type(&typ)?);
             }
             arg_types
         };
         Ok(AnnotatedFunction {
             function: self.function.clone(),
-            return_type: return_type,
+            return_type: to_type(&return_type)?,
             arg_types: arg_types,
         })
     }
@@ -129,7 +131,7 @@ pub fn annotate_types(
                 vec![],
                 type_resolver.create_type_var(),
             ));
-            type_resolver.add_constraint(Constraint::IsLiteral((*main).return_type, Type::None))?;
+            type_resolver.add_constraint(Constraint::IsLiteral((*main).return_type, Unresolved::Literal(TypecheckType::None)))?;
             annotated_functions.insert((*name).to_owned(), 0, main.clone());
             annotate_token(
                 compiler,
@@ -160,7 +162,7 @@ pub fn annotate_types(
 fn annotate_token(
     compiler: &mut Compiler,
     functions: &FunctionMap,
-    types: &mut TypeResolver<Type>,
+    types: &mut TypeResolver<TypecheckType>,
     annotated_functions: &mut TypevarFunctionMap,
     current_function: &TypevarFunction,
     token: &Token,
@@ -190,16 +192,20 @@ fn annotate_token(
             )?;
         }
         Token::Integer(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Int))?;
+            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Unresolved::Literal(TypecheckType::Int)))?;
         }
         Token::Boolean(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Bool))?;
+            types.add_constraint(
+                Constraint::IsLiteral(type_var.clone(), Unresolved::Literal(TypecheckType::Bool))
+            )?;
         }
         Token::String(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::String))?;
+            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Unresolved::Literal(TypecheckType::String)))?;
         }
         Token::Bytes(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Array(Box::new(Type::Byte))))?;
+            let subtype = types.create_type_var();
+            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Unresolved::Generic(TypecheckType::Array, vec![subtype.clone()])))?;
+            types.add_constraint(Constraint::IsLiteral(subtype.clone(), Unresolved::Literal(TypecheckType::Byte)))?;
         }
         Token::Map(map) => {
             for (key, value) in map.iter() {
@@ -230,7 +236,7 @@ fn annotate_token(
 fn parse_and_add_expression(
     compiler: &mut Compiler,
     functions: &FunctionMap,
-    types: &mut TypeResolver<Type>,
+    types: &mut TypeResolver<TypecheckType>,
     annotated_functions: &mut TypevarFunctionMap,
     function: &TypevarFunction,
     expression: &Vec<Token>,

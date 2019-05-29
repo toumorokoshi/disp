@@ -1,5 +1,4 @@
 use super::*;
-use std::rc::{self, Rc};
 
 pub fn expression() -> Expression {
     Expression {
@@ -9,10 +8,10 @@ pub fn expression() -> Expression {
     }
 }
 
-fn boostrap_compiler(compiler: &mut Compiler) {}
+fn boostrap_compiler(_compiler: &mut Compiler) {}
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     _: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {

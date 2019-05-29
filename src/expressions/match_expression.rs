@@ -8,10 +8,10 @@ pub fn expression() -> Expression {
     }
 }
 
-fn boostrap_compiler(compiler: &mut Compiler) {}
+fn boostrap_compiler(_compiler: &mut Compiler) {}
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    _resolver: &mut TypeResolver<TypecheckType>,
     _: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
@@ -60,7 +60,7 @@ pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
                 context.compiler,
                 context.function,
                 context.scope,
-                block
+                block,
             );
             // context.add_instruction(LLVMInstruction::PositionBuilderAtEnd { block });
             // TODO: capture this value and make it the return value of the

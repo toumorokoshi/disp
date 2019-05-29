@@ -8,16 +8,22 @@ pub fn expression() -> Expression {
     }
 }
 
-fn boostrap_compiler(compiler: &mut Compiler) {}
+fn boostrap_compiler(_compiler: &mut Compiler) {}
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     _function: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     let type_var = resolver.create_type_var();
-    resolver.add_constraint(Constraint::IsLiteral(type_var, Type::Bool))?;
-    resolver.add_constraint(Constraint::IsLiteral(args[0], Type::Bool))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        type_var,
+        Unresolved::Literal(TypecheckType::Bool),
+    ))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        args[0],
+        Unresolved::Literal(TypecheckType::Bool),
+    ))?;
     Ok(type_var)
 }
 

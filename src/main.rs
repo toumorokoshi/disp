@@ -37,12 +37,12 @@ pub use self::llvm_codegen::{
     build_functions, to_ptr, CodegenError, Compiler, Context, Function, FunctionType, LLVMCompiler,
     LLVMTypeCache, NativeFunction, Object, Scope,
 };
-use self::loader::{exec_file, load_file};
+use self::loader::load_file;
 use self::macros::{apply_macros_to_function_map, parse_macro, MacroMap};
 use self::parser::parse;
-use self::stdlib::{load_stdlib, LIB_FILE};
+use self::stdlib::LIB_FILE;
 use self::type_annotator::{
-    annotate_types, AnnotatedFunction, AnnotatedFunctionMap, TypevarFunction,
+    annotate_types, AnnotatedFunction, AnnotatedFunctionMap, TypecheckType, TypevarFunction,
 };
 use self::workflow::load_string_into_compiler;
 use std::{

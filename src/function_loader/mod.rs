@@ -1,4 +1,4 @@
-use super::{Compiler, DispError, DispResult, MacroMap, Token, parse_macro};
+use super::{parse_macro, Compiler, DispError, DispResult, MacroMap, Token};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -22,7 +22,7 @@ pub type FunctionMap = HashMap<String, Rc<UnparsedFunction>>;
 
 /// consume tokens, subdividing them into function and macro declarations.
 pub fn parse_functions_and_macros(
-    compiler: &mut Compiler,
+    _compiler: &mut Compiler,
     parent_token: Token,
 ) -> DispResult<(FunctionMap, MacroMap)> {
     let mut function_map = HashMap::new();
@@ -44,7 +44,7 @@ pub fn parse_functions_and_macros(
                         } else {
                             main_function_body.push(Token::Expression(e));
                         }
-                    },
+                    }
                     Token::BangSymbol(ref s) => {
                         if **s == "macro" {
                             let (name, macro_instance) = parse_macro(e)?;
@@ -52,7 +52,7 @@ pub fn parse_functions_and_macros(
                         } else {
                             main_function_body.push(Token::Expression(e));
                         }
-                    },
+                    }
                     _ => main_function_body.push(Token::Expression(e)),
                 },
                 t => main_function_body.push(t),

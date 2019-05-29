@@ -8,17 +8,20 @@ pub fn expression() -> Expression {
     }
 }
 
-fn boostrap_compiler(compiler: &mut Compiler) {}
+fn boostrap_compiler(_compiler: &mut Compiler) {}
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     _function: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     // TODO: figure out how to recurse into nested
     // data structure type variables.
     resolver.add_constraint(Constraint::Equality(args[1].clone(), args[0].clone()))?;
-    resolver.add_constraint(Constraint::IsLiteral(args[0].clone(), Type::Int))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        args[0].clone(),
+        Unresolved::Literal(TypecheckType::Int),
+    ))?;
     Ok(args[0].clone())
 }
 

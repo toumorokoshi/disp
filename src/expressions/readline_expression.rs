@@ -1,8 +1,5 @@
 use super::*;
-use std::{
-    ffi::{CStr, CString},
-    io,
-};
+use std::{ffi::CString, io};
 
 pub fn expression() -> Expression {
     Expression {
@@ -17,7 +14,7 @@ fn boostrap_compiler(compiler: &mut Compiler) {
 }
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     _function: &TypevarFunction,
     _args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {

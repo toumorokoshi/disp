@@ -1,5 +1,5 @@
 use super::*;
-use llvm_sys::{core::*, execution_engine::*, prelude::*, support::*, target::*, *};
+use llvm_sys::core::*;
 
 pub fn expression() -> Expression {
     Expression {
@@ -12,20 +12,20 @@ pub fn expression() -> Expression {
 fn boostrap_compiler(_compiler: &mut Compiler) {}
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     _function: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     // TODO: support ANY parameters for generics
+    let type_var = resolver.create_type_var();
     resolver.add_constraint(Constraint::IsLiteral(
         args[0],
-        Type::Array(Box::new(Type::Any)),
+        Unresolved::Generic(TypecheckType::Array, vec![type_var]),
     ))?;
-    resolver.add_constraint(Constraint::IsLiteral(args[1], Type::Int))?;
-    let type_var = resolver.create_type_var();
-    // TODO: support Generic relationship constraints
-    // resolver.add_constraint(Constraint::IsGenericOf(args[0], type_var));
-    resolver.add_constraint(Constraint::IsLiteral(type_var, Type::Byte))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        args[1],
+        Unresolved::Literal(TypecheckType::Int),
+    ))?;
     Ok(type_var)
 }
 

@@ -1,8 +1,5 @@
 use super::*;
-use std::{
-    ffi::{CStr, CString},
-    io,
-};
+use std::ffi::CStr;
 
 pub fn expression() -> Expression {
     Expression {
@@ -17,13 +14,19 @@ fn boostrap_compiler(compiler: &mut Compiler) {
 }
 
 fn typecheck(
-    resolver: &mut TypeResolver<Type>,
+    resolver: &mut TypeResolver<TypecheckType>,
     _function: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     let type_var = resolver.create_type_var();
-    resolver.add_constraint(Constraint::IsLiteral(args[0], Type::String))?;
-    resolver.add_constraint(Constraint::IsLiteral(type_var, Type::Int))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        args[0],
+        Unresolved::Literal(TypecheckType::String),
+    ))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        type_var,
+        Unresolved::Literal(TypecheckType::Int),
+    ))?;
     Ok(type_var)
 }
 

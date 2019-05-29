@@ -2,9 +2,9 @@ use self::utils::codegen_binop;
 use super::llvm_codegen::{compiler::gen_token, CodegenError, CodegenResult, Compiler, Scope};
 use super::{
     Array, CompilerData, Context, FunctionType, GenericResult, LLVMInstruction, NativeFunction,
-    Object, Token, Type, TypevarFunction,
+    Object, Token, Type, TypecheckType, TypevarFunction,
 };
-use inference::{Constraint, TypeResolver, TypeVar};
+use inference::{Constraint, TypeResolver, TypeVar, Unresolved};
 use libc::c_char;
 use llvm_sys::*;
 use std::{collections::HashMap, ffi::CStr};
@@ -39,7 +39,7 @@ pub type BuiltinExpressions = HashMap<String, Expression>;
 pub struct Expression {
     pub boostrap_compiler: fn(&mut Compiler),
     pub typecheck: fn(
-        resolver: &mut TypeResolver<Type>,
+        resolver: &mut TypeResolver<TypecheckType>,
         function: &TypevarFunction,
         args: &Vec<TypeVar>,
     ) -> GenericResult<TypeVar>,
@@ -62,8 +62,4 @@ pub fn get_builtin_expressions() -> BuiltinExpressions {
     expressions.insert(String::from("read-line"), readline_expression::expression());
     expressions.insert(String::from("while"), while_expression::expression());
     expressions
-}
-
-pub fn empty_codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
-    return Err(CodegenError::new(&format!("unimplemented type",)));
 }
