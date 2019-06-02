@@ -52,7 +52,7 @@ fn unpack(pair: Pair<Rule>) -> Token {
             for p in pair.into_inner() {
                 tokens.push(unpack(p));
             }
-            Token::List(tokens)
+            Token::Block(tokens)
         }
         _l @ Rule::list => {
             let mut tokens = vec![];
@@ -60,6 +60,13 @@ fn unpack(pair: Pair<Rule>) -> Token {
                 tokens.push(unpack(p));
             }
             Token::List(tokens)
+        }
+        _l @ Rule::block => {
+            let mut tokens = vec![];
+            for p in pair.into_inner() {
+                tokens.push(unpack(p));
+            }
+            Token::Block(tokens)
         }
         _m @ Rule::map => {
             let mut map = HashMap::new();

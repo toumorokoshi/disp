@@ -1,7 +1,7 @@
 use super::{
     Compiler, DispError, DispResult, FunctionMap, GenericResult, Token, Type, UnparsedFunction,
 };
-use inference::{Constraint, TypeResolver, TypeVar, Unresolved, Resolved};
+use inference::{Constraint, Resolved, TypeResolver, TypeVar, Unresolved};
 use std::{collections::HashMap, rc::Rc};
 mod types;
 pub use self::types::{to_type, TypecheckType};
@@ -131,7 +131,10 @@ pub fn annotate_types(
                 vec![],
                 type_resolver.create_type_var(),
             ));
-            type_resolver.add_constraint(Constraint::IsLiteral((*main).return_type, Unresolved::Literal(TypecheckType::None)))?;
+            type_resolver.add_constraint(Constraint::IsLiteral(
+                (*main).return_type,
+                Unresolved::Literal(TypecheckType::None),
+            ))?;
             annotated_functions.insert((*name).to_owned(), 0, main.clone());
             annotate_token(
                 compiler,
@@ -171,7 +174,7 @@ fn annotate_token(
     match token {
         Token::List(ref token_list) => {
             for t in token_list {
-                annotate_token(
+                let item_type = annotate_token(
                     compiler,
                     functions,
                     types,
@@ -179,6 +182,26 @@ fn annotate_token(
                     current_function,
                     t,
                 )?;
+                types.add_constraint(Constraint::IsLiteral(
+                    type_var.clone(),
+                    Unresolved::Generic(TypecheckType::Array, vec![item_type]),
+                ))?;
+            }
+        }
+        Token::Block(ref token_list) => {
+            let mut maybe_item_type = None;
+            for t in token_list {
+                maybe_item_type = Some(annotate_token(
+                    compiler,
+                    functions,
+                    types,
+                    annotated_functions,
+                    current_function,
+                    t,
+                )?);
+            }
+            if let Some(item_type) = maybe_item_type {
+                types.add_constraint(Constraint::Equality(type_var, item_type))?;
             }
         }
         Token::Expression(ref expression) => {
@@ -192,20 +215,33 @@ fn annotate_token(
             )?;
         }
         Token::Integer(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Unresolved::Literal(TypecheckType::Int)))?;
+            types.add_constraint(Constraint::IsLiteral(
+                type_var.clone(),
+                Unresolved::Literal(TypecheckType::Int),
+            ))?;
         }
         Token::Boolean(_) => {
-            types.add_constraint(
-                Constraint::IsLiteral(type_var.clone(), Unresolved::Literal(TypecheckType::Bool))
-            )?;
+            types.add_constraint(Constraint::IsLiteral(
+                type_var.clone(),
+                Unresolved::Literal(TypecheckType::Bool),
+            ))?;
         }
         Token::String(_) => {
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Unresolved::Literal(TypecheckType::String)))?;
+            types.add_constraint(Constraint::IsLiteral(
+                type_var.clone(),
+                Unresolved::Literal(TypecheckType::String),
+            ))?;
         }
         Token::Bytes(_) => {
             let subtype = types.create_type_var();
-            types.add_constraint(Constraint::IsLiteral(type_var.clone(), Unresolved::Generic(TypecheckType::Array, vec![subtype.clone()])))?;
-            types.add_constraint(Constraint::IsLiteral(subtype.clone(), Unresolved::Literal(TypecheckType::Byte)))?;
+            types.add_constraint(Constraint::IsLiteral(
+                type_var.clone(),
+                Unresolved::Generic(TypecheckType::Array, vec![subtype.clone()]),
+            ))?;
+            types.add_constraint(Constraint::IsLiteral(
+                subtype.clone(),
+                Unresolved::Literal(TypecheckType::Byte),
+            ))?;
         }
         Token::Map(map) => {
             for (key, value) in map.iter() {

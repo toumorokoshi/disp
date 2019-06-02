@@ -121,6 +121,7 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
             object
         }
         &Token::Symbol(ref s) => {
+            println!("{:?}", context.scope);
             let value = match context.scope.get_local(&(*s.clone())) {
                 Some(s) => {
                     let object = context.allocate(s.object_type.clone());
@@ -140,19 +141,58 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
             }
         }
         &Token::Integer(i) => context.const_int(i),
+        &Token::Block(ref tl) => gen_block(context, tl)?,
         &Token::List(ref tl) => gen_list(context, tl)?,
         &Token::Expression(ref tl) => gen_expr(context, tl)?,
         _ => Object::none(),
     })
 }
 
-fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
+fn gen_block(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
     let mut result = Ok(Object::none());
     for t in args {
         let result_to_add = gen_token(context, t)?;
         result = Ok(result_to_add);
     }
     result
+}
+
+fn gen_list(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {
+    let list_pointer = context.allocate_without_type();
+    let mut results = vec![];
+    for t in args {
+        results.push(gen_token(context, t)?);
+    }
+    unsafe {
+        let array_type = LLVMArrayType(
+            context.compiler.llvm.types.get(&results[0].object_type),
+            results.len() as u32,
+        );
+        context.add_instruction(LLVMInstruction::BuildAlloca {
+            llvm_type: array_type,
+            target: list_pointer,
+        });
+    }
+    let zero = context.const_int(0);
+    for i in 0..results.len() {
+        let field_pointer = context.allocate_without_type();
+        let index_as_llvm_int = context.const_int(i as i64);
+        context.add_instruction(LLVMInstruction::BuildGEP {
+            value: list_pointer,
+            indices: vec![zero.index, index_as_llvm_int.index],
+            target: field_pointer,
+        });
+        context.add_instruction(LLVMInstruction::BuildStore {
+            source: results[i].index,
+            target: field_pointer,
+        });
+    }
+    create_array(
+        context,
+        &results[0].object_type,
+        list_pointer,
+        args.len() as i64,
+    )
 }
 
 fn gen_expr(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {

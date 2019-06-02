@@ -11,6 +11,10 @@ pub enum Token {
     Expression(Vec<Token>),
     Integer(i64),
     List(Vec<Token>),
+    // blocks are used to represent
+    // execution, while lists are literal
+    // values
+    Block(Vec<Token>),
     Map(Box<Map>),
     None,
     Symbol(Box<String>),
@@ -62,6 +66,13 @@ impl fmt::Display for Token {
                     try!(write!(f, "{} ", t));
                 }
                 write!(f, "]")
+            }
+            &Token::Block(ref tl) => {
+                try!(write!(f, "<"));
+                for t in tl {
+                    try!(write!(f, "{} ", t));
+                }
+                write!(f, ">")
             }
             &Token::Expression(ref tl) => {
                 try!(write!(f, "("));

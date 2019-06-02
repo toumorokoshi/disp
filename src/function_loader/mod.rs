@@ -30,7 +30,7 @@ pub fn parse_functions_and_macros(
     // instructions that are not a part of any function
     // are automatically added to the main function.
     let mut main_function_body = vec![];
-    if let Token::List(tokens) = parent_token {
+    if let Token::Block(tokens) = parent_token {
         for token in tokens {
             match token {
                 // the only token we really need to parse out is the expression,
@@ -63,7 +63,7 @@ pub fn parse_functions_and_macros(
         String::from("main"),
         Rc::new(UnparsedFunction::new(
             vec![],
-            Token::List(main_function_body),
+            Token::Block(main_function_body),
         )),
     );
     Ok((function_map, macro_map))

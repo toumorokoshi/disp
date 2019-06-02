@@ -2,6 +2,7 @@ use super::{Object, Type};
 use std::collections::HashMap;
 
 /// Scope objects handle references to functions by value.
+#[derive(Debug)]
 pub struct Scope<'a> {
     pub locals: HashMap<String, Object>,
     /// a declaration of functions, including

@@ -23,6 +23,7 @@ none = { "None" }
 expression = { "(" ~ delimiter? ~ token_list ~ delimiter? ~ ")"}
 integer = { ('0'..'9')+ }
 list = {"[" ~ delimiter? ~ token_list? ~ delimiter? ~ "]"}
+block = {"<" ~ delimiter? ~ token_list? ~ delimiter? ~ ">"}
 map = { "{" ~ delimiter? ~ (token ~ delimiter? ~ ":" ~ delimiter? ~ token ~ delimiter? ~ "," ~ delimiter?)* ~ "}" }
 string_with_quotes = _{ "\"" ~ string ~ "\""}
 bytes_with_quotes = _{ "'" ~ bytes ~ "'"}
