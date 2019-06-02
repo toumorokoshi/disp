@@ -1,0 +1,2 @@
+print (len 'abc')
+print (len [0 1 2 3])

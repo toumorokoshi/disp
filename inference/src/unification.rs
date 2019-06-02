@@ -119,6 +119,10 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
         left: &Unresolved<T>,
         right: &Unresolved<T>,
     ) -> Result<Unresolved<T>, String> {
+        // edge case to handle right being any.
+        if let &Unresolved::Any = right {
+            return Ok(left.clone());
+        }
         match left {
             // Any is the most generic: return the right type if so.
             Unresolved::Any => Ok(right.clone()),
@@ -128,7 +132,10 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
                         return Ok(Unresolved::Literal(left_type.clone()));
                     }
                 }
-                return Err(String::from("unable to unify literal with non-literal"));
+                return Err(format!(
+                    "unable to unify literal with non-literal: {:?} and {:?}",
+                    left_type, right,
+                ));
             }
             Unresolved::Generic(ref left_type, ref left_subtypes) => match &right {
                 Unresolved::Generic(ref right_type, ref right_subtypes) => {

@@ -15,8 +15,3 @@ pub extern "C" fn print_bytes(bytes: *mut Bytes) {
 pub extern "C" fn print_byte(value: u8) {
     print!("{}\n", value as char);
 }
-
-#[no_mangle]
-pub extern "C" fn len_bytes(bytes: *mut Bytes) -> i32 {
-    unsafe { (*bytes).size }
-}
