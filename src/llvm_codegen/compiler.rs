@@ -121,7 +121,6 @@ pub fn gen_token(context: &mut Context, token: &Token) -> CodegenResult<Object> 
             object
         }
         &Token::Symbol(ref s) => {
-            println!("{:?}", context.scope);
             let value = match context.scope.get_local(&(*s.clone())) {
                 Some(s) => {
                     let object = context.allocate(s.object_type.clone());

@@ -1,5 +1,0 @@
-let x false
-match x  {
-  true: [(print 5)],
-  false: [(print 10) 3],
-}

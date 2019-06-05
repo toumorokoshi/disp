@@ -165,8 +165,6 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
     /// In the case of a generic, a tuple will be returned with the
     /// list of subtypes, resolved as well.
     pub fn get_type(&self, t: &TypeVar) -> Option<Resolved<T>> {
-        println!("{:?}", self.reference_by_typevar);
-        println!("{:?}", self.type_by_reference);
         match self.reference_by_typevar.get(t) {
             Some(reference) => match self.type_by_reference.get(reference) {
                 Some(type_resolver_type) => match type_resolver_type {

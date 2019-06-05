@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 export RUST_BACKTRACE=1
 
-exec ./target/debug/disp ${@:2}
+exec ./target/debug/disp ${@:1}

@@ -1,4 +1,0 @@
-# const assignments should be immutable,
-# and allow assignment as with mut
-const x 123
-print x
