@@ -5,13 +5,22 @@ fn main() {
 }
 
 fn _main() -> Result<(), Box<Error>> {
-    for entry in read_dir("./examples_working")? {
-        let entry = entry?;
+    let mut paths: Vec<_> = read_dir("./examples_working")?
+        .map(|r| r.unwrap())
+        .collect();
+    paths.sort_by_key(|d| d.path());
+    for entry in paths {
         let path = entry.path();
         if "ds" == path.extension().unwrap() {
             let output = execute_script(path.as_path())?;
             let expected_output = get_expected_output(path.as_path())?;
-            println!("{:?}: {}", entry.path(), output == expected_output);
+            if output == expected_output {
+                println!("{:?}: passed", entry.path());
+            } else {
+                println!("{:?}: failed", entry.path());
+                println!("expected output:\n{}", expected_output);
+                println!("actual output:\n{}", output);
+            }
         }
     }
     Ok(())
