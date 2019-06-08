@@ -7,10 +7,10 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "fib-lldb",
+            "name": "using_stdlib-lldb",
             "program": "${workspaceRoot}/target/debug/disp",
             "args": [
-                "${workspaceRoot}/examples_working/array.ds"
+                "${workspaceRoot}/examples_working/using_stdlib.ds"
             ],
             "sourceLanguages": [
                 "rust"

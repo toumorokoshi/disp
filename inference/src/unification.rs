@@ -32,6 +32,7 @@ pub type TypeVar = usize;
 /// The TypeResolver is an iterative resolver
 /// of type variables. The TypeResolver immediately
 /// evaluates conditions and provides results and errors.
+#[derive(Debug)]
 pub struct TypeResolver<T>
 where
     T: Clone + PartialEq + Debug,

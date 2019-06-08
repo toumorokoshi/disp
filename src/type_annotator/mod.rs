@@ -89,7 +89,7 @@ impl TypevarFunction {
                     Some(t) => t,
                     None => {
                         return Err(DispError::new(&format!(
-                            "unable to resolve type variable {}",
+                            "unable to resolve type variable {} for argument",
                             type_var,
                         )))
                     }
@@ -152,7 +152,16 @@ pub fn annotate_types(
     let mut result = AnnotatedFunctionMap::new();
     for (name, function_by_args) in &annotated_functions.map {
         for typevar_function in function_by_args.values() {
-            let annotated_function = typevar_function.to_annotated_function(&type_resolver)?;
+            let annotated_function = match typevar_function.to_annotated_function(&type_resolver) {
+                Ok(result) => result,
+                Err(error) => {
+                    println!("type resolver: {:?}", type_resolver);
+                    return Err(Box::new(DispError::new(&format!(
+                        "function {}: {}",
+                        name, error
+                    ))));
+                }
+            };
             result
                 .entry(name.clone())
                 .or_insert(HashMap::new())
@@ -205,7 +214,7 @@ fn annotate_token(
             }
         }
         Token::Expression(ref expression) => {
-            parse_and_add_expression(
+            let result = parse_and_add_expression(
                 compiler,
                 functions,
                 types,
@@ -213,6 +222,9 @@ fn annotate_token(
                 current_function,
                 expression,
             )?;
+            types.add_constraint(Constraint::Equality(
+                type_var, result
+            ))?;
         }
         Token::Integer(_) => {
             types.add_constraint(Constraint::IsLiteral(
@@ -326,7 +338,7 @@ fn parse_and_add_expression(
                     arg_type_variables.len(),
                     typevar_function.clone(),
                 );
-                annotate_token(
+                let result = annotate_token(
                     compiler,
                     functions,
                     types,
@@ -334,6 +346,7 @@ fn parse_and_add_expression(
                     &typevar_function,
                     &function.body,
                 )?;
+                types.add_constraint(Constraint::Equality(return_type, result))?;
                 Ok(return_type)
             }
         }
