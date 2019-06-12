@@ -2,7 +2,7 @@ use self::utils::codegen_binop;
 use super::llvm_codegen::{compiler::gen_token, CodegenError, CodegenResult, Compiler, Scope};
 use super::{
     Array, CompilerData, Context, FunctionType, GenericResult, LLVMInstruction, NativeFunction,
-    Object, Token, Type, TypecheckType, TypevarFunction,
+    Object, Token, Type, TypecheckType, TypevarFunction, AnnotatorScope
 };
 use inference::{Constraint, TypeResolver, TypeVar, Unresolved};
 use libc::c_char;

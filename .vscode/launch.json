@@ -10,7 +10,7 @@
             "name": "using_stdlib-lldb",
             "program": "${workspaceRoot}/target/debug/disp",
             "args": [
-                "${workspaceRoot}/examples_working/using_stdlib.ds"
+                "${workspaceRoot}/examples_working/macro.ds"
             ],
             "sourceLanguages": [
                 "rust"

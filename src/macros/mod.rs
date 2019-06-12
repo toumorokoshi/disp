@@ -42,6 +42,12 @@ fn apply_macros_to_token(macros: &MacroMap, token: &mut Token) -> DispResult<Tok
                 list[i] = apply_macros_to_token(macros, &mut list[i])?;
             }
         }
+        Token::Block(ref mut block) => {
+            for i in 0..block.len() {
+                block[i] = apply_macros_to_token(macros, &mut block[i])?;
+            }
+        }
+
         Token::Map(ref mut m) => {
             for token in m.values_mut() {
                 *token = apply_macros_to_token(macros, &mut *token)?;

@@ -16,10 +16,14 @@ fn typecheck(
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
     let type_var = resolver.create_type_var();
-    resolver.add_constraint(Constraint::IsLiteral(type_var, 
-        Unresolved::Literal(TypecheckType::None)))?;
-    resolver.add_constraint(Constraint::IsLiteral(args[0], 
-        Unresolved::Literal(TypecheckType::None)))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        type_var,
+        Unresolved::Literal(TypecheckType::None),
+    ))?;
+    resolver.add_constraint(Constraint::IsLiteral(
+        args[0],
+        Unresolved::Literal(TypecheckType::Bool),
+    ))?;
     Ok(type_var)
 }
 

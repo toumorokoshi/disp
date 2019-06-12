@@ -3,8 +3,8 @@ fn print-addition [l r]
 	
 macro! if [cond body]
 	match cond {
-    true: body,
-  }
+		true: body,
+	}
 
 macro! ++ [var]
 	let var (+ var 1)
@@ -16,3 +16,4 @@ macro! for-range [symbol start-int end-int body] [
 ]
 
 macro! neq [l r] (not (eq l r))
+

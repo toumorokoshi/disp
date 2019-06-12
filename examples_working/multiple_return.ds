@@ -1,10 +1,9 @@
-let random-case (fn [i] [
-  (match i {
-    1: (return 2),
-    0: (return 1),
-  })
-  (return 10)
-])
+fn random-case [i]
+	match i {
+		1: (return 2),
+		0: (return 1),
+	}
+	return 10
 
 print (random-case 0)
 print (random-case 1)

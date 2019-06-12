@@ -141,7 +141,10 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
             Unresolved::Generic(ref left_type, ref left_subtypes) => match &right {
                 Unresolved::Generic(ref right_type, ref right_subtypes) => {
                     if left_subtypes.len() != right_subtypes.len() {
-                        return Err(String::from("unable to unify literal with non-literal"));
+                        return Err(format!(
+                            "unable to unify literal with non-literal {:?} and {:?}",
+                            left_subtypes, right_subtypes
+                        ));
                     }
                     if right_type != left_type {
                         return Err(String::from("generic type mismatch"));
@@ -157,7 +160,10 @@ impl<T: Clone + PartialEq + Debug> TypeResolver<T> {
                         left_subtypes.clone(),
                     ))
                 }
-                _ => Err(String::from("unable to unify literal with non-literal")),
+                _ => Err(format!(
+                    "i unable to unify literal with non-literal {:?} and {:?}",
+                    left, right
+                )),
             },
         }
     }

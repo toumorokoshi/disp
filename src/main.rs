@@ -43,6 +43,7 @@ use self::parser::parse;
 use self::stdlib::LIB_FILE;
 use self::type_annotator::{
     annotate_types, AnnotatedFunction, AnnotatedFunctionMap, TypecheckType, TypevarFunction,
+    AnnotatorScope
 };
 use self::workflow::load_string_into_compiler;
 use std::{

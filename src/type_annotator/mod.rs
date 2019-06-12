@@ -1,9 +1,11 @@
 use super::{
     Compiler, DispError, DispResult, FunctionMap, GenericResult, Token, Type, UnparsedFunction,
 };
-use inference::{Constraint, Resolved, TypeResolver, TypeVar, Unresolved};
+use inference::{Constraint, TypeResolver, TypeVar, Unresolved};
 use std::{collections::HashMap, rc::Rc};
+mod scope;
 mod types;
+pub use self::scope::AnnotatorScope;
 pub use self::types::{to_type, TypecheckType};
 
 /// The result of the type annotation phase is a map
@@ -23,7 +25,7 @@ struct TypevarFunctionMap {
     pub map: HashMap<String, HashMap<usize, Rc<TypevarFunction>>>,
 }
 
-impl TypevarFunctionMap {
+impl<'a> TypevarFunctionMap {
     pub fn new() -> TypevarFunctionMap {
         TypevarFunctionMap {
             map: HashMap::new(),
@@ -136,6 +138,7 @@ pub fn annotate_types(
                 Unresolved::Literal(TypecheckType::None),
             ))?;
             annotated_functions.insert((*name).to_owned(), 0, main.clone());
+            let mut scope = AnnotatorScope::new();
             annotate_token(
                 compiler,
                 &functions,
@@ -143,6 +146,7 @@ pub fn annotate_types(
                 &mut annotated_functions,
                 &main,
                 &function.body,
+                &mut scope,
             )?;
         }
     }
@@ -171,17 +175,21 @@ pub fn annotate_types(
     Ok(result)
 }
 
-fn annotate_token(
+fn annotate_token<'a>(
     compiler: &mut Compiler,
     functions: &FunctionMap,
     types: &mut TypeResolver<TypecheckType>,
     annotated_functions: &mut TypevarFunctionMap,
     current_function: &TypevarFunction,
     token: &Token,
+    scope: &mut AnnotatorScope<'a>,
 ) -> GenericResult<TypeVar> {
     let type_var = types.create_type_var();
     match token {
         Token::List(ref token_list) => {
+            println!(
+                "debug token list: {:?}", token_list
+            );
             for t in token_list {
                 let item_type = annotate_token(
                     compiler,
@@ -190,6 +198,7 @@ fn annotate_token(
                     annotated_functions,
                     current_function,
                     t,
+                    scope,
                 )?;
                 types.add_constraint(Constraint::IsLiteral(
                     type_var.clone(),
@@ -199,6 +208,10 @@ fn annotate_token(
         }
         Token::Block(ref token_list) => {
             let mut maybe_item_type = None;
+            let mut child_scope = AnnotatorScope {
+                parent: Some(&scope),
+                locals: HashMap::new(),
+            };
             for t in token_list {
                 maybe_item_type = Some(annotate_token(
                     compiler,
@@ -207,6 +220,7 @@ fn annotate_token(
                     annotated_functions,
                     current_function,
                     t,
+                    &mut child_scope,
                 )?);
             }
             if let Some(item_type) = maybe_item_type {
@@ -221,10 +235,9 @@ fn annotate_token(
                 annotated_functions,
                 current_function,
                 expression,
+                scope,
             )?;
-            types.add_constraint(Constraint::Equality(
-                type_var, result
-            ))?;
+            types.add_constraint(Constraint::Equality(type_var, result))?;
         }
         Token::Integer(_) => {
             types.add_constraint(Constraint::IsLiteral(
@@ -264,6 +277,7 @@ fn annotate_token(
                     annotated_functions,
                     current_function,
                     &key.as_token(),
+                    scope,
                 )?;
                 annotate_token(
                     compiler,
@@ -272,24 +286,53 @@ fn annotate_token(
                     annotated_functions,
                     current_function,
                     value,
+                    scope,
                 )?;
             }
             // types.add_constraint(Constraint::IsLiteral(type_var.clone(), Type::Map<Type::String, Type::String>));
         }
+        Token::Symbol(s) => match scope.get(s) {
+            Some(variable) => return Ok(variable),
+            None => {
+                return Err(Box::new(DispError::new(&format!(
+                    "unable to resolve variable {}",
+                    s
+                ))))
+            }
+        },
         _ => {}
     }
     Ok(type_var)
 }
 
-fn parse_and_add_expression(
+fn parse_and_add_expression<'a>(
     compiler: &mut Compiler,
     functions: &FunctionMap,
     types: &mut TypeResolver<TypecheckType>,
     annotated_functions: &mut TypevarFunctionMap,
     function: &TypevarFunction,
     expression: &Vec<Token>,
+    scope: &mut AnnotatorScope<'a>,
 ) -> GenericResult<TypeVar> {
     if let Token::Symbol(name) = expression[0].clone() {
+        // TODO: find a way to move this into
+        // let_expression
+        if *name == "let" {
+            if let Token::Symbol(s) = expression[1].clone() {
+                let target = annotate_token(
+                    compiler,
+                    functions,
+                    types,
+                    annotated_functions,
+                    function,
+                    &expression[2],
+                    scope,
+                )?;
+                scope.locals.insert(*s, target);
+                return Ok(target);
+            }
+        }
+
         let arg_type_variables = {
             let mut arg_type_variables = vec![];
             for token in &expression[1..] {
@@ -300,16 +343,19 @@ fn parse_and_add_expression(
                     annotated_functions,
                     function,
                     token,
+                    scope,
                 )?);
             }
             arg_type_variables
         };
+
         // first, we should check the compiler to see if
         // there is a matching primitive function.
         // TODO: check types in compiler
-        if let Some(expression) = compiler.data.builtin_expressions.get(&*name) {
-            return (expression.typecheck)(types, function, &arg_type_variables);
+        if let Some(expression_struct) = compiler.data.builtin_expressions.get(&*name) {
+            return (expression_struct.typecheck)(types, function, &arg_type_variables);
         }
+
         // next, there are builtin native functions that we should check against.
         // next, we check if there is an already
         // parsed function that matches the type signature
@@ -317,7 +363,7 @@ fn parse_and_add_expression(
             return Ok(function.return_type);
         }
         // finally, we check to see if there is an unparsed function with the name
-        // and argument count, and if so we start generating and expression for that.
+        // and argument count, and if so we start generating an expression for that.
         match functions.get(&*name) {
             None => Err(Box::new(DispError::new(&format!(
                 "unable to find function with name {}",
@@ -338,6 +384,12 @@ fn parse_and_add_expression(
                     arg_type_variables.len(),
                     typevar_function.clone(),
                 );
+                let mut function_scope = AnnotatorScope::new();
+                for i in 0..arg_type_variables.len() {
+                    function_scope
+                        .locals
+                        .insert(function.args[i].clone(), arg_type_variables[i].clone());
+                }
                 let result = annotate_token(
                     compiler,
                     functions,
@@ -345,6 +397,7 @@ fn parse_and_add_expression(
                     annotated_functions,
                     &typevar_function,
                     &function.body,
+                    &mut function_scope,
                 )?;
                 types.add_constraint(Constraint::Equality(return_type, result))?;
                 Ok(return_type)

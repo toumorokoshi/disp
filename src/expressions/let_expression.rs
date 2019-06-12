@@ -15,8 +15,11 @@ fn typecheck(
     _: &TypevarFunction,
     args: &Vec<TypeVar>,
 ) -> GenericResult<TypeVar> {
-    resolver.add_constraint(Constraint::Equality(args[0].clone(), args[1].clone()))?;
-    Ok(args[0].clone())
+    let type_var = resolver.create_type_var();
+    // this is not invoked, instead there
+    // is custom code for this one use case in the
+    // type annotator.
+    Ok(type_var)
 }
 
 pub fn codegen(context: &mut Context, args: &[Token]) -> CodegenResult<Object> {

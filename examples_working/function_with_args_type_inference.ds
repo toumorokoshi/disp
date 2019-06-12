@@ -1,6 +1,8 @@
-fn add [l r] [(+ l r)
-fn p (fn [arg] [(print arg)])
-p "foo"
-p 10
-fn add-and-print [l r] [(let x (add l r)) (p x)]
+fn add [l r]
+	return (+ l r)
+print "foo"
+print 10
+fn add-and-print [l r] 
+	let x (add l r)
+	print x
 add-and-print 11 12

@@ -1,10 +1,11 @@
 macro! unless [cond body]
 	match cond {
-    false: body,
-  }
+		false: body,
+	}
 
 
 if true
-	print "macro from stdlib works!"
+	print 'macro from stdlib works!'
 unless false
-	print "macro from scope works!"
+	print 'macro from scope works!'
+
