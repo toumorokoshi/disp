@@ -139,6 +139,9 @@ pub fn annotate_types(
             ))?;
             annotated_functions.insert((*name).to_owned(), 0, main.clone());
             let mut scope = AnnotatorScope::new();
+            if cfg!(feature = "debug") {
+                println!("annotating function {:?}\nbody:\n{:?}", name, function.body);
+            }
             annotate_token(
                 compiler,
                 &functions,
@@ -187,9 +190,6 @@ fn annotate_token<'a>(
     let type_var = types.create_type_var();
     match token {
         Token::List(ref token_list) => {
-            println!(
-                "debug token list: {:?}", token_list
-            );
             for t in token_list {
                 let item_type = annotate_token(
                     compiler,

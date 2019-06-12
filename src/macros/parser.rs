@@ -1,4 +1,4 @@
-use super::{DispError, Macro, Token, DispResult};
+use super::{DispError, DispResult, Macro, Token};
 
 pub fn parse_macro(args: Vec<Token>) -> DispResult<(String, Macro)> {
     if args.len() == 4 {
@@ -14,10 +14,13 @@ pub fn parse_macro(args: Vec<Token>) -> DispResult<(String, Macro)> {
                     )));
                 }
             }
-            return Ok(((**name).clone(), Macro {
+            return Ok((
+                (**name).clone(),
+                Macro {
                     arguments: arguments,
-                    body: args[2].clone(),
-            }));
+                    body: args[3].clone(),
+                },
+            ));
         }
     }
     Err(DispError::new(&format!(

@@ -106,6 +106,13 @@ pub fn expand_token(replacement_tokens: &HashMap<String, Token>, token: &Token) 
             }
             Token::List(new_list)
         }
+        &Token::Block(ref token_list) => {
+            let mut new_list = vec![];
+            for t in token_list {
+                new_list.push(expand_token(replacement_tokens, t));
+            }
+            Token::Block(new_list)
+        }
         &Token::Expression(ref token_list) => {
             let mut new_list = vec![];
             for t in token_list {
