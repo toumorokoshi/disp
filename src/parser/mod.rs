@@ -30,7 +30,8 @@ fn parse_rule(rule: Rule, body: &str) -> Token {
 fn unpack(pair: Pair<Rule>) -> Token {
     match pair.clone().as_rule() {
         _s @ Rule::bang_symbol => Token::BangSymbol(Box::new(String::from(pair.as_str()))),
-        _c @ Rule::comment => Token::Comment(Box::new(String::from(pair.as_str()))),
+        // _c @ Rule::comment => Token::Comment(Box::new(String::from(pair.as_str()))),
+        _c @ Rule::comment => Token::None,
         _e @ Rule::expression_no_parens => {
             let mut tokens = vec![];
             for p in pair.into_inner() {

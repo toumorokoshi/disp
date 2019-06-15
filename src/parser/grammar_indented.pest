@@ -1,9 +1,9 @@
 head = _{ list_of_lines ~ EOI }
 list_of_lines = {
-  expression_no_parens ~ ("\n" ~ PEEK_ALL ~ expression_no_parens?)*
+  (comment | expression_no_parens) ~ ("\n" ~ PEEK_ALL ~ (comment |expression_no_parens)?)*
 }
 expression_no_parens = {
-  (comment | (token ~ delimiter_no_newline?)+) ~ ("\n" ~ indented_list)?
+  (token ~ delimiter_no_newline?)+ ~ ("\n" ~ indented_list)?
 }
 // TODO: add comments to syntax tree ,needed to preserve comments during
 // transforms.
