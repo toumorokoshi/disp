@@ -12,7 +12,7 @@ indented_list = _{ PEEK_ALL ~ PUSH(indentation) ~ list_of_lines ~ DROP }
 delimiter = _{ (delimiter_no_newline | "\n" | "\t")+ }
 delimiter_no_newline = _{ (" ")+ } indentation = _{ ("\t")+ }
 token = _{
-  none | expression | integer | list | map |
+  none | expression | block | integer | list | map |
   // ordering is important! symbol must come after
   // any literals in the parser, or symbol will match first.
   // e.j. "true" will be a symbol if the rule is after symbol.

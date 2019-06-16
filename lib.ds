@@ -9,11 +9,19 @@ macro! if [cond body]
 macro! ++ [var]
 	let var (+ var 1)
 
-macro! for [init cond end body] [init (while cond [body end])]
+macro! for [init cond end body] <init (while cond <body end>)>
 
-macro! for-range [symbol start-int end-int body] [
+macro! for-range [symbol start-int end-int body]
 	(for (let symbol start-int) (not (eq symbol end-int)) (++ symbol) body)
-]
 
 macro! neq [l r] (not (eq l r))
+
+macro! for-each [list body]
+	for-range i 0 (len list) body
+
+fn hash [value]
+	let i 0
+	for-each value
+		++ i
+	return i
 

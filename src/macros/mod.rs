@@ -68,7 +68,10 @@ fn expand_expression(macros: &MacroMap, mut expression: Vec<Token>) -> DispResul
     if let Some((func_token, args)) = expression.split_first() {
         if let Token::Symbol(ref s) = func_token {
             if let Some(macro_instance) = macros.get(&**s) {
-                return Ok(expand_macro(macro_instance, args)?);
+                let mut result = expand_macro(macro_instance, args)?;
+                // we then expand the result again, in case
+                // the result is another macro to expand
+                return apply_macros_to_token(macros, &mut result);
             }
         }
     }
