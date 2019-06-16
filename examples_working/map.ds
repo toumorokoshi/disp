@@ -1,3 +1,2 @@
 let x [1 2 3]
-let y (hash x)
-print y
+print (hash x)
